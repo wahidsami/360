@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Link2, Trash2 } from 'lucide-react';
-import { FrappeGantt, Task, ViewMode } from 'react-frappe-gantt';
+import { Calendar, Link2, Trash2, Sparkles } from 'lucide-react';
+import { Task, ViewMode } from 'react-frappe-gantt';
 import 'frappe-gantt/dist/frappe-gantt.css';
+
+// Lazy load the Gantt component to play nice with React 19 Suspense
+const FrappeGantt = lazy(() => import('react-frappe-gantt').then(mod => ({ default: mod.FrappeGantt })));
 import { GlassCard, Button, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { Task as TaskType } from '../../types';
@@ -181,12 +184,17 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
           </p>
         ) : (
           <div className="gantt-container" style={{ minWidth: 600 }}>
-            <FrappeGantt
-              tasks={ganttTasks}
-              viewMode={ViewMode.Month}
-              onDateChange={handleDateChange}
-              onClick={(task) => { }}
-            />
+            <Suspense fallback={<div className="py-20 flex flex-col items-center gap-2 text-slate-500">
+              <Sparkles className="w-6 h-6 animate-spin text-cyan-500" />
+              Preparing Gantt chart...
+            </div>}>
+              <FrappeGantt
+                tasks={ganttTasks}
+                viewMode={ViewMode.Month}
+                onDateChange={handleDateChange}
+                onClick={(task) => { }}
+              />
+            </Suspense>
           </div>
         )}
       </GlassCard>
