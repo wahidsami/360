@@ -188,7 +188,16 @@ const resources = {
       "unassigned": "Unassigned",
       "save_changes": "Save Changes",
       "enter_task_title": "Task title...",
-      "enter_details": "Details..."
+      "enter_details": "Details...",
+      "add_new_client": "Add New Client",
+      "create_new_client": "Create a new client profile",
+      "add_rule": "Add Rule",
+      "edit_rule": "Edit Rule",
+      "save": "Save",
+      "log_time": "Log Time",
+      "add_tasks_first": "Add tasks to the project first.",
+      "no_time_entries": "No time entries yet.",
+      "edit_time": "Edit Time"
     }
   },
   ar: {
@@ -377,7 +386,16 @@ const resources = {
       "unassigned": "غير معين",
       "save_changes": "حفظ التغييرات",
       "enter_task_title": "عنوان المهمة...",
-      "enter_details": "التفاصيل..."
+      "enter_details": "التفاصيل...",
+      "add_new_client": "إضافة عميل جديد",
+      "create_new_client": "إنشاء ملف عميل جديد",
+      "add_rule": "إضافة قاعدة",
+      "edit_rule": "تعديل قاعدة",
+      "save": "حفظ",
+      "log_time": "تسجيل الوقت",
+      "add_tasks_first": "أضف مهام إلى المشروع أولاً.",
+      "no_time_entries": "لا توجد سجلات وقت بعد.",
+      "edit_time": "تعديل الوقت"
     }
   }
 };
