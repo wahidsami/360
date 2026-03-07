@@ -63,16 +63,18 @@ Use a personal access token or SSH if prompted for auth.
 
 ### Backend (NestJS API)
 
+This project is Coolify-ready: root **Dockerfile**, **HEALTHCHECK** on `/health`, and **curl** in the image.
+
+**Coolify UI – API (recommended):** Source = GitHub `wahidsami/360` (branch `main`). Build Pack = **Dockerfile**. **Base Directory** = `/`. **Dockerfile path** = `Dockerfile`. **Port** = `3000`. Health check is in the Dockerfile (`/health`). Add env vars from `arena360-api/.env.example` (§2); required: `DATABASE_URL`, `JWT_SECRET`, `ALLOWED_ORIGINS`.
+
+**Alternative (build from subfolder):** Base Directory = `arena360-api`, Dockerfile path = `Dockerfile`, Port = `3000`.
+
 1. In Coolify, create a new **Application** → **Public Repository** (or connect GitHub and select `wahidsami/360`).
 2. Set **Build Pack** to **Dockerfile**.
-3. Set **Dockerfile path** to: `arena360-api/Dockerfile`.
+3. Set **Dockerfile path** to: `Dockerfile` (root) or `arena360-api/Dockerfile` (with Base Directory `arena360-api`).
    - Coolify may need the **root** of the build context to be the repo root; then the Dockerfile path is `arena360-api/Dockerfile`. If Coolify supports a “context” path, set context to repo root.
-4. Add **Environment variables** from `arena360-api/.env.example` (and your real values), especially:
-   - `DATABASE_URL` (PostgreSQL on VPS; database name **arena360**).
-   - `JWT_SECRET`, `ALLOWED_ORIGINS`, and optionally S3, Resend, OpenAI.
+4. Add **Environment variables** from `arena360-api/.env.example` (and your real values), especially `DATABASE_URL`, `JWT_SECRET`, `ALLOWED_ORIGINS`.
 5. Expose port **3000** and point your domain (e.g. `api.your-domain.com`) to this service.
-
-If Coolify expects a single Dockerfile at repo root, we can add a root `Dockerfile` that builds/runs `arena360-api` (see below).
 
 ### Frontend (static)
 
@@ -91,32 +93,15 @@ If Coolify expects a single Dockerfile at repo root, we can add a root `Dockerfi
 
 ---
 
-## 5. Optional: root Dockerfile for API-only deploy
+## 5. Root Dockerfile (included)
 
-If Coolify only picks a Dockerfile at repo root, add a `Dockerfile` at root that delegates to the API:
+The repo includes a **root `Dockerfile`** that builds and runs `arena360-api` with build context = repo root. It includes:
 
-```dockerfile
-# Root Dockerfile – build and run arena360-api
-FROM node:22-alpine AS builder
-WORKDIR /app
-COPY arena360-api/package*.json arena360-api/prisma ./prisma/
-COPY arena360-api/package*.json ./
-RUN npm install
-COPY arena360-api/ .
-RUN npx prisma generate && npm run build
+- Multi-stage build (builder + production image)
+- `curl` for health checks
+- **HEALTHCHECK** on `GET /health` so Coolify/Traefik only route when the app is up
 
-FROM node:22-alpine
-WORKDIR /app
-RUN apk add --no-cache curl
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-EXPOSE 3000
-CMD ["npm", "run", "start:prod"]
-```
-
-Then set **Dockerfile path** to `Dockerfile` and ensure build context is repo root. Environment variables stay the same as above.
+Use it in Coolify with **Base Directory** `/` and **Dockerfile path** `Dockerfile`.
 
 ---
 
