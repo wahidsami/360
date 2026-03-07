@@ -113,15 +113,30 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
       .filter((t): t is Task => t !== null);
   }, [tasks, depMap]);
 
+  const toISO = (d: any): string | undefined => {
+    if (!d) return undefined;
+    // FrappeGantt may pass a Date object, a moment-like object with .format(), or a string
+    if (d && typeof d.format === 'function') return d.format('YYYY-MM-DD');
+    const date = d instanceof Date ? d : new Date(d);
+    if (isNaN(date.getTime())) return undefined;
+    // Use UTC to avoid timezone-offset shifting the date
+    return date.toISOString().slice(0, 10);
+  };
+
   const handleDateChange = async (task: any, start: any, end: any) => {
     const taskId = task.id;
-    const startStr = start && start.format ? start.format('YYYY-MM-DD') : (start && start.toString?.() ? start.toString().slice(0, 10) : '');
-    const endStr = end && end.format ? end.format('YYYY-MM-DD') : (end && end.toString?.() ? end.toString().slice(0, 10) : '');
+    const startStr = toISO(start);
+    const endStr = toISO(end);
+    if (!startStr || !endStr) {
+      toast.error('Invalid dates received from Gantt chart');
+      return;
+    }
     try {
-      await api.projects.updateTask(projectId, taskId, { startDate: startStr || undefined, dueDate: endStr || undefined });
+      await api.projects.updateTask(projectId, taskId, { startDate: startStr, dueDate: endStr });
       onRefreshTasks();
-    } catch (e) {
-      toast.error('Failed to update dates');
+      toast.success('Dates updated');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to update dates');
     }
   };
 
