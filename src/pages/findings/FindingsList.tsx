@@ -25,6 +25,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(!initialFindings);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId || '');
 
   // Filters State
   const [search, setSearch] = useState('');
@@ -36,7 +37,6 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
     const loadData = async () => {
       if (!initialFindings) {
         setLoading(true);
-        // If we are in project context but don't have initial findings (unlikely due to ProjectDetails load but for safety)
         const fData = projectId ? await api.projects.getFindings(projectId) : await api.findings.list();
         setFindings(fData);
       }
@@ -47,6 +47,8 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       ]);
       setProjects(pData);
       setClients(cData);
+      // Pre-select first project when on global page
+      if (!projectId && pData.length > 0) setSelectedProjectId(pData[0].id);
       setLoading(false);
     };
     loadData();
@@ -60,7 +62,12 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
 
   const handleCreateFinding = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectId) return;
+    // Use the prop projectId if available, otherwise fall back to the modal's selected project
+    const targetProjectId = projectId || selectedProjectId;
+    if (!targetProjectId) {
+      toast.error('Please select a project');
+      return;
+    }
 
     const formData = new FormData(e.target as HTMLFormElement);
     const payload = {
@@ -71,13 +78,15 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       visibility: (formData.get('visibility') as string).toUpperCase() as any
     };
 
-    const newFinding = await api.projects.createFinding(projectId, payload);
+    const newFinding = await api.projects.createFinding(targetProjectId, payload);
     if (newFinding) {
       setIsModalOpen(false);
+      toast.success('Finding created');
       if (onRefresh) onRefresh();
       else {
-        // Local update if no manual refresh provided
-        const updated = await api.projects.getFindings(projectId);
+        const updated = projectId
+          ? await api.projects.getFindings(targetProjectId)
+          : await api.findings.list();
         setFindings(updated);
       }
     }
@@ -146,7 +155,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           >
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="shadow-[0_0_15px_rgba(6,182,212,0.4)]" disabled={!projectId}>
+          <Button onClick={() => setIsModalOpen(true)} className="shadow-[0_0_15px_rgba(6,182,212,0.4)]">
             <Plus className="w-4 h-4 mr-2" /> {t('create_finding')}
           </Button>
         </div>
@@ -265,6 +274,18 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       {/* Create Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Finding">
         <form onSubmit={handleCreateFinding} className="space-y-4">
+          {/* Project selector — only shown on global page where no projectId prop */}
+          {!projectId && (
+            <Select
+              label="Project"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              required
+            >
+              <option value="">Select a project...</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+          )}
           <Input name="title" label="Finding Title" placeholder="e.g., SQL Injection vulnerability" required />
           <TextArea name="description" label="Description" placeholder="Provide details about the discovery..." required />
           <div className="grid grid-cols-2 gap-4">
