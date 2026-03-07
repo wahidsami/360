@@ -11,6 +11,7 @@ import { TasksTab } from '../components/project/TasksTab';
 import { RecurringTasksTab } from '../components/project/RecurringTasksTab';
 import { useAuth } from '../contexts/AuthContext';
 import { useAI } from '../contexts/AIContext';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 export const ProjectDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -19,6 +20,7 @@ export const ProjectDetails: React.FC = () => {
   const { user, can } = useAuth();
   const { openAI, setContext } = useAI();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isPending, startTransition] = React.useTransition();
 
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -296,9 +298,13 @@ export const ProjectDetails: React.FC = () => {
         {tabs.filter(t => !t.hidden).map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              startTransition(() => {
+                setActiveTab(tab.id);
+              });
+            }}
             className={`pb-4 px-2 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'
-              }`}
+              } ${isPending ? 'opacity-50' : ''}`}
           >
             {tab.label}
           </button>
@@ -307,44 +313,51 @@ export const ProjectDetails: React.FC = () => {
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
-        {activeTab === 'overview' && (
-          <OverviewTab
-            project={project}
-            clientName={client?.name}
-            stats={{
-              taskCount: tasks.length,
-              completedTasks: tasks.filter(t => t.status === 'done').length,
-              milestoneCount: milestones.length,
-              completedMilestones: milestones.filter(m => m.status === 'completed').length,
-              budget: project.budget || financials.contract?.totalValue || 0,
-              spent: financials.invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0)
-            }}
-            recentUpdates={updates.slice(0, 5)}
-          />
-        )}
-        {activeTab === 'tasks' && <TasksTab projectId={projectId!} tasks={tasks} milestones={milestones} members={members} onUpsert={handleUpsertTask} onDelete={handleDeleteTask} onMove={handleMoveTask} onJoin={() => handleAddMember(user?.id || '', user?.role as any)} currentUserId={user?.id || ''} />}
-        {activeTab === 'time' && projectId && <TimeTab projectId={projectId} tasks={tasks} currentUserId={user?.id} />}
-        {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
-        {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} onUpsertTask={handleUpsertTask} />}
-        {activeTab === 'recurring' && projectId && <RecurringTasksTab projectId={projectId} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
-        {activeTab === 'milestones' && <MilestonesTab milestones={milestones} onUpsert={handleUpsertMilestone} onDelete={handleDeleteMilestone} />}
-        {activeTab === 'updates' && <UpdatesTab updates={updates} onPost={handlePostUpdate} />}
-        {activeTab === 'files' && <FilesTab files={files} onUpload={handleUploadFile} onDownload={handleDownloadFile} onDelete={handleDeleteFile} />}
-        {activeTab === 'team' && <TeamTab members={members} onUpdateRole={handleUpdateRole} onAdd={handleAddMember} onRemove={handleRemoveMember} />}
-        {activeTab === 'findings' && <FindingsTab findings={findings} projectId={projectId!} onRefresh={handleRefreshFindings} />}
-        {activeTab === 'reports' && <ReportsTab reports={reports} onRefresh={loadData} />}
-        {activeTab === 'testing' && <EnvironmentsTab environments={environments} />}
-        {activeTab === 'financials' && <FinancialsTab contract={financials.contract} invoices={financials.invoices} onRefresh={loadData} />}
-        {activeTab === 'discussions' && <DiscussionsTab
-          projectId={projectId!}
-          discussions={discussions}
-          onCreateThread={handleCreateDiscussion}
-          onDeleteThread={handleDeleteDiscussion}
-          onGetReplies={handleGetReplies}
-          onCreateReply={handleCreateReply}
-          onDeleteReply={handleDeleteReply}
-        />}
-        {activeTab === 'activity' && <ActivityTab activity={activity} onRefresh={loadData} />}
+        <ErrorBoundary fallback={<div className="p-10 text-center text-rose-400 bg-rose-500/5 border border-rose-500/10 rounded-xl">Something went wrong in this tab. Please try refreshing.</div>}>
+          <React.Suspense fallback={<div className="p-10 text-center text-slate-500 animate-pulse flex flex-col items-center gap-2 font-display">
+            <Sparkles className="w-8 h-8 text-cyan-500 animate-spin" />
+            Loading {activeTab}...
+          </div>}>
+            {activeTab === 'overview' && (
+              <OverviewTab
+                project={project}
+                clientName={client?.name}
+                stats={{
+                  taskCount: tasks.length,
+                  completedTasks: tasks.filter(t => t.status === 'done').length,
+                  milestoneCount: milestones.length,
+                  completedMilestones: milestones.filter(m => m.status === 'completed').length,
+                  budget: project.budget || financials.contract?.totalValue || 0,
+                  spent: financials.invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0)
+                }}
+                recentUpdates={updates.slice(0, 5)}
+              />
+            )}
+            {activeTab === 'tasks' && <TasksTab projectId={projectId!} tasks={tasks} milestones={milestones} members={members} onUpsert={handleUpsertTask} onDelete={handleDeleteTask} onMove={handleMoveTask} onJoin={() => handleAddMember(user?.id || '', user?.role as any)} currentUserId={user?.id || ''} />}
+            {activeTab === 'time' && projectId && <TimeTab projectId={projectId} tasks={tasks} currentUserId={user?.id} />}
+            {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
+            {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} onUpsertTask={handleUpsertTask} />}
+            {activeTab === 'recurring' && projectId && <RecurringTasksTab projectId={projectId} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
+            {activeTab === 'milestones' && <MilestonesTab milestones={milestones} onUpsert={handleUpsertMilestone} onDelete={handleDeleteMilestone} />}
+            {activeTab === 'updates' && <UpdatesTab updates={updates} onPost={handlePostUpdate} />}
+            {activeTab === 'files' && <FilesTab files={files} onUpload={handleUploadFile} onDownload={handleDownloadFile} onDelete={handleDeleteFile} />}
+            {activeTab === 'team' && <TeamTab members={members} onUpdateRole={handleUpdateRole} onAdd={handleAddMember} onRemove={handleRemoveMember} />}
+            {activeTab === 'findings' && <FindingsTab findings={findings} projectId={projectId!} onRefresh={handleRefreshFindings} />}
+            {activeTab === 'reports' && <ReportsTab reports={reports} onRefresh={loadData} />}
+            {activeTab === 'testing' && <EnvironmentsTab environments={environments} />}
+            {activeTab === 'financials' && <FinancialsTab contract={financials.contract} invoices={financials.invoices} onRefresh={loadData} />}
+            {activeTab === 'discussions' && <DiscussionsTab
+              projectId={projectId!}
+              discussions={discussions}
+              onCreateThread={handleCreateDiscussion}
+              onDeleteThread={handleDeleteDiscussion}
+              onGetReplies={handleGetReplies}
+              onCreateReply={handleCreateReply}
+              onDeleteReply={handleDeleteReply}
+            />}
+            {activeTab === 'activity' && <ActivityTab activity={activity} onRefresh={loadData} />}
+          </React.Suspense>
+        </ErrorBoundary>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { Button, GlassCard } from "./UIComponents";
 
 interface Props {
     children?: ReactNode;
+    fallback?: ReactNode;
 }
 
 interface State {
@@ -30,6 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
+            if (this.props.fallback) return this.props.fallback;
             return (
                 <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
                     <GlassCard className="max-w-md w-full text-center p-8 border-rose-500/30">
