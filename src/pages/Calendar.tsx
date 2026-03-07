@@ -1,0 +1,102 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin from '@fullcalendar/interaction';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
+import { Task } from '../types';
+export const Calendar: React.FC = () => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      api.tasks
+        .getMyTasks(user.id)
+        .then(setTasks)
+        .catch(() => setTasks([]))
+        .finally(() => setLoading(false));
+    }
+  }, [user]);
+
+  const events = useMemo(() => {
+    return tasks
+      .filter((t) => t.dueDate || t.startDate || t.createdAt)
+      .map((task) => {
+        const start = task.startDate || task.dueDate || task.createdAt;
+        const end = task.dueDate || task.startDate || task.createdAt;
+        const startStr = start ? new Date(start).toISOString().slice(0, 10) : null;
+        const endStr = end ? new Date(end).toISOString().slice(0, 10) : null;
+        if (!startStr) return null;
+        return {
+          id: task.id,
+          title: task.title,
+          start: startStr,
+          end: endStr && endStr !== startStr ? endStr : undefined,
+          allDay: true,
+          extendedProps: {
+            taskId: task.id,
+            projectId: task.projectId,
+            status: task.status,
+          },
+        };
+      })
+      .filter(Boolean) as { id: string; title: string; start: string; end?: string; allDay: boolean; extendedProps: any }[];
+  }, [tasks]);
+
+  const handleEventClick = (info: { event: { id: string; extendedProps: { projectId: string } } }) => {
+    const projectId = info.event.extendedProps?.projectId;
+    if (projectId) navigate(`/app/projects/${projectId}?tab=tasks`);
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold font-display text-white flex items-center gap-2">
+          <CalendarIcon className="w-8 h-8 text-cyan-500" />
+          {t('calendar') || 'Calendar'}
+        </h1>
+        <p className="text-slate-400 mt-1">{t('calendar_subtitle') || 'Your assigned tasks by due date.'}</p>
+      </div>
+
+      <div className="calendar-wrap bg-slate-900/80 border border-slate-700 rounded-xl p-4 overflow-hidden [--fc-border-color:theme(colors.slate.700)] [--fc-button-bg-color:theme(colors.cyan.600)] [--fc-button-border-color:theme(colors.cyan.500)] [--fc-today-bg-color:theme(colors.cyan.500/10)] [--fc-page-bg-color:transparent] [--fc-neutral-bg-color:theme(colors.slate.800/50)] [--fc-list-event-hover-bg-color:theme(colors.slate.700)]">
+        {loading ? (
+          <p className="text-slate-500 py-12 text-center">{t('loading')}...</p>
+        ) : (
+          <FullCalendar
+            plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,listWeek',
+            }}
+            events={events}
+            eventClick={handleEventClick}
+            height="auto"
+            eventDisplay="block"
+            dayMaxEvents={4}
+            views={{
+              listWeek: { buttonText: t('week') || 'Week' },
+              dayGridMonth: { buttonText: t('month') || 'Month' },
+            }}
+            themeSystem="standard"
+            eventClassNames="fc-event-cyan"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Calendar;

@@ -1,0 +1,16 @@
+services:
+  postgres:
+    # Remove public port mapping for production
+    ports: !override []
+    restart: unless-stopped
+
+  minio:
+    # Remove public port mapping for production
+    ports: !override []
+    restart: unless-stopped
+
+  api:
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # In production, ALLOWED_ORIGINS and JWT_SECRET should be handled via secrets or .env.prod

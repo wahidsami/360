@@ -1,0 +1,1103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GlobalRole {
+  SUPER_ADMIN
+  OPS
+  PM
+  DEV
+  FINANCE
+  CLIENT_OWNER
+  CLIENT_MANAGER
+  CLIENT_MEMBER
+  VIEWER
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  LEAD
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  TESTING
+  DEPLOYED
+  MAINTENANCE
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectHealth {
+  GOOD
+  AT_RISK
+  CRITICAL
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum UpdateVisibility {
+  INTERNAL
+  CLIENT
+}
+
+enum FileScopeType {
+  CLIENT
+  PROJECT
+  FINDING
+}
+
+enum FileCategory {
+  DOCS
+  DESIGNS
+  BUILDS
+  LOGO
+  EVIDENCE
+  OTHER
+}
+
+enum FileVisibility {
+  INTERNAL
+  CLIENT
+}
+
+enum FindingSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FindingStatus {
+  OPEN
+  IN_PROGRESS
+  IN_REVIEW
+  CLOSED
+  DISMISSED
+}
+
+enum FindingVisibility {
+  INTERNAL
+  CLIENT
+}
+
+enum ReportType {
+  TECHNICAL
+  EXECUTIVE
+  COMPLIANCE
+  OTHER
+}
+
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReportVisibility {
+  INTERNAL
+  CLIENT
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+}
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?  @unique
+  createdAt DateTime @default(now())
+
+  // Multi-tenancy: Plan & Limits
+  plan          String   @default("FREE") // FREE, PRO, ENTERPRISE
+  maxUsers      Int      @default(50)
+  maxProjects   Int      @default(100)
+  maxStorageMB  Int      @default(5000)
+  trialEndsAt   DateTime?
+
+  // Branding
+  logo          String?
+  primaryColor  String?  @default("#06b6d4")
+  accentColor   String?  @default("#6366f1")
+
+  onboardingDismissedAt DateTime?
+
+  users           User[]
+  clients         Client[]
+  projects        Project[]
+  automationRules AutomationRule[]
+  ssoConfigs      SSOConfig[]
+  integrations    Integration[]
+  webhooks        Webhook[]
+  customFieldDefs CustomFieldDef[]
+  customFieldValues CustomFieldValue[]
+  slaPolicies     SLAPolicy[]
+  slaTrackers     SLATracker[]
+  wikiPages       WikiPage[]
+}
+
+model User {
+  id           String     @id @default(cuid())
+  orgId        String
+  org          Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  email        String     @unique
+  name         String
+  passwordHash String?    // null for SSO-only users
+  role         GlobalRole @default(DEV)
+  avatar       String?
+  isActive     Boolean    @default(true)
+
+  // Granular permissions (overrides role defaults)
+  customPermissions String[] @default([])
+
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean  @default(false)
+  recoveryCodes     String?  @db.Text
+
+  dashboardPreferences Json?  // { widgets: [{ id, order, config }] }
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  clientMemberships ClientMember[]
+  projectMemberships ProjectMember[]
+  assignedTasks      Task[] @relation("TaskAssignee")
+  ownedMilestones    Milestone[] @relation("MilestoneOwner")
+  projectUpdates     ProjectUpdate[] @relation("UpdateAuthor")
+  uploadedFiles      FileAsset[] @relation("FileUploader")
+  reportedFindings   Finding[] @relation("FindingReporter")
+  assignedFindings   Finding[] @relation("FindingAssignee")
+  createdReports     Report[] @relation("ReportCreator")
+  createdInvoices    Invoice[] @relation("InvoiceCreator")
+  createdContracts   Contract[] @relation("ContractCreator2")
+  invites            UserInvite[]
+  createdInvites     UserInvite[] @relation("InviteCreator")
+  findingComments    FindingComment[]
+  discussions        Discussion[]     @relation("DiscussionAuthor")
+  discussionReplies  DiscussionReply[] @relation("ReplyAuthor")
+  createdTemplates   ReportTemplate[] @relation("TemplateCreator")
+  notifications      Notification[]   @relation("NotificationRecipient")
+  notificationPrefs  NotificationPreference?
+  timeEntries        TimeEntry[]
+  approvalRequestsRequested ApprovalRequest[] @relation("ApprovalRequestedBy")
+  approvalRequestsReviewed  ApprovalRequest[] @relation("ApprovalReviewedBy")
+  approvalStepsAsApprover   ApprovalRequest[] @relation("ApprovalStepApprover")
+  identities                UserIdentity[]
+  passwordResets            PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+enum SSOProvider {
+  GOOGLE
+  SAML
+}
+
+model SSOConfig {
+  id           String      @id @default(cuid())
+  orgId        String
+  org          Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  provider     SSOProvider
+  name         String      // e.g. "Google Workspace", "Acme SAML"
+  enabled      Boolean     @default(true)
+  // OAuth (Google)
+  clientId     String?
+  clientSecret String?     // encrypt in production
+  // SAML
+  issuer       String?
+  entryPoint   String?
+  cert         String?     @db.Text
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  @@index([orgId])
+  @@index([orgId, provider])
+}
+
+model UserIdentity {
+  id         String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  SSOProvider
+  providerId String     // e.g. Google sub, SAML nameId
+  profile   Json?       // provider profile snapshot
+  createdAt DateTime    @default(now())
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model UserInvite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tokenHash String   @unique // Stores only the hash of the token
+  expiresAt DateTime
+  usedAt    DateTime?
+  
+  createdById String?
+  createdBy   User?    @relation("InviteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+model Client {
+  id        String       @id @default(cuid())
+  orgId     String
+  org       Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  name      String
+  status    ClientStatus @default(ACTIVE)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  members   ClientMember[]
+  projects  Project[]
+  files     FileAsset[]
+  
+  // Extended Fields
+  industry      String?
+  contactPerson String?
+  email         String?
+  phone         String?
+  website       String?
+  address       String?
+  notes         String?
+  
+  billing       Json?
+  logo          String?
+
+  // Stats (Cached/Stored for now)
+  revenueYTD         Float    @default(0)
+  outstandingBalance Float    @default(0)
+  lastActivity       DateTime @default(now())
+}
+
+model ClientMember {
+  id        String     @id @default(cuid())
+  clientId  String
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role      GlobalRole // must be a CLIENT_* role in app logic
+  createdAt DateTime   @default(now())
+
+  @@unique([clientId, userId])
+}
+
+model Project {
+  id        String        @id @default(cuid())
+  orgId     String
+  org       Org           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  clientId  String
+  client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  name      String
+  status    ProjectStatus @default(PLANNING)
+  health    ProjectHealth @default(GOOD)
+  progress  Int           @default(0) // 0..100
+  description String?      @db.Text
+
+  startDate DateTime?
+  endDate   DateTime?
+  budget    Float?
+  tags      String[]      @default([])
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  members   ProjectMember[]
+  tasks     Task[]
+  taskDependencies TaskDependency[]
+  sprints   Sprint[]
+  recurringTaskTemplates RecurringTaskTemplate[]
+  activityFeeds ActivityFeed[]
+  milestones Milestone[]
+  updates    ProjectUpdate[]
+  files      FileAsset[]
+  findings   Finding[]
+  reports    Report[]
+  contracts  Contract[]
+  invoices   Invoice[]
+  discussions Discussion[]
+}
+
+model ProjectMember {
+  id        String     @id @default(cuid())
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role      GlobalRole // internal roles or client roles; enforced in app logic
+  createdAt DateTime   @default(now())
+
+  @@unique([projectId, userId])
+}
+
+model Task {
+  id         String       @id @default(cuid())
+  projectId  String
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title      String
+  description String?
+  status     TaskStatus   @default(TODO)
+  priority   TaskPriority @default(MEDIUM)
+
+  assigneeId String?
+  assignee   User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  startDate  DateTime?    // For Gantt/timeline; if null, derived from createdAt or dueDate
+  dueDate    DateTime?
+
+  labels     String[]     @default([])
+  milestoneId String?
+  milestone  Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  sprintId    String?
+  sprint     Sprint?      @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  storyPoints Int?       // For agile planning
+
+  sourceRecurringId String?  // Link to RecurringTaskTemplate if created by recurrence
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+
+  timeEntries    TimeEntry[]
+  dependenciesAsSuccessor TaskDependency[] @relation("TaskSuccessor")
+  dependenciesAsPredecessor TaskDependency[] @relation("TaskPredecessor")
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([sprintId])
+}
+
+enum SprintStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Sprint {
+  id         String       @id @default(cuid())
+  projectId  String
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String       // e.g. "Sprint 1", "Iteration 2"
+  goal       String?      @db.Text
+  startDate  DateTime
+  endDate    DateTime
+  status     SprintStatus @default(PLANNING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  tasks      Task[]
+  @@index([projectId])
+  @@index([status])
+}
+
+model RecurringTaskTemplate {
+  id              String    @id @default(cuid())
+  orgId           String
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?   @db.Text
+  priority        TaskPriority @default(MEDIUM)
+  recurrenceRule  Json      // e.g. { frequency: 'WEEKLY', interval: 1, weekday: 1 } (1=Mon)
+  nextRunAt       DateTime
+  lastRunAt       DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  @@index([projectId])
+  @@index([orgId])
+  @@index([nextRunAt])
+  @@index([isActive])
+}
+
+model TaskDependency {
+  id                String   @id @default(cuid())
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  predecessorTaskId String    // Must complete before successor can start
+  predecessor       Task     @relation("TaskPredecessor", fields: [predecessorTaskId], references: [id], onDelete: Cascade)
+  successorTaskId   String
+  successor         Task     @relation("TaskSuccessor", fields: [successorTaskId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  @@unique([predecessorTaskId, successorTaskId])
+  @@index([projectId])
+  @@index([predecessorTaskId])
+  @@index([successorTaskId])
+}
+
+model Milestone {
+  id              String          @id @default(cuid())
+  orgId           String
+  projectId       String
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title           String
+  dueDate         DateTime
+  ownerId         String?
+  owner           User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull, name: "MilestoneOwner")
+  status          MilestoneStatus @default(PENDING)
+  percentComplete Int             @default(0)
+  description     String?
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  tasks           Task[]
+
+  @@index([projectId])
+  @@index([orgId])
+}
+
+model ProjectUpdate {
+  id         String           @id @default(cuid())
+  orgId      String
+  projectId  String
+  project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId   String
+  author     User             @relation(fields: [authorId], references: [id], onDelete: Cascade, name: "UpdateAuthor")
+  title      String
+  content    String
+  visibility UpdateVisibility @default(INTERNAL)
+
+  createdAt  DateTime         @default(now())
+  deletedAt  DateTime?
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([createdAt])
+}
+
+model FileAsset {
+  id           String         @id @default(cuid())
+  orgId        String
+
+  // Scope: either client-level or project-level
+  scopeType    FileScopeType
+  clientId     String?
+  client       Client?        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId    String?
+  project      Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  findingId    String?
+  finding      Finding?       @relation(fields: [findingId], references: [id], onDelete: Cascade)
+
+  uploaderId   String
+  uploader     User           @relation(fields: [uploaderId], references: [id], onDelete: Cascade, name: "FileUploader")
+
+  category     FileCategory   @default(OTHER)
+  visibility   FileVisibility @default(INTERNAL)
+
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String         // S3 object key
+
+  createdAt    DateTime       @default(now())
+  deletedAt    DateTime?
+
+  @@index([orgId])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([scopeType])
+}
+
+model Finding {
+  id            String            @id @default(cuid())
+  orgId         String
+  projectId     String
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  severity      FindingSeverity   @default(MEDIUM)
+  status        FindingStatus     @default(OPEN)
+  visibility    FindingVisibility @default(INTERNAL)
+  remediation   String?
+  impact        String?
+
+  reportedById  String
+  reportedBy    User              @relation(fields: [reportedById], references: [id], onDelete: Cascade, name: "FindingReporter")
+  assignedToId  String?
+  assignedTo    User?             @relation(fields: [assignedToId], references: [id], onDelete: SetNull, name: "FindingAssignee")
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+
+  comments      FindingComment[]
+  evidence      FileAsset[]
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([status])
+  @@index([severity])
+}
+
+model FindingComment {
+  id          String   @id @default(cuid())
+  orgId       String
+  findingId   String
+  finding     Finding  @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  content     String
+  
+  parentId    String?
+  parent      FindingComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     FindingComment[] @relation("CommentReplies")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  @@index([findingId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Report {
+  id           String          @id @default(cuid())
+  orgId        String
+  projectId    String
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title        String
+  description  String?
+  type         ReportType      @default(OTHER)
+  status       ReportStatus    @default(DRAFT)
+  visibility   ReportVisibility @default(INTERNAL)
+
+  // Report Generation
+  templateId       String?
+  template         ReportTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  generatedFileKey String?          // S3 key for generated .pptx file
+  generatedAt      DateTime?
+
+  createdById  String
+  createdBy    User            @relation(fields: [createdById], references: [id], onDelete: Cascade, name: "ReportCreator")
+  publishedAt  DateTime?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([status])
+}
+
+model ReportTemplate {
+  id          String   @id @default(cuid())
+  orgId       String?
+  name        String
+  description String?
+  type        ReportType @default(OTHER)
+  isBuiltIn   Boolean  @default(false)  // System templates vs user-created
+  slidesConfig Json    // JSON array defining slide layout & data bindings
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull, name: "TemplateCreator")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reports     Report[]
+
+  @@index([orgId])
+  @@index([isBuiltIn])
+}
+
+model Contract {
+  id          String         @id @default(cuid())
+  orgId       String
+  projectId   String
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title       String
+  amount      Float
+  currency    String         @default("SAR")
+  startDate   DateTime
+  endDate     DateTime?
+  status      ContractStatus @default(ACTIVE)
+
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade, name: "ContractCreator2")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  invoices    Invoice[]
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([status])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  orgId         String
+  projectId     String
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contractId    String?
+  contract      Contract?     @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  invoiceNumber String        @unique
+  amount        Float
+  currency      String        @default("SAR")
+  dueDate       DateTime
+  status        InvoiceStatus @default(DRAFT)
+  issuedAt      DateTime?
+  paidAt        DateTime?
+
+  paymentProvider   String?   // e.g. 'stripe'
+  paymentIntentId   String?   // Stripe PaymentIntent id
+  paymentMetadata   Json?     // charge id, etc.
+
+  createdById   String
+  createdBy     User          @relation(fields: [createdById], references: [id], onDelete: Cascade, name: "InvoiceCreator")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([contractId])
+  @@index([status])
+  @@index([invoiceNumber])
+}
+model AuditLog {
+  id         String   @id @default(cuid())
+  orgId      String?
+  actorId    String?
+  action     String   // e.g., "CREATE", "UPDATE", "DELETE"
+  entity     String   // e.g., "Project", "Task"
+  entityId   String
+  beforeJson Json?    // State before change
+  afterJson  Json?    // State after change
+  requestId  String?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([orgId])
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model ActivityFeed {
+  id          String   @id @default(cuid())
+  orgId       String
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String   // actor
+  action      String   // e.g. "task.created", "finding.updated"
+  entityType  String   // task, finding, report, etc.
+  entityId    String?
+  description String   @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  @@index([projectId])
+  @@index([orgId])
+  @@index([createdAt])
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ApprovalRequest {
+  id            String          @id @default(cuid())
+  orgId         String
+  projectId     String?         // optional, for project-scoped listing
+  entityType    String          // REPORT, INVOICE, CONTRACT
+  entityId      String
+  stepOrder     Int             @default(1)  // 1-based step in chain
+  approverId    String?         // user who must approve this step (null = any internal)
+  requestedById String
+  requestedBy   User            @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
+  approver      User?           @relation("ApprovalStepApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  status        ApprovalStatus  @default(PENDING)
+  reviewedById  String?
+  reviewedBy    User?           @relation("ApprovalReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt    DateTime?
+  comment       String?         @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  @@index([orgId])
+  @@index([projectId])
+  @@index([entityType, entityId])
+  @@index([status])
+}
+
+enum IntegrationType {
+  SLACK
+  GITHUB
+}
+
+model Integration {
+  id        String          @id @default(cuid())
+  orgId     String
+  org       Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  type      IntegrationType
+  name      String
+  enabled   Boolean         @default(true)
+  config    Json            // e.g. { webhookUrl, channel } for Slack; { token, repo, defaultBranch } for GitHub
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  @@index([orgId])
+  @@index([orgId, type])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name      String
+  url       String   @db.Text
+  secret    String?  // optional HMAC secret for signature verification
+  events    String[] @default([]) // e.g. ["task.created", "finding.updated"]
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([orgId])
+}
+
+enum CustomFieldEntityType {
+  PROJECT
+  TASK
+  CLIENT
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  CHECKBOX
+}
+
+model CustomFieldDef {
+  id         String                @id @default(cuid())
+  orgId      String
+  org        Org                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  entityType CustomFieldEntityType
+  key        String                // e.g. "region", "story_points"
+  label      String
+  fieldType  CustomFieldType       @default(TEXT)
+  options    Json?                 // for SELECT: ["Option A", "Option B"] or [{ value, label }]
+  required   Boolean               @default(false)
+  sortOrder  Int                   @default(0)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  values     CustomFieldValue[]
+  @@unique([orgId, entityType, key])
+  @@index([orgId])
+  @@index([orgId, entityType])
+}
+
+model CustomFieldValue {
+  id          String         @id @default(cuid())
+  orgId       String
+  org         Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  fieldDefId  String
+  fieldDef    CustomFieldDef @relation(fields: [fieldDefId], references: [id], onDelete: Cascade)
+  entityType  CustomFieldEntityType
+  entityId    String
+  value       String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  @@unique([fieldDefId, entityId])
+  @@index([orgId])
+  @@index([entityType, entityId])
+}
+
+model Discussion {
+  id        String             @id @default(cuid())
+  orgId     String
+  projectId String
+  project   Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade, name: "DiscussionAuthor")
+  title     String
+  body      String
+  replies   DiscussionReply[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([projectId])
+  @@index([orgId])
+}
+
+model DiscussionReply {
+  id           String     @id @default(cuid())
+  orgId        String
+  discussionId String
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade, name: "ReplyAuthor")
+  body         String
+  createdAt    DateTime   @default(now())
+
+  @@index([discussionId])
+  @@index([orgId])
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_STATUS_CHANGE
+  FINDING_ASSIGNED
+  FINDING_STATUS_CHANGE
+  INVOICE_OVERDUE
+  MENTION
+  COMMENT_REPLY
+  SLA_BREACH
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  orgId     String
+  userId    String
+  user      User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  readAt    DateTime?
+  linkUrl   String?          // e.g. /app/projects/xxx?tab=tasks
+  entityId  String?          // taskId, findingId, etc.
+  entityType String?         // task, finding, invoice
+  createdAt DateTime        @default(now())
+  @@index([userId])
+  @@index([orgId])
+  @@index([readAt])
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailTasks      Boolean  @default(true)
+  emailFindings   Boolean  @default(true)
+  emailInvoices   Boolean  @default(true)
+  inApp           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TimeEntry {
+  id         String   @id @default(cuid())
+  orgId      String
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  minutes    Int
+  date       DateTime @db.Date
+  billable   Boolean  @default(true)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([taskId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([date])
+}
+
+enum AutomationTriggerEntity {
+  TASK
+  FINDING
+  INVOICE
+}
+
+enum AutomationTriggerEvent {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNED
+}
+
+enum AutomationActionType {
+  CREATE_NOTIFICATION
+}
+
+model AutomationRule {
+  id                String                 @id @default(cuid())
+  orgId             String
+  org               Org                    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name              String                 // e.g. "Notify assignee when task is assigned"
+  triggerEntity     AutomationTriggerEntity
+  triggerEvent      AutomationTriggerEvent
+  triggerConditions Json?                  // optional: { "status": "DONE", "priority": "HIGH" }
+  actionType        AutomationActionType   @default(CREATE_NOTIFICATION)
+  actionConfig      Json                   // e.g. { "titleTemplate": "Task {{title}} assigned", "userIdFrom": "assigneeId" }
+  isActive          Boolean                @default(true)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  logs              AutomationLog[]
+  @@index([orgId])
+  @@index([isActive])
+}
+
+model AutomationLog {
+  id         String        @id @default(cuid())
+  ruleId     String
+  rule       AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  entityType String        // TASK, FINDING, INVOICE
+  entityId   String
+  success    Boolean
+  message    String?       // error message if success=false
+  ranAt      DateTime      @default(now())
+  @@index([ruleId])
+  @@index([entityType, entityId])
+  @@index([ranAt])
+}
+
+// Phase 3.4 — SLA Management
+enum SLAEntityType {
+  TASK
+  FINDING
+  INVOICE
+}
+
+enum SLATrackerStatus {
+  PENDING
+  MET
+  BREACHED
+}
+
+model SLAPolicy {
+  id          String        @id @default(cuid())
+  orgId       String
+  org        Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name        String        // e.g. "Task response 24h"
+  entityType  SLAEntityType
+  targetHours Int           // e.g. 24 = respond within 24 hours
+  // Optional scope: apply to specific client or all
+  clientId    String?
+  enabled     Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  trackers    SLATracker[]
+  @@index([orgId])
+  @@index([orgId, entityType])
+}
+
+model SLATracker {
+  id         String           @id @default(cuid())
+  orgId      String
+  org        Org              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  policyId   String
+  policy     SLAPolicy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  entityType SLAEntityType
+  entityId   String
+  dueAt      DateTime
+  breachedAt DateTime?
+  status     SLATrackerStatus @default(PENDING)
+  notifiedAt DateTime?       // last breach notification sent
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  @@unique([policyId, entityId])
+  @@index([orgId])
+  @@index([policyId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([dueAt])
+}
+
+// Phase 4.1 — Knowledge Base / Wiki
+model WikiPage {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  slug        String   // URL path, e.g. "getting-started"
+  title       String
+  body        String   @db.Text
+  authorId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  versions    WikiPageVersion[]
+  @@unique([orgId, slug])
+  @@index([orgId])
+}
+
+model WikiPageVersion {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title     String
+  body      String   @db.Text
+  authorId  String?
+  createdAt DateTime @default(now())
+  @@index([pageId])
+  @@index([createdAt])
+}
+

@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Cairo", sans-serif;
+  --font-display: "Orbitron", sans-serif;
+
+  --color-slate-850: #151e2e;
+  --color-slate-950: #020617;
+}
+
+/* White-label: theme from Org branding (injected by Layout) */
+:root {
+  --brand-primary: #06b6d4;
+  --brand-accent: #6366f1;
+  --brand-bg: #020617;
+  --brand-surface: #0f172a;
+}
+
+@layer base {
+  body {
+    background-color: var(--brand-bg);
+    color: white;
+  }
+}
+
+/* Light theme (when .theme-light on html) */
+html.theme-light {
+  --brand-bg: #f8fafc;
+  --brand-surface: #ffffff;
+}
+html.theme-light body {
+  color: #0f172a;
+}
+
+@utility spin-slow {
+  animation: spin 3s linear infinite;
+}
