@@ -31,6 +31,6 @@ EXPOSE 3000
 
 # Coolify / Traefik: only route traffic when app responds on /health
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://127.0.0.1:3000/health || exit 1
+  CMD curl -f http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["npm", "run", "start:prod"]
