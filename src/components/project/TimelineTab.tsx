@@ -76,23 +76,39 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
   const ganttTasks = useMemo(() => {
     return tasks
       .filter((t) => {
-        const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
-        const end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
-        return !isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start;
+        try {
+          const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
+          const end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          return !isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start;
+        } catch {
+          return false;
+        }
       })
       .map((t) => {
-        const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
-        const end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
-        const deps = depMap[t.id];
-        return new Task({
-          id: t.id,
-          name: t.title,
-          start: toYMD(start),
-          end: toYMD(end),
-          progress: statusToProgress[t.status] ?? 0,
-          dependencies: deps && deps.length ? deps.join(', ') : '',
-        });
-      });
+        try {
+          const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
+          let end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+          // Ensure end is at least 1 day after start for Frappe Gantt stability
+          if (end <= start) {
+            end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          }
+
+          const deps = depMap[t.id];
+          return new Task({
+            id: t.id,
+            name: t.title || 'Untitled Task',
+            start: toYMD(start),
+            end: toYMD(end),
+            progress: statusToProgress[t.status] ?? 0,
+            dependencies: deps && deps.length ? deps.join(', ') : '',
+          });
+        } catch (e) {
+          console.error("Error creating Gantt task", e);
+          return null;
+        }
+      })
+      .filter((t): t is Task => t !== null);
   }, [tasks, depMap]);
 
   const handleDateChange = async (task: any, start: any, end: any) => {
@@ -169,7 +185,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
               tasks={ganttTasks}
               viewMode={ViewMode.Month}
               onDateChange={handleDateChange}
-              onClick={(task) => {}}
+              onClick={(task) => { }}
             />
           </div>
         )}

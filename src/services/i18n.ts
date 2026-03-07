@@ -197,7 +197,18 @@ const resources = {
       "log_time": "Log Time",
       "add_tasks_first": "Add tasks to the project first.",
       "no_time_entries": "No time entries yet.",
-      "edit_time": "Edit Time"
+      "edit_time": "Edit Time",
+      "new_sprint": "New Sprint",
+      "edit_sprint": "Edit Sprint",
+      "sprint_tasks": "Sprint Tasks",
+      "no_sprint_tasks": "No tasks in this sprint.",
+      "no_backlog_tasks": "No tasks in backlog.",
+      "add_to_sprint": "Add to Sprint",
+      "timeline_hint": "Drag bars to change start/due dates. Add dependencies below.",
+      "add_dependency": "Add Dependency",
+      "dependencies": "Dependencies",
+      "no_dependencies": "No task dependencies. Add one to enforce order.",
+      "no_tasks_with_dates": "No tasks with valid start/due dates to display."
     }
   },
   ar: {
@@ -395,7 +406,18 @@ const resources = {
       "log_time": "تسجيل الوقت",
       "add_tasks_first": "أضف مهام إلى المشروع أولاً.",
       "no_time_entries": "لا توجد سجلات وقت بعد.",
-      "edit_time": "تعديل الوقت"
+      "edit_time": "تعديل الوقت",
+      "new_sprint": "دورة جديدة",
+      "edit_sprint": "تعديل الدورة",
+      "sprint_tasks": "مهام الدورة",
+      "no_sprint_tasks": "لا توجد مهام في هذه الدورة.",
+      "no_backlog_tasks": "لا توجد مهام في المتأخرات.",
+      "add_to_sprint": "إضافة إلى الدورة",
+      "timeline_hint": "اسحب الأشرطة لتغيير تواريخ البدء / الاستحقاق. أضف التبعيات أدناه.",
+      "add_dependency": "إضافة تبعية",
+      "dependencies": "التبعيات",
+      "no_dependencies": "لا توجد تبعيات للمهام. أضف واحدة لفرض الترتيب.",
+      "no_tasks_with_dates": "لا توجد مهام مع تواريخ بدء / استحقاق صالحة للعرض."
     }
   }
 };

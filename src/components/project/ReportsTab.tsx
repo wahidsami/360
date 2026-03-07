@@ -15,12 +15,12 @@ interface ReportsTabProps {
 }
 
 interface ApprovalInfo {
-  id: string;
-  status: string;
-  requestedBy?: { name: string };
-  reviewedBy?: { name: string };
-  reviewedAt?: string;
-  comment?: string | null;
+    id: string;
+    status: string;
+    requestedBy?: { name: string };
+    reviewedBy?: { name: string };
+    reviewedAt?: string;
+    comment?: string | null;
 }
 
 export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports, onRefresh }) => {
@@ -65,7 +65,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                 }
             });
             setApprovalByReportId((prev) => ({ ...prev, ...byReport }));
-        }).catch(() => {});
+        }).catch(() => { });
     }, [projectId, reports.map((r) => r.id).join(',')]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -113,8 +113,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                 const ext = generateFormat === 'pdf' ? 'pdf' : 'pptx';
                 await api.projects.downloadReport(projectId, res.reportId, `report.${ext}`);
             }
-        } catch (e) {
-            toast.error('Generate failed');
+        } catch (e: any) {
+            console.error('Report generation failed:', e);
+            toast.error(e?.message || 'Report generation failed');
         } finally {
             setGenerating(false);
         }

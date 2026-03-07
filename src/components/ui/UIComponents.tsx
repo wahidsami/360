@@ -23,7 +23,7 @@ export const GlassCard = ({ children, className = '', title, ...props }: GlassCa
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children?: React.ReactNode;
     className?: string;
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
     size?: 'sm' | 'md' | 'lg';
     onClick?: React.MouseEventHandler<HTMLButtonElement>;
     type?: 'button' | 'submit' | 'reset';
@@ -37,7 +37,8 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
         primary: "bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/20",
         secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
         ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white",
-        danger: "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20"
+        danger: "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20",
+        outline: "bg-transparent hover:bg-slate-800 text-slate-200 border border-slate-600"
     };
 
     const sizes = {
