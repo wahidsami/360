@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Link2, Trash2, Sparkles } from 'lucide-react';
-import { Task, ViewMode } from 'react-frappe-gantt';
+import { FrappeGantt, Task, ViewMode } from 'react-frappe-gantt';
 import 'frappe-gantt/dist/frappe-gantt.css';
-
-// Lazy load the Gantt component to play nice with React 19 Suspense
-const FrappeGantt = lazy(() => import('react-frappe-gantt').then(mod => ({ default: mod.FrappeGantt })));
 import { GlassCard, Button, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { Task as TaskType } from '../../types';
@@ -16,15 +13,13 @@ import toast from 'react-hot-toast';
 interface TimelineTabProps {
   projectId: string;
   tasks: TaskType[];
-  onRefreshTasks: () => void;
+  onRefreshTasks: () => Promise<void>;
 }
 
-export interface TaskDependencyRow {
+interface TaskDependencyRow {
   id: string;
   predecessorTaskId: string;
   successorTaskId: string;
-  predecessor?: { id: string; title: string };
-  successor?: { id: string; title: string };
 }
 
 const statusToProgress: Record<string, number> = {
@@ -55,11 +50,15 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
   const loadDeps = async () => {
     try {
       const list = await api.projects.getTaskDependencies(projectId);
-      setDependencies(list as TaskDependencyRow[]);
+      startTransition(() => {
+        setDependencies(list as TaskDependencyRow[]);
+      });
     } catch (e) {
       console.error('Failed to load dependencies', e);
     } finally {
-      setLoading(false);
+      startTransition(() => {
+        setLoading(false);
+      });
     }
   };
 
@@ -133,12 +132,14 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
     }
     try {
       await api.projects.addTaskDependency(projectId, addPredecessor, addSuccessor);
+      toast.success('Dependency added');
       setAddDepModal(false);
       setAddPredecessor('');
       setAddSuccessor('');
-      loadDeps();
+      startTransition(() => {
+        loadDeps();
+      });
       onRefreshTasks();
-      toast.success('Dependency added');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to add dependency');
     }
@@ -184,17 +185,12 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
           </p>
         ) : (
           <div className="gantt-container" style={{ minWidth: 600 }}>
-            <Suspense fallback={<div className="py-20 flex flex-col items-center gap-2 text-slate-500">
-              <Sparkles className="w-6 h-6 animate-spin text-cyan-500" />
-              Preparing Gantt chart...
-            </div>}>
-              <FrappeGantt
-                tasks={ganttTasks}
-                viewMode={ViewMode.Month}
-                onDateChange={handleDateChange}
-                onClick={(task) => { }}
-              />
-            </Suspense>
+            <FrappeGantt
+              tasks={ganttTasks}
+              viewMode={ViewMode.Month}
+              onDateChange={handleDateChange}
+              onClick={(task) => { }}
+            />
           </div>
         )}
       </GlassCard>

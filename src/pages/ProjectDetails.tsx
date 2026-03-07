@@ -48,9 +48,13 @@ export const ProjectDetails: React.FC = () => {
     if (!projectId) return;
     const p = await api.projects.get(projectId);
     if (p) {
-      setProject(p);
+      startTransition(() => {
+        setProject(p);
+      });
       const c = await api.clients.get(p.clientId);
-      setClient(c || null);
+      startTransition(() => {
+        setClient(c || null);
+      });
 
       // Parallel fetch with error handling
       try {
@@ -67,17 +71,20 @@ export const ProjectDetails: React.FC = () => {
           api.projects.getReports(projectId).catch(e => { console.error('Reports failed', e); return []; }),
           api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; })
         ]);
-        setMilestones(m);
-        setUpdates(u);
-        setEnvironments(e);
-        setFinancials(f as any);
-        setDiscussions(th as any);
-        setActivity(act);
-        setFiles(fl);
-        setMembers(mem);
-        setFindings(fnd);
-        setReports(rep);
-        setTasks(tsk);
+
+        startTransition(() => {
+          setMilestones(m);
+          setUpdates(u);
+          setEnvironments(e);
+          setFinancials(f as any);
+          setDiscussions(th as any);
+          setActivity(act);
+          setFiles(fl);
+          setMembers(mem);
+          setFindings(fnd);
+          setReports(rep);
+          setTasks(tsk);
+        });
       } catch (error) {
         console.error("Critical error loading project data", error);
       }
