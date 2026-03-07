@@ -35,12 +35,28 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
         setModalOpen(true);
     };
 
+    const toDateInput = (d: any) => {
+        if (!d) return '';
+        const s = typeof d === 'string' ? d : new Date(d).toISOString();
+        return s.slice(0, 10); // "YYYY-MM-DD"
+    };
+
+    const openEdit = (task: Task) => {
+        setSelectedTask({
+            ...task,
+            startDate: toDateInput((task as any).startDate),
+            dueDate: toDateInput(task.dueDate),
+        });
+        setModalOpen(true);
+    };
+
     const handleSave = () => {
         if (selectedTask.title) {
             onUpsert(selectedTask);
             setModalOpen(false);
         }
     };
+
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -109,7 +125,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                                         {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
                                     </td>
                                     <td className="p-4 text-right">
-                                        <button onClick={() => { setSelectedTask(task); setModalOpen(true); }} className="text-cyan-400 hover:text-cyan-300 mr-3">Edit</button>
+                                        <button onClick={() => { openEdit(task); }} className="text-cyan-400 hover:text-cyan-300 mr-3">Edit</button>
                                     </td>
                                 </tr>
                             ))}
@@ -133,7 +149,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                             </h3>
                             <div className="space-y-3 overflow-y-auto flex-1 scrollbar-thin">
                                 {tasks.filter(t => t.status === status).map(task => (
-                                    <div key={task.id} onClick={() => { setSelectedTask(task); setModalOpen(true); }} className="bg-slate-800 p-3 rounded-lg border border-slate-700 hover:border-cyan-500/50 cursor-pointer shadow-sm group">
+                                    <div key={task.id} onClick={() => { openEdit(task); }} className="bg-slate-800 p-3 rounded-lg border border-slate-700 hover:border-cyan-500/50 cursor-pointer shadow-sm group">
                                         <p className="font-medium text-white mb-2 group-hover:text-cyan-400 transition-colors">{task.title}</p>
                                         <div className="flex justify-between items-center text-xs text-slate-500">
                                             <span>{members.find(m => m.userId === task.assigneeId)?.name || 'Unassigned'}</span>
@@ -187,7 +203,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
 
                     {selectedTask.id && (
                         <div className="pt-4 border-t border-slate-700">
-                            <CustomFieldsSection entityType="TASK" entityId={selectedTask.id} onValuesSaved={() => {}} />
+                            <CustomFieldsSection entityType="TASK" entityId={selectedTask.id} onValuesSaved={() => { }} />
                         </div>
                     )}
 

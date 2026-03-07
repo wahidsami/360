@@ -222,7 +222,21 @@ export const ProjectDetails: React.FC = () => {
   const handleUpsertTask = async (t: Partial<Task>) => {
     if (!projectId) return;
     if (t.id) {
-      await api.projects.updateTask(projectId, t.id, t);
+      // Only send fields that the API accepts — strip server-only / relational fields
+      const toYMD = (d: any) => {
+        if (!d) return undefined;
+        const s = typeof d === 'string' ? d : new Date(d).toISOString();
+        return s.slice(0, 10); // "YYYY-MM-DD"
+      };
+      const { id, projectId: _pid, sourceRecurringId, createdAt, updatedAt,
+        assignedTo, assignedToId: _aid, sprintId: _sid, sprint,
+        dependencies, ...rest } = t as any;
+      const payload = {
+        ...rest,
+        startDate: toYMD(rest.startDate),
+        dueDate: toYMD(rest.dueDate),
+      };
+      await api.projects.updateTask(projectId, t.id, payload);
     } else {
       await api.projects.createTask(projectId, t);
     }
