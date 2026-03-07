@@ -204,6 +204,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
               tasks={ganttTasks}
               viewMode={ViewMode.Month}
               onDateChange={handleDateChange}
+              onTasksChange={() => { }}
               onClick={(task) => { }}
             />
           </div>
