@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Download, Filter, BarChart3, Activity } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, CartesianGrid, Tooltip, PieChart as RePieChart, Pie, Cell, Legend } from 'recharts';
-import { GlassCard, Button, Badge, Input, Select, KpiCard } from "@/components/ui/UIComponents";
+import { GlassCard, Button, Badge, Input, Select, KpiCard, Modal } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
-import { Report } from '@/types';
+import { Report, Project } from '@/types';
+import toast from 'react-hot-toast';
 
 const ANALYTICS_DATA = [
   { name: 'Security', value: 35, color: '#f43f5e' },
@@ -25,14 +26,48 @@ export const Reports: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [reports, setReports] = useState<Report[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  React.useEffect(() => {
+  // Generate modal state
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [generateProjectId, setGenerateProjectId] = useState('');
+  const [generateFormat, setGenerateFormat] = useState<'pptx' | 'pdf'>('pptx');
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
     const loadReports = async () => {
       const data = await api.reports.list();
       setReports(data || []);
     };
     loadReports();
+
+    const loadProjects = async () => {
+      const data = await api.projects.list();
+      setProjects(data || []);
+      if (data && data.length > 0) setGenerateProjectId(data[0].id);
+    };
+    loadProjects();
   }, []);
+
+  const handleGenerate = async () => {
+    if (!generateProjectId) { toast.error('Please select a project'); return; }
+    setGenerating(true);
+    try {
+      const res = await api.projects.generateReport(generateProjectId, { format: generateFormat });
+      toast.success(`Report generated (${generateFormat.toUpperCase()})`);
+      setGenerateModalOpen(false);
+      const data = await api.reports.list();
+      setReports(data || []);
+      if (res?.reportId && res?.generatedFileKey) {
+        const ext = generateFormat === 'pdf' ? 'pdf' : 'pptx';
+        await api.projects.downloadReport(generateProjectId, res.reportId, `report.${ext}`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Report generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const filteredReports = reports.filter(r => {
     const matchesSearch = r.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -47,7 +82,7 @@ export const Reports: React.FC = () => {
           <h1 className="text-3xl font-bold font-display text-white">{t('reports')}</h1>
           <p className="text-slate-400">Intelligence aggregation and data export.</p>
         </div>
-        <Button className="shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+        <Button className="shadow-[0_0_15px_rgba(6,182,212,0.4)]" onClick={() => setGenerateModalOpen(true)}>
           <FileText className="w-4 h-4 mr-2" /> Generate Report
         </Button>
       </div>
@@ -177,6 +212,31 @@ export const Reports: React.FC = () => {
           </table>
         </GlassCard>
       </div>
+      {/* Generate Report Modal */}
+      <Modal isOpen={generateModalOpen} onClose={() => setGenerateModalOpen(false)} title="Generate Report">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Project</label>
+            <Select value={generateProjectId} onChange={(e) => setGenerateProjectId(e.target.value)} className="w-full">
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.length === 0 && <option value="">No projects available</option>}
+            </Select>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Format</label>
+            <Select value={generateFormat} onChange={(e) => setGenerateFormat(e.target.value as 'pptx' | 'pdf')} className="w-full">
+              <option value="pptx">PowerPoint (.pptx)</option>
+              <option value="pdf">PDF (.pdf)</option>
+            </Select>
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="ghost" onClick={() => setGenerateModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleGenerate} disabled={generating || !generateProjectId}>
+              {generating ? 'Generating...' : 'Generate'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
