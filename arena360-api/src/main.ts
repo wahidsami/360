@@ -12,6 +12,8 @@ async function bootstrap() {
   });
   const config = app.get(ConfigService);
 
+  app.setGlobalPrefix('api');
+
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Arena360 API')
     .setDescription('Project management and operations platform API')
