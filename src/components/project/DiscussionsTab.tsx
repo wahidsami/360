@@ -78,7 +78,6 @@ const HoverActions: React.FC<{
     showDelete: boolean;
 }> = ({ onReply, onDelete, showDelete }) => (
     <div className="absolute -top-3 right-3 hidden group-hover:flex items-center gap-0.5 bg-slate-800 border border-slate-700 rounded-lg px-1 py-0.5 shadow-xl z-10">
-        <ActionBtn title="React with emoji"><Smile className="w-3.5 h-3.5" /></ActionBtn>
         {onReply && <ActionBtn title="Reply in thread" onClick={onReply}><MessageSquare className="w-3.5 h-3.5" /></ActionBtn>}
         {showDelete && <ActionBtn title="Delete" onClick={onDelete} danger><Trash2 className="w-3.5 h-3.5" /></ActionBtn>}
     </div>
@@ -220,16 +219,17 @@ const MessageInput: React.FC<{
     onChange: (v: string) => void;
     onSend: () => void;
     loading?: boolean;
-}> = ({ placeholder, value, onChange, onSend, loading }) => {
+    attachedFiles: File[];
+    setAttachedFiles: React.Dispatch<React.SetStateAction<File[]>>;
+}> = ({ placeholder, value, onChange, onSend, loading, attachedFiles, setAttachedFiles }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileRef = useRef<HTMLInputElement>(null);
     const videoRef = useRef<HTMLInputElement>(null);
 
+    const canSend = !loading && (value.trim().length > 0 || attachedFiles.length > 0);
+
     const [openPanel, setOpenPanel] = useState<'emoji' | 'format' | 'slash' | null>(null);
     const [isListening, setIsListening] = useState(false);
-    const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-
-    const canSend = !loading && (value.trim().length > 0 || attachedFiles.length > 0);
 
     // Insert text at cursor position
     const insertAtCursor = (text: string) => {
@@ -404,6 +404,7 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
     const [loading, setLoading] = useState(false);
+    const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -442,6 +443,8 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
                             onChange={setBody}
                             onSend={() => handleSubmit({ preventDefault: () => { } } as any)}
                             loading={loading}
+                            attachedFiles={attachedFiles}
+                            setAttachedFiles={setAttachedFiles}
                         />
                     </div>
                     <div className="flex justify-end gap-3 pt-1">
@@ -472,15 +475,51 @@ const ThreadPanel: React.FC<{
 }> = ({ discussion, replies, loading, userId, onClose, onSendReply, onDeleteReply, onDeleteThread }) => {
     const [replyText, setReplyText] = useState('');
     const [sending, setSending] = useState(false);
+    const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [replies]);
 
+    const uploadFiles = async (files: File[], token: string): Promise<string[]> => {
+        const urls: string[] = [];
+        for (const file of files) {
+            const form = new FormData();
+            form.append('file', file);
+            try {
+                const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
+                const res = await fetch(`${apiUrl}/files/upload-temp`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                    body: form,
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    urls.push(`📎 [${file.name}](${data.url})`);
+                } else {
+                    urls.push(`📎 ${file.name}`);
+                }
+            } catch {
+                urls.push(`📎 ${file.name}`);
+            }
+        }
+        return urls;
+    };
+
     const send = async () => {
-        if (!replyText.trim()) return;
+        if (!replyText.trim() && attachedFiles.length === 0) return;
         setSending(true);
-        try { await onSendReply(replyText.trim()); setReplyText(''); }
-        finally { setSending(false); }
+        try {
+            let body = replyText.trim();
+            if (attachedFiles.length > 0) {
+                const token = localStorage.getItem('auth_token') || '';
+                const links = await uploadFiles(attachedFiles, token);
+                if (body) body += '\n';
+                body += links.join('\n');
+            }
+            await onSendReply(body);
+            setReplyText('');
+            setAttachedFiles([]);
+        } finally { setSending(false); }
     };
 
     return (
@@ -549,26 +588,33 @@ const ThreadPanel: React.FC<{
                                                 <span className="text-xs text-slate-500">{friendlyDate(reply.createdAt)}</span>
                                             </div>
                                         )}
-                                        <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{reply.body}</p>
-                                        {/* Attachment chips */}
-                                        {reply.attachments && reply.attachments.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {reply.attachments.map((att: any, idx: number) => (
-                                                    <a
-                                                        key={idx}
-                                                        href={att.url}
-                                                        download={att.filename}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="flex items-center gap-1.5 bg-slate-700/60 border border-slate-600 hover:border-cyan-500/50 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors group/att"
-                                                    >
-                                                        <Paperclip className="w-3 h-3 text-cyan-400" />
-                                                        <span className="max-w-[150px] truncate">{att.filename}</span>
-                                                        <DownloadIcon className="w-3 h-3 text-slate-500 group-hover/att:text-cyan-400 transition-colors" />
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        )}
+                                        <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                            {reply.body.split('\n').filter(l => !l.match(/^📎 \[.+\]\(.+\)$/) && !l.match(/^📎 .+/)).join('\n') || null}
+                                        </p>
+                                        {/* Attachment chips parsed from body links */}
+                                        {(() => {
+                                            const links = reply.body.split('\n')
+                                                .map(l => { const m = l.match(/^📎 \[(.+?)\]\((.+?)\)$/); return m ? { filename: m[1], url: m[2] } : l.startsWith('📎 ') ? { filename: l.replace('📎 ', ''), url: '' } : null; })
+                                                .filter(Boolean) as { filename: string; url: string }[];
+                                            if (!links.length) return null;
+                                            return (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {links.map((att, idx) => att.url ? (
+                                                        <a key={idx} href={att.url} download={att.filename} target="_blank" rel="noreferrer"
+                                                            className="flex items-center gap-1.5 bg-slate-700/60 border border-slate-600 hover:border-cyan-500/50 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors group/att">
+                                                            <Paperclip className="w-3 h-3 text-cyan-400" />
+                                                            <span className="max-w-[150px] truncate">{att.filename}</span>
+                                                            <DownloadIcon className="w-3 h-3 text-slate-500 group-hover/att:text-cyan-400 transition-colors" />
+                                                        </a>
+                                                    ) : (
+                                                        <div key={idx} className="flex items-center gap-1.5 bg-slate-700/60 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+                                                            <Paperclip className="w-3 h-3 text-cyan-400" />
+                                                            <span className="max-w-[150px] truncate">{att.filename}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                     <HoverActions showDelete={userId === reply.authorId} onDelete={() => onDeleteReply(reply)} />
                                 </div>
@@ -590,6 +636,8 @@ const ThreadPanel: React.FC<{
                     onChange={setReplyText}
                     onSend={send}
                     loading={sending}
+                    attachedFiles={attachedFiles}
+                    setAttachedFiles={setAttachedFiles}
                 />
             </div>
         </div>
