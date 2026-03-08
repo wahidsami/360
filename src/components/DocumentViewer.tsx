@@ -10,8 +10,27 @@ interface DocumentViewerProps {
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ url, filename, mimeType, onDownload }) => {
-    const isImage = mimeType.startsWith('image/');
-    const isPdf = mimeType === 'application/pdf';
+    // Helper to infer MIME type from filename if provided type is generic
+    const getEffectiveMimeType = (mime: string, name: string) => {
+        if (mime !== 'application/octet-stream' && mime !== '') return mime;
+
+        const ext = name.split('.').pop()?.toLowerCase();
+        const mimeMap: Record<string, string> = {
+            'pdf': 'application/pdf',
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml',
+            'bmp': 'image/bmp'
+        };
+        return (ext && mimeMap[ext]) || mime;
+    };
+
+    const effectiveMimeType = getEffectiveMimeType(mimeType, filename);
+    const isImage = effectiveMimeType.startsWith('image/');
+    const isPdf = effectiveMimeType === 'application/pdf';
 
     if (isImage) {
         return (
@@ -60,7 +79,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ url, filename, m
             <div>
                 <h3 className="text-xl font-semibold text-white mb-2">No Preview Available</h3>
                 <p className="text-slate-400 max-w-xs mx-auto">
-                    This file type ({mimeType}) cannot be previewed directly in the browser.
+                    This file type ({effectiveMimeType}) cannot be previewed directly in the browser.
                 </p>
             </div>
             {onDownload && (

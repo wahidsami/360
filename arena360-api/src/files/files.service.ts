@@ -11,6 +11,26 @@ export class FilesService {
         private storage: StorageService
     ) { }
 
+    private resolveMimeType(filename: string, originalMime: string): string {
+        if (originalMime !== 'application/octet-stream' && originalMime !== '') {
+            return originalMime;
+        }
+
+        const ext = filename.split('.').pop()?.toLowerCase();
+        const mimeMap: Record<string, string> = {
+            'pdf': 'application/pdf',
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml',
+            'bmp': 'image/bmp'
+        };
+
+        return (ext && mimeMap[ext]) || originalMime;
+    }
+
     // === CLIENT FILES ===
 
     async listClientFiles(clientId: string, user: UserWithRoles) {
@@ -365,7 +385,7 @@ export class FilesService {
                 category: 'EVIDENCE',
                 visibility: fileVisibility,
                 filename: file.originalname,
-                mimeType: file.mimetype,
+                mimeType: this.resolveMimeType(file.originalname, file.mimetype),
                 sizeBytes: file.size,
                 storageKey
             },
