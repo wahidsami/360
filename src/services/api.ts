@@ -1032,6 +1032,15 @@ export const api = {
         return undefined;
       }
     },
+    deleteFile: async (findingId: string, fileId: string): Promise<boolean> => {
+      try {
+        await fetchApi(`/findings/${findingId}/files/${fileId}`, { method: 'DELETE' });
+        return true;
+      } catch (e) {
+        console.error('Failed to delete finding file:', e);
+        return false;
+      }
+    },
 
     // Contracts
     getContracts: async (projectId: string) => {

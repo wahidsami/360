@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ShieldAlert, CheckCircle, FileText, Image as ImageIcon,
-  Send, Download, Share2, Sparkles
+  Send, Download, Share2, Sparkles, Trash2
 } from 'lucide-react';
 import { Badge, Button, GlassCard, Label, Select, TextArea } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
 import { Finding, User, isInternalRole } from '@/types';
 import { useAI } from '@/contexts/AIContext';
+import { useAuth } from '@/contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface RichFinding extends Finding {
   projectName: string;
@@ -23,6 +25,7 @@ export const FindingDetails: React.FC = () => {
   const navigate = useNavigate();
   const { findingId } = useParams();
   const { openAI, setContext } = useAI();
+  const { user } = useAuth();
   const [finding, setFinding] = useState<RichFinding | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [replyText, setReplyText] = useState('');
@@ -193,6 +196,27 @@ export const FindingDetails: React.FC = () => {
     }
   };
 
+  const handleDeleteFile = async (fileId: string) => {
+    if (!findingId || !window.confirm('Are you sure you want to delete this evidence?')) return;
+
+    try {
+      const success = await api.findings.deleteFile(findingId, fileId);
+      if (success) {
+        toast.success('Evidence deleted');
+        // Refresh evidence list
+        const refreshed = await api.findings.get(findingId);
+        if (refreshed) {
+          setFinding({
+            ...finding!,
+            evidence: refreshed.evidence
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete file', err);
+    }
+  };
+
   if (loading) return <div className="p-12 text-center text-slate-500">Loading intelligence...</div>;
   if (!finding) return <div className="p-12 text-center text-slate-500">Finding not found.</div>;
 
@@ -333,6 +357,11 @@ export const FindingDetails: React.FC = () => {
                     <button onClick={() => handleFileAction(file.id)} title="Download">
                       <Download className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
                     </button>
+                    {isInternalRole(user?.role) && (
+                      <button onClick={() => handleDeleteFile(file.id)} title="Delete">
+                        <Trash2 className="w-3 h-3 text-slate-500 cursor-pointer hover:text-red-400" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

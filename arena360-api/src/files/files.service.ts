@@ -431,6 +431,36 @@ export class FilesService {
         return this.storage.getSignedUrl(file.storageKey, 3600, download);
     }
 
+    async deleteFindingFile(findingId: string, fileId: string, user: UserWithRoles): Promise<void> {
+        // Only internal staff can delete finding files
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        if (!internalRoles.includes(user.role)) {
+            throw new ForbiddenException('Only internal staff can delete finding evidence');
+        }
+
+        // Verify file exists and belongs to the finding and org
+        const file = await this.prisma.fileAsset.findFirst({
+            where: {
+                id: fileId,
+                findingId,
+                scopeType: 'FINDING',
+                orgId: user.orgId
+            }
+        });
+
+        if (!file) {
+            throw new NotFoundException('Evidence file not found');
+        }
+
+        // Delete from storage
+        await this.storage.deleteObject(file.storageKey);
+
+        // Delete record from DB
+        await this.prisma.fileAsset.delete({
+            where: { id: fileId }
+        });
+    }
+
     /** Quick file upload for discussion messages - no DB record, returns a download URL */
     async uploadTempFile(user: UserWithRoles, file: Express.Multer.File): Promise<string> {
         const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');

@@ -182,6 +182,16 @@ export class FilesController {
         return res.redirect(signedUrl);
     }
 
+    @Delete('findings/:findingId/files/:fileId')
+    async deleteFindingFile(
+        @Request() req: any,
+        @Param('findingId') findingId: string,
+        @Param('fileId') fileId: string
+    ) {
+        await this.filesService.deleteFindingFile(findingId, fileId, req.user);
+        return { message: 'Finding evidence deleted successfully' };
+    }
+
     // === TEMP UPLOAD (for discussion attachments) ===
 
     @Post('files/upload-temp')
