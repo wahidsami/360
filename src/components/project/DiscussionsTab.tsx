@@ -408,10 +408,42 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim() || !body.trim()) return;
+        if (!title.trim() || !body.trim() && attachedFiles.length === 0) return;
         setLoading(true);
-        try { await onSubmit(title.trim(), body.trim()); onClose(); }
-        finally { setLoading(false); }
+        try {
+            let finalBody = body.trim();
+            if (attachedFiles.length > 0) {
+                const token = localStorage.getItem('auth_token') || '';
+                // Use the same fallback as api.ts
+                const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
+                const links: string[] = [];
+                for (const file of attachedFiles) {
+                    const form = new FormData();
+                    form.append('file', file);
+                    try {
+                        const res = await fetch(`${apiUrl}/files/upload-temp`, {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${token}` },
+                            body: form,
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            links.push(`📎 [${file.name}](${data.url})`);
+                        } else {
+                            links.push(`📎 ${file.name}`);
+                        }
+                    } catch (err) {
+                        console.error('Upload error', err);
+                        links.push(`📎 ${file.name}`);
+                    }
+                }
+                if (finalBody) finalBody += '\n';
+                finalBody += links.join('\n');
+            }
+            await onSubmit(title.trim(), finalBody);
+            setAttachedFiles([]);
+            onClose();
+        } finally { setLoading(false); }
     };
 
     return (
@@ -482,11 +514,11 @@ const ThreadPanel: React.FC<{
 
     const uploadFiles = async (files: File[], token: string): Promise<string[]> => {
         const urls: string[] = [];
+        const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
         for (const file of files) {
             const form = new FormData();
             form.append('file', file);
             try {
-                const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
                 const res = await fetch(`${apiUrl}/files/upload-temp`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` },
@@ -498,7 +530,8 @@ const ThreadPanel: React.FC<{
                 } else {
                     urls.push(`📎 ${file.name}`);
                 }
-            } catch {
+            } catch (err) {
+                console.error('Thread upload error', err);
                 urls.push(`📎 ${file.name}`);
             }
         }
