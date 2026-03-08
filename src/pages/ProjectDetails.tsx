@@ -345,11 +345,11 @@ export const ProjectDetails: React.FC = () => {
                 clientName={client?.name}
                 stats={{
                   taskCount: tasks.length,
-                  completedTasks: tasks.filter(t => t.status === 'done').length,
+                  completedTasks: tasks.filter(t => t.status?.toLowerCase() === 'done').length,
                   milestoneCount: milestones.length,
-                  completedMilestones: milestones.filter(m => m.status === 'completed').length,
-                  budget: project.budget || financials.contract?.totalValue || 0,
-                  spent: financials.invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0)
+                  completedMilestones: milestones.filter(m => m.status?.toLowerCase() === 'completed').length,
+                  budget: project.budget || financials.contract?.amount || 0,
+                  spent: financials.invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((sum, i) => sum + i.amount, 0)
                 }}
                 recentUpdates={updates.slice(0, 5)}
               />

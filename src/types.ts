@@ -288,7 +288,7 @@ export interface Invoice {
 export interface Contract {
   id: string;
   projectId: string;
-  totalValue: number;
+  amount: number;
   currency: string;
   startDate: string;
   endDate: string;
