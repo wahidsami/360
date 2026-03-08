@@ -285,6 +285,16 @@ export class FindingsService {
                     previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
                 }).catch(() => { });
             }
+
+            // Always trigger UPDATED event
+            this.automation.evaluateRules({
+                orgId: finding.orgId,
+                entityType: AutomationTriggerEntity.FINDING,
+                entityId: findingId,
+                event: AutomationTriggerEvent.UPDATED,
+                entity,
+                previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
+            }).catch(() => { });
             this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => { });
             return updated;
         }
@@ -324,6 +334,16 @@ export class FindingsService {
                 previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
             }).catch(() => { });
         }
+
+        // Always trigger UPDATED event
+        this.automation.evaluateRules({
+            orgId: finding.orgId,
+            entityType: AutomationTriggerEntity.FINDING,
+            entityId: findingId,
+            event: AutomationTriggerEvent.UPDATED,
+            entity,
+            previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
+        }).catch(() => { });
         this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => { });
         return updated;
     }

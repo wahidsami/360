@@ -17,7 +17,7 @@ export class AutomationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
-  ) {}
+  ) { }
 
   async evaluateRules(payload: TriggerPayload): Promise<void> {
     const rules = await this.prisma.automationRule.findMany({
@@ -75,15 +75,31 @@ export class AutomationService {
     const config = rule.actionConfig as Record<string, any> || {};
     if (rule.actionType === AutomationActionType.CREATE_NOTIFICATION) {
       const userIdField = config.userIdField ?? 'assigneeId';
-      const userId = payload.entity[userIdField];
+      let userId = payload.entity[userIdField];
+
+      // fallback: if the field is not on the entity, check if it's a static ID
+      if (!userId && (userIdField.length === 25 || userIdField.length === 36)) {
+        userId = userIdField;
+      }
+
       if (!userId) return;
       const title = this.interpolate(config.titleTemplate ?? 'Update', { ...payload.entity, title: payload.entity.title ?? 'Item' });
       const body = config.bodyTemplate ? this.interpolate(config.bodyTemplate, payload.entity) : undefined;
       const linkUrl = config.linkUrlTemplate ? this.interpolate(config.linkUrlTemplate, payload.entity) : undefined;
+
+      let type: any = 'TASK_ASSIGNED';
+      if (payload.entityType === AutomationTriggerEntity.TASK) {
+        type = payload.event === AutomationTriggerEvent.STATUS_CHANGED ? 'TASK_STATUS_CHANGE' : 'TASK_ASSIGNED';
+      } else if (payload.entityType === AutomationTriggerEntity.FINDING) {
+        type = payload.event === AutomationTriggerEvent.STATUS_CHANGED ? 'FINDING_STATUS_CHANGE' : 'FINDING_ASSIGNED';
+      } else if (payload.entityType === AutomationTriggerEntity.INVOICE) {
+        type = 'INVOICE_OVERDUE';
+      }
+
       await this.notifications.create({
         orgId: payload.orgId,
         userId,
-        type: payload.entityType === AutomationTriggerEntity.TASK ? 'TASK_ASSIGNED' : payload.entityType === AutomationTriggerEntity.FINDING ? 'FINDING_ASSIGNED' : 'INVOICE_OVERDUE',
+        type,
         title,
         body,
         linkUrl,

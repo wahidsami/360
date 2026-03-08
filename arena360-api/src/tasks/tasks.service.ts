@@ -216,6 +216,16 @@ export class TasksService {
                     previousEntity: { assigneeId: task.assigneeId, status: task.status },
                 }).catch(() => { });
             }
+
+            // Always trigger UPDATED event
+            this.automation.evaluateRules({
+                orgId: project.orgId,
+                entityType: AutomationTriggerEntity.TASK,
+                entityId: taskId,
+                event: AutomationTriggerEvent.UPDATED,
+                entity,
+                previousEntity: { assigneeId: task.assigneeId, status: task.status },
+            }).catch(() => { });
         }
         if (project?.orgId) {
             this.logTaskActivity(projectId, project.orgId, user.id, 'task.updated', updated, `Task "${updated.title}" updated`).catch(() => { });
