@@ -5,7 +5,7 @@ import {
   Search, Plus, MoreHorizontal, Shield, User as UserIcon,
   Mail, Edit2, Power, Filter, CheckCircle, XCircle
 } from 'lucide-react';
-import { GlassCard, Button, Badge, Input, Select, Label } from "@/components/ui/UIComponents";
+import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/components/ui/UIComponents";
 import { Modal } from "@/components/ui/Modal";
 import { api } from '@/services/api';
 import { Role, User, Permission } from '@/types';
@@ -142,9 +142,15 @@ export const UsersAdmin: React.FC = () => {
                     />
                     <div>
                       <p className="font-medium text-slate-200">{user.name}</p>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <Mail className="w-3 h-3" /> {user.email}
-                      </p>
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3" /> {user.email}
+                        </p>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-600 font-mono">
+                          <span>ID: {user.id}</span>
+                          <CopyButton value={user.id} className="scale-75 origin-left" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </td>

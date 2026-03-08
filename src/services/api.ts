@@ -1237,7 +1237,7 @@ export const api = {
     list: async (): Promise<User[]> => {
       return fetchApi('/admin/users');
     },
-    create: async (payload: Partial<User> & { password?: string }): Promise<User> => {
+    create: async (payload: Partial<User> & { password?: string; permissions?: string[] }): Promise<User> => {
       return fetchApi('/admin/users', {
         method: 'POST',
         body: JSON.stringify(payload)

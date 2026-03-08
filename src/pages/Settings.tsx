@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Bell, User, Building2, BarChart3, Key, Plus, Pencil, Trash2, List, Clock, Smartphone } from 'lucide-react';
-import { GlassCard, Button, Input, Label, Modal } from '../components/ui/UIComponents';
+import { GlassCard, Button, Input, Label, Modal, CopyButton } from '../components/ui/UIComponents';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { Role } from '../types';
@@ -724,7 +724,13 @@ const Settings: React.FC = () => {
           </div>
           <div>
             <h3 className="text-lg font-medium text-white">{user?.name}</h3>
-            <p className="text-slate-400">{user?.email}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-slate-400">{user?.email}</p>
+              <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded border border-slate-700/50">
+                <code className="text-[10px] text-slate-500 font-mono">{user?.id}</code>
+                <CopyButton value={user?.id || ''} className="scale-75 origin-left" />
+              </div>
+            </div>
             <p className="text-cyan-500 text-sm mt-1">{user?.role}</p>
           </div>
         </div>
