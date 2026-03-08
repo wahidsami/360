@@ -85,9 +85,15 @@ export class StorageService {
 
     async getSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
         if (this.useLocal) {
-            const baseUrl = this.configService.get('API_URL') || `http://localhost:${process.env.PORT || 3000}`;
+            // Resolve the correct public API base URL
+            // Priority: API_URL → COOLIFY_URL → COOLIFY_FQDN → fallback localhost
+            const coolifyFqdn = this.configService.get<string>('COOLIFY_FQDN');
+            const apiUrl = this.configService.get<string>('API_URL')
+                || this.configService.get<string>('COOLIFY_URL')?.split(',')[0]
+                || (coolifyFqdn ? `https://${coolifyFqdn.split(',')[0]}` : null)
+                || `http://localhost:${process.env.PORT || 3000}`;
             const token = this.generateStreamToken(key, expiresIn);
-            return `${baseUrl}/files/stream?token=${token}`;
+            return `${apiUrl}/files/stream?token=${token}`;
         } else {
             try {
                 const url = await this.s3!.getSignedUrlPromise('getObject', {
