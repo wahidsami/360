@@ -243,7 +243,7 @@ export class FilesService {
                 category,
                 visibility: fileVisibility,
                 filename: displayName || file.originalname,
-                mimeType: file.mimetype,
+                mimeType: this.resolveMimeType(file.originalname, file.mimetype),
                 sizeBytes: file.size,
                 storageKey
             },
