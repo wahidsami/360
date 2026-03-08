@@ -185,7 +185,7 @@ export class FilesController {
     // === TEMP UPLOAD (for discussion attachments) ===
 
     @Post('files/upload-temp')
-    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024 } }))
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }))
     async uploadTempFile(
         @Request() req: any,
         @UploadedFile() file: Express.Multer.File

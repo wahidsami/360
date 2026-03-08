@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-
+import toast from 'react-hot-toast';
 /* ──────────────────────────────────────────────────────────────
    Types
 ────────────────────────────────────────────────────────────────*/
@@ -430,9 +430,11 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
                             const data = await res.json();
                             links.push(`📎 [${file.name}](${data.url})`);
                         } else {
+                            toast.error(`Failed to upload ${file.name} (maybe too large)`);
                             links.push(`📎 ${file.name}`);
                         }
                     } catch (err) {
+                        toast.error(`Failed to upload ${file.name}`);
                         console.error('Upload error', err);
                         links.push(`📎 ${file.name}`);
                     }
@@ -528,9 +530,11 @@ const ThreadPanel: React.FC<{
                     const data = await res.json();
                     urls.push(`📎 [${file.name}](${data.url})`);
                 } else {
+                    toast.error(`Failed to upload ${file.name} (maybe too large)`);
                     urls.push(`📎 ${file.name}`);
                 }
             } catch (err) {
+                toast.error(`Failed to upload ${file.name}`);
                 console.error('Thread upload error', err);
                 urls.push(`📎 ${file.name}`);
             }
