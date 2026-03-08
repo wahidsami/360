@@ -3,8 +3,8 @@ import { Discussion, DiscussionReply } from '@/types';
 import { Button } from '../ui/UIComponents';
 import {
     MessageSquare, Plus, Send, Trash2, ChevronRight, ChevronDown, X,
-    Smile, Bookmark, Forward, MoreHorizontal, Hash,
-    Type, AtSign, Video, Mic, Slash
+    Smile, Hash,
+    Type, AtSign, Video, Mic, Slash, Paperclip, Download as DownloadIcon
 } from 'lucide-react';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,12 +78,9 @@ const HoverActions: React.FC<{
     showDelete: boolean;
 }> = ({ onReply, onDelete, showDelete }) => (
     <div className="absolute -top-3 right-3 hidden group-hover:flex items-center gap-0.5 bg-slate-800 border border-slate-700 rounded-lg px-1 py-0.5 shadow-xl z-10">
-        <ActionBtn title="Emoji"><Smile className="w-3.5 h-3.5" /></ActionBtn>
+        <ActionBtn title="React with emoji"><Smile className="w-3.5 h-3.5" /></ActionBtn>
         {onReply && <ActionBtn title="Reply in thread" onClick={onReply}><MessageSquare className="w-3.5 h-3.5" /></ActionBtn>}
-        <ActionBtn title="Forward"><Forward className="w-3.5 h-3.5" /></ActionBtn>
-        <ActionBtn title="Bookmark"><Bookmark className="w-3.5 h-3.5" /></ActionBtn>
         {showDelete && <ActionBtn title="Delete" onClick={onDelete} danger><Trash2 className="w-3.5 h-3.5" /></ActionBtn>}
-        <ActionBtn title="More"><MoreHorizontal className="w-3.5 h-3.5" /></ActionBtn>
     </div>
 );
 
@@ -275,12 +272,10 @@ const MessageInput: React.FC<{
         recognition.start();
     };
 
-    const handleFile = (files: FileList | null, type: 'file' | 'video') => {
+    const handleFile = (files: FileList | null) => {
         if (!files) return;
         const list = Array.from(files);
         setAttachedFiles(prev => [...prev, ...list]);
-        const names = list.map(f => f.name).join(', ');
-        insertAtCursor(`\n📎 ${names}`);
     };
 
     const handleKey = (e: React.KeyboardEvent) => {
@@ -295,13 +290,32 @@ const MessageInput: React.FC<{
     return (
         <div className="relative border border-slate-700 rounded-xl overflow-visible bg-slate-800/40 focus-within:border-slate-500 transition-colors">
             {/* Hidden inputs */}
-            <input ref={fileRef} type="file" multiple className="hidden" onChange={e => handleFile(e.target.files, 'file')} />
-            <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={e => handleFile(e.target.files, 'video')} />
+            <input ref={fileRef} type="file" multiple className="hidden" onChange={e => handleFile(e.target.files)} />
+            <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={e => handleFile(e.target.files)} />
 
             {/* Popups */}
             {openPanel === 'emoji' && <EmojiPicker onPick={insertAtCursor} onClose={() => setOpenPanel(null)} />}
             {openPanel === 'format' && <FormatMenu onPick={wrapSelection} onClose={() => setOpenPanel(null)} />}
             {openPanel === 'slash' && <SlashMenu onPick={insertAtCursor} onClose={() => setOpenPanel(null)} />}
+
+            {/* Attached files preview */}
+            {attachedFiles.length > 0 && (
+                <div className="px-3 pt-2 flex flex-wrap gap-2">
+                    {attachedFiles.map((f, i) => (
+                        <div key={i} className="flex items-center gap-1.5 bg-slate-700/60 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-300">
+                            <Paperclip className="w-3 h-3 text-cyan-400" />
+                            <span className="max-w-[120px] truncate">{f.name}</span>
+                            <button
+                                type="button"
+                                onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))}
+                                className="ml-1 text-slate-500 hover:text-rose-400 transition-colors"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Textarea */}
             <textarea
@@ -319,7 +333,7 @@ const MessageInput: React.FC<{
                 <div className="flex items-center gap-0.5">
                     {/* Attach file */}
                     <ToolbarBtn title="Add attachment" onClick={() => fileRef.current?.click()}>
-                        <Plus className="w-4 h-4" />
+                        <Paperclip className="w-4 h-4" />
                     </ToolbarBtn>
 
                     {/* Formatting */}
@@ -377,8 +391,8 @@ const MessageInput: React.FC<{
 const ToolbarBtn: React.FC<{ title: string; onClick?: () => void; active?: boolean; children: React.ReactNode }> = ({ title, onClick, active, children }) => (
     <button title={title} onClick={onClick}
         className={`p-1.5 rounded-md transition-colors ${active
-                ? 'text-cyan-400 bg-cyan-950/60 hover:bg-cyan-900/60'
-                : 'text-slate-500 hover:text-slate-200 hover:bg-slate-700/60'
+            ? 'text-cyan-400 bg-cyan-950/60 hover:bg-cyan-900/60'
+            : 'text-slate-500 hover:text-slate-200 hover:bg-slate-700/60'
             }`}
     >{children}</button>
 );
@@ -536,6 +550,25 @@ const ThreadPanel: React.FC<{
                                             </div>
                                         )}
                                         <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{reply.body}</p>
+                                        {/* Attachment chips */}
+                                        {reply.attachments && reply.attachments.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {reply.attachments.map((att: any, idx: number) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={att.url}
+                                                        download={att.filename}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center gap-1.5 bg-slate-700/60 border border-slate-600 hover:border-cyan-500/50 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors group/att"
+                                                    >
+                                                        <Paperclip className="w-3 h-3 text-cyan-400" />
+                                                        <span className="max-w-[150px] truncate">{att.filename}</span>
+                                                        <DownloadIcon className="w-3 h-3 text-slate-500 group-hover/att:text-cyan-400 transition-colors" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <HoverActions showDelete={userId === reply.authorId} onDelete={() => onDeleteReply(reply)} />
                                 </div>
