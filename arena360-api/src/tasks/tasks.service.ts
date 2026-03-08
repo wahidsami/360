@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ScopeUtils, UserWithRoles } from '../common/utils/scope.utils';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -87,9 +87,9 @@ export class TasksService {
                 linkUrl: `/app/projects/${projectId}?tab=tasks`,
                 entityId: task.id,
                 entityType: 'task',
-            }).catch(() => {});
+            }).catch(() => { });
         }
-        this.sla.startOrUpdateTracker(project.orgId, 'TASK', task.id, { clientId: project.clientId }).catch(() => {});
+        this.sla.startOrUpdateTracker(project.orgId, 'TASK', task.id, { clientId: project.clientId }).catch(() => { });
         const entity = { id: task.id, projectId, title: task.title, status: task.status, assigneeId: task.assigneeId };
         this.automation.evaluateRules({
             orgId: project.orgId,
@@ -97,7 +97,7 @@ export class TasksService {
             entityId: task.id,
             event: AutomationTriggerEvent.CREATED,
             entity,
-        }).catch(() => {});
+        }).catch(() => { });
         if (task.assigneeId) {
             this.automation.evaluateRules({
                 orgId: project.orgId,
@@ -105,9 +105,9 @@ export class TasksService {
                 entityId: task.id,
                 event: AutomationTriggerEvent.ASSIGNED,
                 entity,
-            }).catch(() => {});
+            }).catch(() => { });
         }
-        this.logTaskActivity(projectId, project.orgId, user.id, 'task.created', task, `Task "${task.title}" created`).catch(() => {});
+        this.logTaskActivity(projectId, project.orgId, user.id, 'task.created', task, `Task "${task.title}" created`).catch(() => { });
         return task;
     }
 
@@ -121,7 +121,7 @@ export class TasksService {
             entityId: task.id,
             description,
             metadata: { title: task.title },
-        }).catch(() => {});
+        }).catch(() => { });
     }
 
     // Update Task
@@ -192,7 +192,7 @@ export class TasksService {
                 linkUrl: `/app/projects/${projectId}?tab=tasks`,
                 entityId: taskId,
                 entityType: 'task',
-            }).catch(() => {});
+            }).catch(() => { });
         }
         const entity = { id: taskId, projectId, title: updated.title, status: updated.status, assigneeId: updated.assigneeId };
         if (project?.orgId) {
@@ -204,7 +204,7 @@ export class TasksService {
                     event: AutomationTriggerEvent.ASSIGNED,
                     entity,
                     previousEntity: { assigneeId: task.assigneeId, status: task.status },
-                }).catch(() => {});
+                }).catch(() => { });
             }
             if (updateData.status != null && updateData.status !== task.status) {
                 this.automation.evaluateRules({
@@ -214,11 +214,11 @@ export class TasksService {
                     event: AutomationTriggerEvent.STATUS_CHANGED,
                     entity,
                     previousEntity: { assigneeId: task.assigneeId, status: task.status },
-                }).catch(() => {});
+                }).catch(() => { });
             }
         }
         if (project?.orgId) {
-            this.logTaskActivity(projectId, project.orgId, user.id, 'task.updated', updated, `Task "${updated.title}" updated`).catch(() => {});
+            this.logTaskActivity(projectId, project.orgId, user.id, 'task.updated', updated, `Task "${updated.title}" updated`).catch(() => { });
         }
         return updated;
     }
@@ -281,13 +281,20 @@ export class TasksService {
             this.prisma.task.findFirst({ where: { id: successorTaskId, projectId, deletedAt: null } }),
         ]);
         if (!pred || !succ) throw new NotFoundException('Task not found');
-        return this.prisma.taskDependency.create({
-            data: { projectId, predecessorTaskId, successorTaskId },
-            include: {
-                predecessor: { select: { id: true, title: true } },
-                successor: { select: { id: true, title: true } },
-            },
-        });
+        try {
+            return await this.prisma.taskDependency.create({
+                data: { projectId, predecessorTaskId, successorTaskId },
+                include: {
+                    predecessor: { select: { id: true, title: true } },
+                    successor: { select: { id: true, title: true } },
+                },
+            });
+        } catch (e: any) {
+            if (e?.code === 'P2002') {
+                throw new ConflictException('This dependency already exists');
+            }
+            throw e;
+        }
     }
 
     async removeDependency(projectId: string, dependencyId: string, user: UserWithRoles) {
