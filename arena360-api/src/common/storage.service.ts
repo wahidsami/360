@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
 import { Readable } from 'stream';
@@ -115,7 +115,7 @@ export class StorageService {
             if (fs.existsSync(filePath)) {
                 return fs.createReadStream(filePath);
             }
-            throw new Error('File not found');
+            throw new NotFoundException(`File not found at: ${filePath}`);
         } else {
             return this.s3!.getObject({
                 Bucket: this.bucket,
