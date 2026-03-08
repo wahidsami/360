@@ -3,6 +3,8 @@ import { PrismaService } from '../common/prisma.service';
 import { UserWithRoles } from '../common/utils/scope.utils';
 import { CreateReportDto, UpdateReportDto } from './dto/report.dto';
 import { ReportGeneratorService } from './report-generator.service';
+import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 @Injectable()
 export class ReportsService {
@@ -190,8 +192,8 @@ export class ReportsService {
         const title = report.title || project.name;
         const fileKey =
             format === 'pptx'
-                ? await this.reportGenerator.generatePpt(projectId, report.id, user.orgId, title)
-                : await this.reportGenerator.generatePdf(projectId, report.id, user.orgId, title);
+                ? await this.reportGenerator.generatePpt(projectId, report.id, user.orgId, title, report.type)
+                : await this.reportGenerator.generatePdf(projectId, report.id, user.orgId, title, report.type);
 
         await this.prisma.report.update({
             where: { id: report.id },
