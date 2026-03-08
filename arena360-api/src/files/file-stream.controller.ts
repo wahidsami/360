@@ -14,8 +14,8 @@ export class FileStreamController {
     async streamFile(
         @Query('token') token: string,
         @Query('download') download: string,
-        @Res({ passthrough: true }) res: Response
-    ): Promise<StreamableFile> {
+        @Res() res: Response
+    ): Promise<void> {
         if (!token) {
             throw new ForbiddenException('Missing token');
         }
@@ -30,7 +30,6 @@ export class FileStreamController {
         });
 
         const isDownload = download === 'true';
-        const disposition = isDownload ? 'attachment' : 'inline';
 
         // Resolve mime-type: Database -> Key extension mapping -> Fallback
         let mimeType = fileAsset?.mimeType || 'application/octet-stream';
@@ -51,34 +50,34 @@ export class FileStreamController {
             if (ext && mimeMap[ext]) mimeType = mimeMap[ext];
         }
 
-        if (fileAsset) {
-            let filename = fileAsset.filename;
-            if (key.includes('.') && !filename.includes('.')) {
-                const ext = key.split('.').pop();
-                filename = `${filename}.${ext}`;
-            }
+        // Set Headers
+        res.setHeader('Content-Type', mimeType);
 
-            const headers: Record<string, string> = {
-                'Content-Type': mimeType,
-            };
+        // Security headers that help with inline rendering
+        res.setHeader('X-Content-Type-Options', 'nosniff');
 
-            // For inline viewing, some browsers handle 'inline' better than 'inline; filename=...'
-            // We only add the filename if it's explicitly a download to ensure wide compatibility
-            if (isDownload) {
-                headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(filename)}"`;
-            } else {
-                headers['Content-Disposition'] = 'inline';
-            }
+        let filename = fileAsset?.filename || 'file';
+        if (key.includes('.') && !filename.includes('.')) {
+            const ext = key.split('.').pop();
+            filename = `${filename}.${ext}`;
+        }
 
-            res.set(headers);
+        if (isDownload) {
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
         } else {
-            res.set({
-                'Content-Type': mimeType,
-                'Content-Disposition': disposition
-            });
+            // For inline, we only send 'inline' to maximize browser compatibility for viewing
+            res.setHeader('Content-Disposition', 'inline');
         }
 
         const stream = this.storageService.getObjectStream(key);
-        return new StreamableFile(stream);
+
+        stream.on('error', (err) => {
+            console.error('Streaming error:', err);
+            if (!res.headersSent) {
+                res.status(500).send('Error streaming file');
+            }
+        });
+
+        stream.pipe(res);
     }
 }
