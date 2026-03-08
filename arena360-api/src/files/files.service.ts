@@ -433,8 +433,8 @@ export class FilesService {
 
     /** Quick file upload for discussion messages - no DB record, returns a download URL */
     async uploadTempFile(user: UserWithRoles, file: Express.Multer.File): Promise<string> {
-        const ext = file.originalname.split('.').pop() || 'bin';
-        const key = `temp/${user.orgId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const key = `temp/${user.orgId}/${Date.now()}_${sanitizedName}`;
         await this.storage.putObject(key, file.buffer, file.mimetype);
         return this.storage.getSignedUrl(key, 7 * 24 * 3600, true);
     }

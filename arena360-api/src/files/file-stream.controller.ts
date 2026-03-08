@@ -27,9 +27,22 @@ export class FileStreamController {
             throw new ForbiddenException('Invalid or expired token');
         }
 
-        const fileAsset = await this.prisma.fileAsset.findFirst({
+        let fileAsset = await this.prisma.fileAsset.findFirst({
             where: { storageKey: key }
         });
+
+        if (!fileAsset && key.startsWith('temp/')) {
+            // Virtual Asset for temp files (which don't have DB records)
+            // Format: temp/orgId/timestamp_filename.ext OR temp/orgId/timestamp-random.ext
+            const filenameMatch = key.match(/temp\/[^/]+\/\d+[_-](.+)$/);
+            const filename = filenameMatch ? filenameMatch[1] : 'file';
+            fileAsset = {
+                filename,
+                mimeType: null, // will be inferred from key extension
+                sizeBytes: null, // we don't know it, but browser will handle it
+                storageKey: key
+            } as any;
+        }
 
         if (!fileAsset) {
             this.logger.error(`FileAsset not found in DB for key: ${key}`);
