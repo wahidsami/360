@@ -179,9 +179,12 @@ export class TasksService {
 
         const updated = await this.prisma.task.update({
             where: { id: taskId },
-            data: updateData
+            data: updateData,
+            include: {
+                assignee: { select: { id: true, name: true } }
+            }
         });
-        const project = await this.prisma.project.findUnique({ where: { id: projectId }, select: { orgId: true } });
+        const project = await this.prisma.project.findUnique({ where: { id: projectId }, select: { orgId: true, name: true } });
         if (project?.orgId && updateData.assigneeId && updateData.assigneeId !== task.assigneeId) {
             this.notifications.create({
                 orgId: project.orgId,
@@ -194,7 +197,12 @@ export class TasksService {
                 entityType: 'task',
             }).catch(() => { });
         }
-        const entity = { id: taskId, projectId, title: updated.title, status: updated.status, assigneeId: updated.assigneeId };
+        const entity = {
+            ...updated,
+            projectId,
+            project: { id: projectId, name: project?.name },
+            assignee: updated.assignee ? { id: updated.assignee.id, name: updated.assignee.name } : null
+        };
         if (project?.orgId) {
             if (updateData.assigneeId != null && updateData.assigneeId !== task.assigneeId) {
                 this.automation.evaluateRules({

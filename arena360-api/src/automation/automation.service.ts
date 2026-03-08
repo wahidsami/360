@@ -68,7 +68,14 @@ export class AutomationService {
   }
 
   private interpolate(template: string, data: Record<string, any>): string {
-    return template.replace(/\{\{(\w+)\}\}/g, (_, key) => (data[key] != null ? String(data[key]) : ''));
+    return template.replace(/\{\{([\w.]+)\}\}/g, (_, key) => {
+      const parts = key.split('.');
+      let val: any = data;
+      for (const part of parts) {
+        val = val?.[part];
+      }
+      return val != null ? String(val) : '';
+    });
   }
 
   private async runAction(rule: any, payload: TriggerPayload): Promise<void> {
@@ -83,18 +90,29 @@ export class AutomationService {
       }
 
       if (!userId) return;
-      const title = this.interpolate(config.titleTemplate ?? 'Update', { ...payload.entity, title: payload.entity.title ?? 'Item' });
-      const body = config.bodyTemplate ? this.interpolate(config.bodyTemplate, payload.entity) : undefined;
-      const linkUrl = config.linkUrlTemplate ? this.interpolate(config.linkUrlTemplate, payload.entity) : undefined;
 
+      // Smarter defaults based on entity
+      let defaultTitle = 'Update';
+      let defaultLink = '/app/dashboard';
       let type: any = 'TASK_ASSIGNED';
+
       if (payload.entityType === AutomationTriggerEntity.TASK) {
+        defaultTitle = payload.entity.title || 'Task Update';
+        defaultLink = `/app/projects/${payload.entity.projectId}?tab=tasks`;
         type = payload.event === AutomationTriggerEvent.STATUS_CHANGED ? 'TASK_STATUS_CHANGE' : 'TASK_ASSIGNED';
       } else if (payload.entityType === AutomationTriggerEntity.FINDING) {
+        defaultTitle = payload.entity.title || 'Finding Update';
+        defaultLink = `/app/projects/${payload.entity.projectId}?tab=findings`;
         type = payload.event === AutomationTriggerEvent.STATUS_CHANGED ? 'FINDING_STATUS_CHANGE' : 'FINDING_ASSIGNED';
       } else if (payload.entityType === AutomationTriggerEntity.INVOICE) {
+        defaultTitle = payload.entity.invoiceNumber || 'Invoice Update';
+        defaultLink = `/app/projects/${payload.entity.projectId}?tab=financials`;
         type = 'INVOICE_OVERDUE';
       }
+
+      const title = this.interpolate(config.titleTemplate || defaultTitle, { ...payload.entity, title: payload.entity.title || 'Item' });
+      const body = config.bodyTemplate ? this.interpolate(config.bodyTemplate, payload.entity) : undefined;
+      const linkUrl = this.interpolate(config.linkUrlTemplate || defaultLink, payload.entity);
 
       await this.notifications.create({
         orgId: payload.orgId,

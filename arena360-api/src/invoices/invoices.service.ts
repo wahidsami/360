@@ -4,12 +4,15 @@ import { UserWithRoles } from '../common/utils/scope.utils';
 import { CreateInvoiceDto, UpdateInvoiceDto } from './dto/invoice.dto';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
+import { AutomationService } from '../automation/automation.service';
+import { AutomationTriggerEntity, AutomationTriggerEvent } from '@prisma/client';
 
 @Injectable()
 export class InvoicesService {
     constructor(
         private prisma: PrismaService,
         private config: ConfigService,
+        private automation: AutomationService,
     ) { }
 
     async findAll(projectId: string, user: UserWithRoles) {
@@ -102,7 +105,7 @@ export class InvoicesService {
         // Auto-set issuedAt when status is ISSUED
         const issuedAt = dto.status === 'ISSUED' ? new Date() : null;
 
-        return this.prisma.invoice.create({
+        const invoice = await this.prisma.invoice.create({
             data: {
                 ...dto,
                 dueDate: new Date(dto.dueDate),
@@ -120,6 +123,17 @@ export class InvoicesService {
                 }
             }
         });
+
+        // Trigger automation
+        this.automation.evaluateRules({
+            orgId: user.orgId,
+            entityType: AutomationTriggerEntity.INVOICE,
+            entityId: invoice.id,
+            event: AutomationTriggerEvent.CREATED,
+            entity: { ...invoice, projectId }
+        }).catch(() => { });
+
+        return invoice;
     }
 
     async findOne(projectId: string, invoiceId: string, user: UserWithRoles) {
@@ -214,7 +228,7 @@ export class InvoicesService {
             updateData.paidAt = new Date();
         }
 
-        return this.prisma.invoice.update({
+        const updated = await this.prisma.invoice.update({
             where: { id: invoiceId },
             data: updateData,
             include: {
@@ -226,6 +240,32 @@ export class InvoicesService {
                 }
             }
         });
+
+        const entity = { ...updated, projectId };
+
+        // Trigger automation status changed
+        if (dto.status && dto.status !== invoice.status) {
+            this.automation.evaluateRules({
+                orgId: user.orgId,
+                entityType: AutomationTriggerEntity.INVOICE,
+                entityId: invoiceId,
+                event: AutomationTriggerEvent.STATUS_CHANGED,
+                entity,
+                previousEntity: { status: invoice.status }
+            }).catch(() => { });
+        }
+
+        // Trigger automation updated
+        this.automation.evaluateRules({
+            orgId: user.orgId,
+            entityType: AutomationTriggerEntity.INVOICE,
+            entityId: invoiceId,
+            event: AutomationTriggerEvent.UPDATED,
+            entity,
+            previousEntity: { status: invoice.status }
+        }).catch(() => { });
+
+        return updated;
     }
 
     async delete(projectId: string, invoiceId: string, user: UserWithRoles) {

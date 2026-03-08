@@ -264,7 +264,13 @@ export class FindingsService {
                     evidence: true
                 }
             });
-            const entity = { id: findingId, projectId, title: updated.title, status: updated.status, assignedToId: updated.assignedToId };
+            const project = await this.prisma.project.findUnique({ where: { id: projectId }, select: { name: true } });
+            const entity = {
+                ...updated,
+                projectId,
+                project: { id: projectId, name: project?.name },
+                assignedTo: updated.assignedTo ? { id: updated.assignedTo.id, name: updated.assignedTo.name } : null
+            };
             if (dto.assignedToId !== undefined && dto.assignedToId !== finding.assignedToId) {
                 this.automation.evaluateRules({
                     orgId: finding.orgId,
@@ -313,7 +319,13 @@ export class FindingsService {
                 evidence: true
             }
         });
-        const entity = { id: findingId, projectId, title: updated.title, status: updated.status, assignedToId: updated.assignedToId };
+        const project = await this.prisma.project.findUnique({ where: { id: projectId }, select: { name: true } });
+        const entity = {
+            ...updated,
+            projectId,
+            project: { id: projectId, name: project?.name },
+            assignedTo: updated.assignedTo ? { id: updated.assignedTo.id, name: updated.assignedTo.name } : null
+        };
         if (dto.assignedToId !== undefined && dto.assignedToId !== finding.assignedToId) {
             this.automation.evaluateRules({
                 orgId: finding.orgId,
