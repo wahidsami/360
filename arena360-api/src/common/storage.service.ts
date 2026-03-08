@@ -83,8 +83,8 @@ export class StorageService {
         }
     }
 
-    async getSignedUrl(key: string, expiresIn: number = 3600, download: boolean = false): Promise<string> {
-        if (this.useLocal) {
+    async getSignedUrl(key: string, expiresIn: number = 3600, download: boolean = false, forceProxy: boolean = false): Promise<string> {
+        if (this.useLocal || forceProxy) {
             // Resolve the correct public API base URL
             // Priority: API_URL → COOLIFY_URL → COOLIFY_FQDN → fallback localhost
             const coolifyFqdn = this.configService.get<string>('COOLIFY_FQDN');

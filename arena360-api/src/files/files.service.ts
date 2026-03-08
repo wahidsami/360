@@ -436,6 +436,8 @@ export class FilesService {
         const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
         const key = `temp/${user.orgId}/${Date.now()}_${sanitizedName}`;
         await this.storage.putObject(key, file.buffer, file.mimetype);
-        return this.storage.getSignedUrl(key, 7 * 24 * 3600, true);
+        // Return a proxy streaming URL valid for 10 years so thread links don't expire prematurely
+        // Using 10 years to strictly avoid Y2K38 problems
+        return this.storage.getSignedUrl(key, 10 * 365 * 24 * 3600, true, true);
     }
 }
