@@ -60,7 +60,7 @@ export const Layout: React.FC = () => {
       const root = document.documentElement.style;
       if (o.primaryColor) root.setProperty('--brand-primary', o.primaryColor);
       if (o.accentColor) root.setProperty('--brand-accent', o.accentColor);
-    }).catch(() => {});
+    }).catch(() => { });
   }, [user]);
 
   const loadNotificationCount = async () => {
@@ -285,11 +285,6 @@ export const Layout: React.FC = () => {
             >
               <History className="w-5 h-5" />
             </button>
-            <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
-            <NotificationsDrawer
-              open={notificationDrawerOpen}
-              onClose={() => { setNotificationDrawerOpen(false); loadNotificationCount(); }}
-            />
           </div>
         </header>
 
@@ -300,6 +295,12 @@ export const Layout: React.FC = () => {
         </main>
       </div>
       {user?.role === Role.SUPER_ADMIN && <OnboardingWizard />}
+      {/* Portals: rendered at top-level to avoid z-index / stacking context issues */}
+      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
+      <NotificationsDrawer
+        open={notificationDrawerOpen}
+        onClose={() => { setNotificationDrawerOpen(false); loadNotificationCount(); }}
+      />
     </div>
   );
 };
