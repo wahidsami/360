@@ -23,9 +23,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ url, filename, m
             'gif': 'image/gif',
             'webp': 'image/webp',
             'svg': 'image/svg+xml',
-            'bmp': 'image/bmp'
+            'bmp': 'image/bmp',
+            'image': 'image/jpeg',  // Handle nameless image uploads
+            'screenshot': 'image/png' // Handle common nameless screenshots
         };
-        return (ext && mimeMap[ext]) || mime;
+        return (ext && mimeMap[ext]) || mimeMap[name.toLowerCase()] || mime;
     };
 
     const effectiveMimeType = getEffectiveMimeType(mimeType, filename);
