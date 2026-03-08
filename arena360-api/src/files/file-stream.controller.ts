@@ -13,16 +13,15 @@ export class FileStreamController {
     @Get('stream')
     async streamFile(
         @Query('token') token: string,
-        @Query('key') key: string,
         @Res({ passthrough: true }) res: Response
     ): Promise<StreamableFile> {
         if (!token) {
             throw new ForbiddenException('Missing token');
         }
 
-        const verifiedKey = this.storageService.verifyStreamToken(token);
-        // Ensure the token matches the requested key
-        if (!verifiedKey || verifiedKey !== key) {
+        // verifyStreamToken decodes the key from the token (base64 first segment)
+        const key = this.storageService.verifyStreamToken(token);
+        if (!key) {
             throw new ForbiddenException('Invalid or expired token');
         }
 
@@ -37,10 +36,7 @@ export class FileStreamController {
                 'Content-Disposition': `attachment; filename="${fileAsset.filename}"`,
             });
         } else {
-            // Fallback if record deleted but file exists
-            res.set({
-                'Content-Type': 'application/octet-stream',
-            });
+            res.set({ 'Content-Type': 'application/octet-stream' });
         }
 
         const stream = this.storageService.getObjectStream(key);
