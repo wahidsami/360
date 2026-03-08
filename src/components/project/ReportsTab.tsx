@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Report, Permission, isInternalRole } from '@/types';
 import { Button, GlassCard, Badge, Modal, Input } from '../ui/UIComponents';
-import { FileText, Plus, Download, Calendar, FileDown, Send, Check, X } from 'lucide-react';
+import { FileText, Plus, Download, Calendar, FileDown, Send, Check, X, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PermissionGate } from '../PermissionGate';
 import { format } from 'date-fns';
@@ -44,6 +44,33 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                 setReports(r);
                 onRefresh?.();
             } catch (e) { console.error(e); }
+        }
+    };
+
+    const handleDeleteReport = async (report: Report) => {
+        if (!projectId || !confirm(`Are you sure you want to delete "${report.title}"?`)) return;
+        try {
+            await api.projects.deleteReport(projectId, report.id);
+            toast.success('Report deleted');
+            await refreshReports();
+        } catch (e) {
+            toast.error('Failed to delete report');
+        }
+    };
+
+    const handleUploadFile = async (reportId: string, file: File) => {
+        if (!projectId) return;
+        const tid = toast.loading('Uploading report...');
+        try {
+            const res = await api.projects.uploadReportFile(projectId, reportId, file);
+            if (res) {
+                toast.success('Report uploaded', { id: tid });
+                await refreshReports();
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (e) {
+            toast.error('Failed to upload report', { id: tid });
         }
     };
 
@@ -250,11 +277,40 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                                     <Button variant="secondary" size="sm" onClick={() => handleDownload(report as any)}>
                                         <Download className="w-3 h-3 mr-1" /> Download
                                     </Button>
-                                ) : report.status === 'PUBLISHED' && (
-                                    <Button variant="secondary" size="sm" disabled>
-                                        <Download className="w-3 h-3 mr-1" /> —
-                                    </Button>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" className="text-cyan-400 border-cyan-400/30 hover:bg-cyan-400/10 h-8" onClick={() => { setGenerateReportId(report.id); setGenerateModalOpen(true); }}>
+                                            <FileDown className="w-3 h-3 mr-1" /> Generate
+                                        </Button>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                id={`upload-${report.id}`}
+                                                className="hidden"
+                                                onChange={(e) => e.target.files?.[0] && handleUploadFile(report.id, e.target.files[0])}
+                                                accept=".pdf,.pptx"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-slate-400 border-slate-700 hover:bg-slate-800 h-8"
+                                                onClick={() => document.getElementById(`upload-${report.id}`)?.click()}
+                                            >
+                                                <Upload className="w-3 h-3 mr-1" /> Upload
+                                            </Button>
+                                        </div>
+                                    </div>
                                 )}
+                                <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-rose-400 h-8 w-8 p-0"
+                                        onClick={() => handleDeleteReport(report)}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </PermissionGate>
                             </div>
                         </div>
                     </GlassCard>

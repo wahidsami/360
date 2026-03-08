@@ -834,6 +834,26 @@ export const api = {
         console.error('Failed to delete report:', e);
       }
     },
+    uploadReportFile: async (projectId: string, reportId: string, file: File): Promise<Report | undefined> => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/projects/${projectId}/reports/${reportId}/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+        return await response.json();
+      } catch (e) {
+        console.error('Failed to upload report file:', e);
+        return undefined;
+      }
+    },
     generateReport: async (projectId: string, options: { reportId?: string; format: 'pptx' | 'pdf' }) => {
       return fetchApi(`/projects/${projectId}/reports/generate`, {
         method: 'POST',

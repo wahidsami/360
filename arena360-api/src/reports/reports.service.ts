@@ -156,10 +156,11 @@ export class ReportsService {
             throw new ForbiddenException('Only SUPER_ADMIN, OPS, or PM can delete reports');
         }
 
-        return this.prisma.report.update({
+        await this.prisma.report.update({
             where: { id: reportId },
             data: { deletedAt: new Date() }
         });
+        return { success: true };
     }
 
     async generate(projectId: string, reportId: string | null, format: 'pptx' | 'pdf', user: UserWithRoles) {
@@ -209,7 +210,37 @@ export class ReportsService {
         });
         if (!report) throw new NotFoundException('Report not found');
         if (!report.generatedFileKey) throw new NotFoundException('Report not generated yet');
-        const ext = report.generatedFileKey.endsWith('.pdf') ? 'pdf' : 'pptx';
+        const ext = report.generatedFileKey.split('.').pop();
         return { path: this.getDownloadPath(report.generatedFileKey), filename: `${report.title || 'report'}.${ext}` };
+    }
+
+    async uploadFile(projectId: string, reportId: string, user: UserWithRoles, file: Express.Multer.File) {
+        const report = await this.prisma.report.findFirst({
+            where: { id: reportId, projectId, orgId: user.orgId }
+        });
+        if (!report) throw new NotFoundException('Report not found');
+
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        if (!internalRoles.includes(user.role)) {
+            throw new ForbiddenException('Only internal staff can upload reports');
+        }
+
+        const dir = join(process.cwd(), 'uploads', 'reports');
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+        const ext = file.originalname.split('.').pop();
+        const generatedFileKey = `reports/${reportId}_manual.${ext}`;
+        const filePath = join(process.cwd(), 'uploads', generatedFileKey);
+
+        const fs = require('fs');
+        fs.writeFileSync(filePath, file.buffer);
+
+        return this.prisma.report.update({
+            where: { id: reportId },
+            data: {
+                generatedFileKey,
+                generatedAt: new Date(),
+            }
+        });
     }
 }

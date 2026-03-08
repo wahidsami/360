@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, Res, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import * as express from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -62,5 +63,16 @@ export class ReportsController {
     ) {
         const { path, filename } = await this.reportsService.getReportForDownload(projectId, reportId, req.user);
         res.download(path, filename);
+    }
+
+    @Post('projects/:projectId/reports/:reportId/upload')
+    @UseInterceptors(FileInterceptor('file'))
+    async upload(
+        @Request() req: any,
+        @Param('projectId') projectId: string,
+        @Param('reportId') reportId: string,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        return this.reportsService.uploadFile(projectId, reportId, req.user, file);
     }
 }
