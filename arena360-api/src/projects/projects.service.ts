@@ -204,6 +204,7 @@ export class ProjectsService {
         if (member) {
             await this.prisma.projectMember.delete({ where: { id: member.id } });
         }
+        return { success: true };
     }
 
     async getActivity(projectId: string, user: UserWithRoles) {

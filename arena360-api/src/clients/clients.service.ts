@@ -205,5 +205,6 @@ export class ClientsService {
         if (member) {
             await this.prisma.clientMember.delete({ where: { id: member.id } });
         }
+        return { success: true };
     }
 }

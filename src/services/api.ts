@@ -18,15 +18,24 @@ const fetchApi = async (endpoint: string, options: RequestInit & { silent?: bool
       ...options.headers,
     },
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
+    const text = await res.text();
+    const error = text ? JSON.parse(text) : {};
     const message = error.message || 'API Error';
     if (!options.silent) {
       toast.error(message);
     }
     throw new Error(message);
   }
-  return res.json();
+
+  // Handle empty or non-JSON responses
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch (e) {
+    return null;
+  }
 };
 
 // Helper to normalize backend task to frontend Task type
