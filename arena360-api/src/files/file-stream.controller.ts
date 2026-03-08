@@ -20,13 +20,11 @@ export class FileStreamController {
             throw new ForbiddenException('Missing token');
         }
 
-        // verifyStreamToken decodes the key from the token (base64 first segment)
         const key = this.storageService.verifyStreamToken(token);
         if (!key) {
             throw new ForbiddenException('Invalid or expired token');
         }
 
-        // Look up file metadata for Content-Type and Filename
         const fileAsset = await this.prisma.fileAsset.findFirst({
             where: { storageKey: key }
         });
@@ -34,22 +32,48 @@ export class FileStreamController {
         const isDownload = download === 'true';
         const disposition = isDownload ? 'attachment' : 'inline';
 
+        // Resolve mime-type: Database -> Key extension mapping -> Fallback
+        let mimeType = fileAsset?.mimeType || 'application/octet-stream';
+        if (mimeType === 'application/octet-stream' && key.includes('.')) {
+            const ext = key.split('.').pop()?.toLowerCase();
+            const mimeMap: Record<string, string> = {
+                'pdf': 'application/pdf',
+                'png': 'image/png',
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'gif': 'image/gif',
+                'webp': 'image/webp',
+                'svg': 'image/svg+xml',
+                'txt': 'text/plain',
+                'mp4': 'video/mp4',
+                'mp3': 'audio/mpeg'
+            };
+            if (ext && mimeMap[ext]) mimeType = mimeMap[ext];
+        }
+
         if (fileAsset) {
-            // Ensure filename has an extension (fix for user report)
             let filename = fileAsset.filename;
             if (key.includes('.') && !filename.includes('.')) {
                 const ext = key.split('.').pop();
                 filename = `${filename}.${ext}`;
             }
 
-            res.set({
-                'Content-Type': fileAsset.mimeType,
-                'Content-Disposition': `${disposition}; filename="${filename}"`,
-            });
+            const headers: Record<string, string> = {
+                'Content-Type': mimeType,
+            };
+
+            // For inline viewing, some browsers handle 'inline' better than 'inline; filename=...'
+            // We only add the filename if it's explicitly a download to ensure wide compatibility
+            if (isDownload) {
+                headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(filename)}"`;
+            } else {
+                headers['Content-Disposition'] = 'inline';
+            }
+
+            res.set(headers);
         } else {
-            // Fallback for files without records
             res.set({
-                'Content-Type': 'application/octet-stream',
+                'Content-Type': mimeType,
                 'Content-Disposition': disposition
             });
         }
