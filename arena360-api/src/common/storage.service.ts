@@ -17,16 +17,23 @@ export class StorageService {
     constructor(private configService: ConfigService) {
         const accessKeyId = this.configService.get<string>('S3_ACCESS_KEY');
         const secretAccessKey = this.configService.get<string>('S3_SECRET_KEY');
+        const endpoint = this.configService.get<string>('S3_ENDPOINT') || '';
 
-        if (!accessKeyId || !secretAccessKey) {
+        // If no credentials OR endpoint is localhost (dev-only MinIO not available in prod) → local storage
+        const isLocalhostEndpoint = /localhost|127\.0\.0\.1/.test(endpoint);
+
+        if (!accessKeyId || !secretAccessKey || isLocalhostEndpoint) {
             this.useLocal = true;
-            this.logger.warn('AWS S3 credentials not found. Using local storage.');
+            if (isLocalhostEndpoint && accessKeyId) {
+                this.logger.warn(`S3_ENDPOINT points to localhost (${endpoint}) — falling back to local filesystem storage. Set a real S3/MinIO endpoint in production to enable cloud storage.`);
+            } else {
+                this.logger.warn('AWS S3 credentials not found. Using local storage.');
+            }
             // Ensure upload directory exists
             if (!fs.existsSync(this.uploadDir)) {
                 fs.mkdirSync(this.uploadDir, { recursive: true });
             }
         } else {
-            const endpoint = this.configService.get<string>('S3_ENDPOINT');
             this.bucket = this.configService.get<string>('S3_BUCKET', 'arena360-files');
             const region = this.configService.get<string>('S3_REGION', 'us-east-1');
             const useSSL = this.configService.get<string>('S3_USE_SSL', 'false') === 'true';
