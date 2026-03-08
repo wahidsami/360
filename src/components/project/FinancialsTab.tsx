@@ -52,16 +52,16 @@ function PaymentForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: (
 }
 
 interface ApprovalInfo {
-  id: string;
-  status: string;
-  entityType: string;
-  entityId: string;
-  stepOrder?: number;
-  approver?: { id: string; name: string };
-  requestedBy?: { name: string };
-  reviewedBy?: { name: string };
-  reviewedAt?: string;
-  comment?: string | null;
+    id: string;
+    status: string;
+    entityType: string;
+    entityId: string;
+    stepOrder?: number;
+    approver?: { id: string; name: string };
+    requestedBy?: { name: string };
+    reviewedBy?: { name: string };
+    reviewedAt?: string;
+    comment?: string | null;
 }
 
 interface FinancialsTabProps {
@@ -97,9 +97,13 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
     const [payLoading, setPayLoading] = useState(false);
 
     // Stats
-    const totalOutstanding = invoices.filter(i => i.status === 'issued' || i.status === 'overdue').reduce((acc, i) => acc + i.amount, 0);
-    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + i.amount, 0);
-    const totalOverdue = invoices.filter(i => i.status === 'overdue').reduce((acc, i) => acc + i.amount, 0);
+    const totalOutstanding = invoices.filter(i => {
+        const s = i.status?.toLowerCase();
+        return s === 'issued' || s === 'overdue';
+    }).reduce((acc, i) => acc + i.amount, 0);
+
+    const totalPaid = invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((acc, i) => acc + i.amount, 0);
+    const totalOverdue = invoices.filter(i => i.status?.toLowerCase() === 'overdue').reduce((acc, i) => acc + i.amount, 0);
 
     // Fetch data wrapper
     const refreshData = async () => {
@@ -141,7 +145,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
             });
             Object.keys(map).forEach(k => map[k].sort((a, b) => (a.stepOrder ?? 1) - (b.stepOrder ?? 1)));
             setApprovalMap(map);
-        }).catch(() => {});
+        }).catch(() => { });
     };
 
     useEffect(() => {
@@ -371,12 +375,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const pendingStep = steps.find((s: ApprovalInfo) => s.status === 'PENDING');
                                                     const overallStatus = steps.some((s: ApprovalInfo) => s.status === 'REJECTED') ? 'REJECTED' : steps.length > 0 && steps.every((s: ApprovalInfo) => s.status === 'APPROVED') ? 'APPROVED' : pendingStep ? 'PENDING' : null;
                                                     return (
-                                                      <>
-                                                        {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
-                                                        {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
-                                                        {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
-                                                        <Badge variant={contract.status === 'active' ? 'success' : 'neutral'}>{contract.status}</Badge>
-                                                      </>
+                                                        <>
+                                                            {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
+                                                            {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
+                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
+                                                            <Badge variant={contract.status === 'active' ? 'success' : 'neutral'}>{contract.status}</Badge>
+                                                        </>
                                                     );
                                                 })()}
                                             </div>
@@ -388,19 +392,19 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const pendingStep = steps.find((s: ApprovalInfo) => s.status === 'PENDING');
                                                     const hasPending = !!pendingStep;
                                                     return (
-                                                      <>
-                                                        {hasPending && isInternalRole(user?.role) && (
-                                                            <>
-                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
-                                                                <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
-                                                            </>
-                                                        )}
-                                                        {!hasPending && (
-                                                            <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('CONTRACT', contract.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
-                                                        )}
-                                                        <Button variant="ghost" size="sm" onClick={() => openEditContract(contract)}><Edit className="w-4 h-4" /></Button>
-                                                        <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteContract(contract.id)}><Trash2 className="w-4 h-4" /></Button>
-                                                      </>
+                                                        <>
+                                                            {hasPending && isInternalRole(user?.role) && (
+                                                                <>
+                                                                    <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
+                                                                    <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
+                                                                </>
+                                                            )}
+                                                            {!hasPending && (
+                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('CONTRACT', contract.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
+                                                            )}
+                                                            <Button variant="ghost" size="sm" onClick={() => openEditContract(contract)}><Edit className="w-4 h-4" /></Button>
+                                                            <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteContract(contract.id)}><Trash2 className="w-4 h-4" /></Button>
+                                                        </>
                                                     );
                                                 })()}
                                             </div>
@@ -437,16 +441,16 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const pendingStep = steps.find((s: ApprovalInfo) => s.status === 'PENDING');
                                                     const overallStatus = steps.some((s: ApprovalInfo) => s.status === 'REJECTED') ? 'REJECTED' : steps.length > 0 && steps.every((s: ApprovalInfo) => s.status === 'APPROVED') ? 'APPROVED' : pendingStep ? 'PENDING' : null;
                                                     return (
-                                                      <>
-                                                        {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (step ${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
-                                                        {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
-                                                        {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
-                                                        <Badge variant={
-                                                            invoice.status === 'paid' ? 'success' :
-                                                                invoice.status === 'overdue' ? 'danger' :
-                                                                    invoice.status === 'issued' || invoice.status === 'ISSUED' ? 'warning' : 'neutral'
-                                                        }>{invoice.status}</Badge>
-                                                      </>
+                                                        <>
+                                                            {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (step ${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
+                                                            {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
+                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
+                                                            <Badge variant={
+                                                                invoice.status?.toLowerCase() === 'paid' ? 'success' :
+                                                                    invoice.status?.toLowerCase() === 'overdue' ? 'danger' :
+                                                                        ['issued', 'sent'].includes(invoice.status?.toLowerCase() || '') ? 'warning' : 'neutral'
+                                                            }>{invoice.status?.toLowerCase()}</Badge>
+                                                        </>
                                                     );
                                                 })()}
                                             </div>
@@ -458,22 +462,22 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const pendingStep = steps.find((s: ApprovalInfo) => s.status === 'PENDING');
                                                     const hasPending = !!pendingStep;
                                                     return (
-                                                      <>
-                                                        {hasPending && isInternalRole(user?.role) && (
-                                                            <>
-                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
-                                                                <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
-                                                            </>
-                                                        )}
-                                                        {!hasPending && (
-                                                            <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('INVOICE', invoice.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
-                                                        )}
-                                                        {(invoice.status === 'issued' || invoice.status === 'ISSUED') && (
-                                                            <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> Pay with Card</Button>
-                                                        )}
-                                                        <Button variant="ghost" size="sm" onClick={() => openEditInvoice(invoice)}><Edit className="w-4 h-4" /></Button>
-                                                        <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteInvoice(invoice.id)}><Trash2 className="w-4 h-4" /></Button>
-                                                      </>
+                                                        <>
+                                                            {hasPending && isInternalRole(user?.role) && (
+                                                                <>
+                                                                    <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
+                                                                    <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
+                                                                </>
+                                                            )}
+                                                            {!hasPending && (
+                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('INVOICE', invoice.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
+                                                            )}
+                                                            {(invoice.status === 'issued' || invoice.status === 'ISSUED') && (
+                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> Pay with Card</Button>
+                                                            )}
+                                                            <Button variant="ghost" size="sm" onClick={() => openEditInvoice(invoice)}><Edit className="w-4 h-4" /></Button>
+                                                            <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteInvoice(invoice.id)}><Trash2 className="w-4 h-4" /></Button>
+                                                        </>
                                                     );
                                                 })()}
                                             </div>
