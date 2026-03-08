@@ -275,7 +275,16 @@ const MessageInput: React.FC<{
     const handleFile = (files: FileList | null) => {
         if (!files) return;
         const list = Array.from(files);
-        setAttachedFiles(prev => [...prev, ...list]);
+        const validFiles = list.filter(f => {
+            if (f.size > 20 * 1024 * 1024) {
+                toast.error(`File ${f.name} is too large. Maximum size is 20MB.`);
+                return false;
+            }
+            return true;
+        });
+        if (validFiles.length > 0) {
+            setAttachedFiles(prev => [...prev, ...validFiles]);
+        }
     };
 
     const handleKey = (e: React.KeyboardEvent) => {
