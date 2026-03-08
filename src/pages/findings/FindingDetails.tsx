@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ShieldAlert, CheckCircle, FileText, Image as ImageIcon,
-  Send, Download, Share2, Sparkles, Eye
+  Send, Download, Share2, Sparkles
 } from 'lucide-react';
-import { Badge, Button, GlassCard, Label, Select, TextArea, Modal } from "@/components/ui/UIComponents";
+import { Badge, Button, GlassCard, Label, Select, TextArea } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
 import { Finding, User, isInternalRole } from '@/types';
 import { useAI } from '@/contexts/AIContext';
-import { DocumentViewer } from '@/components/DocumentViewer';
 
 interface RichFinding extends Finding {
   projectName: string;
@@ -28,7 +27,6 @@ export const FindingDetails: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [replyText, setReplyText] = useState('');
   const [comments, setComments] = useState<any[]>([]);
-  const [viewModal, setViewModal] = useState<{ isOpen: boolean; url: string; filename: string; mimeType: string; fileId: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [postingComment, setPostingComment] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -177,30 +175,18 @@ export const FindingDetails: React.FC = () => {
       setUploading(false);
     }
   };
-
-  const handleFileAction = async (fileId: string, download: boolean = true) => {
+  const handleFileAction = async (fileId: string) => {
     if (!findingId) return;
     try {
-      const file = finding.evidence?.find(f => f.id === fileId);
-      const url = await api.findings.downloadFile(findingId, fileId, download);
+      const url = await api.findings.downloadFile(findingId, fileId, true);
       if (url) {
-        if (download) {
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = '';
-          a.target = '_blank';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } else if (file) {
-          setViewModal({
-            isOpen: true,
-            url,
-            filename: file.filename,
-            mimeType: file.mimeType || 'application/octet-stream',
-            fileId: file.id
-          });
-        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     } catch (err) {
       console.error('File action failed', err);
@@ -344,10 +330,7 @@ export const FindingDetails: React.FC = () => {
                     <span className="text-xs text-slate-300 truncate" title={file.filename}>{file.filename}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleFileAction(file.id, false)} title="View inline">
-                      <Eye className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
-                    </button>
-                    <button onClick={() => handleFileAction(file.id, true)} title="Download">
+                    <button onClick={() => handleFileAction(file.id)} title="Download">
                       <Download className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
                     </button>
                   </div>
@@ -566,22 +549,6 @@ export const FindingDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Document Viewer Modal */}
-      {viewModal && (
-        <Modal
-          isOpen={viewModal.isOpen}
-          onClose={() => setViewModal(null)}
-          title={viewModal.filename}
-          maxWidth="max-w-4xl"
-        >
-          <DocumentViewer
-            url={viewModal.url}
-            filename={viewModal.filename}
-            mimeType={viewModal.mimeType}
-            onDownload={() => handleFileAction(viewModal.fileId, true)}
-          />
-        </Modal>
-      )}
     </div>
   );
 };
