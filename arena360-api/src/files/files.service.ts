@@ -106,7 +106,7 @@ export class FilesService {
         });
     }
 
-    async downloadClientFile(clientId: string, fileId: string, user: UserWithRoles): Promise<string> {
+    async downloadClientFile(clientId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify client exists and user has access
         const client = await this.prisma.client.findFirst({
             where: { id: clientId, orgId: user.orgId }
@@ -137,7 +137,7 @@ export class FilesService {
         }
 
         // Generate signed URL (valid for 1 hour)
-        return this.storage.getSignedUrl(file.storageKey, 3600);
+        return this.storage.getSignedUrl(file.storageKey, 3600, download);
     }
 
     // === PROJECT FILES ===
@@ -235,7 +235,7 @@ export class FilesService {
         });
     }
 
-    async downloadProjectFile(projectId: string, fileId: string, user: UserWithRoles): Promise<string> {
+    async downloadProjectFile(projectId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
             where: { id: projectId, orgId: user.orgId }
@@ -266,7 +266,7 @@ export class FilesService {
         }
 
         // Generate signed URL (valid for 1 hour)
-        return this.storage.getSignedUrl(file.storageKey, 3600);
+        return this.storage.getSignedUrl(file.storageKey, 3600, download);
     }
 
     async deleteProjectFile(projectId: string, fileId: string, user: UserWithRoles): Promise<void> {
@@ -377,7 +377,7 @@ export class FilesService {
         });
     }
 
-    async downloadFindingFile(findingId: string, fileId: string, user: UserWithRoles): Promise<string> {
+    async downloadFindingFile(findingId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify finding exists and user has access
         const finding = await this.prisma.finding.findFirst({
             where: { id: findingId, orgId: user.orgId }
@@ -408,6 +408,6 @@ export class FilesService {
         }
 
         // Generate signed URL (valid for 1 hour)
-        return this.storage.getSignedUrl(file.storageKey, 3600);
+        return this.storage.getSignedUrl(file.storageKey, 3600, download);
     }
 }

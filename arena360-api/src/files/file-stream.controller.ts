@@ -13,6 +13,7 @@ export class FileStreamController {
     @Get('stream')
     async streamFile(
         @Query('token') token: string,
+        @Query('download') download: string,
         @Res({ passthrough: true }) res: Response
     ): Promise<StreamableFile> {
         if (!token) {
@@ -30,13 +31,27 @@ export class FileStreamController {
             where: { storageKey: key }
         });
 
+        const isDownload = download === 'true';
+        const disposition = isDownload ? 'attachment' : 'inline';
+
         if (fileAsset) {
+            // Ensure filename has an extension (fix for user report)
+            let filename = fileAsset.filename;
+            if (key.includes('.') && !filename.includes('.')) {
+                const ext = key.split('.').pop();
+                filename = `${filename}.${ext}`;
+            }
+
             res.set({
                 'Content-Type': fileAsset.mimeType,
-                'Content-Disposition': `attachment; filename="${fileAsset.filename}"`,
+                'Content-Disposition': `${disposition}; filename="${filename}"`,
             });
         } else {
-            res.set({ 'Content-Type': 'application/octet-stream' });
+            // Fallback for files without records
+            res.set({
+                'Content-Type': 'application/octet-stream',
+                'Content-Disposition': disposition
+            });
         }
 
         const stream = this.storageService.getObjectStream(key);

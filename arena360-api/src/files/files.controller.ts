@@ -58,7 +58,7 @@ export class FilesController {
         @Param('clientId') clientId: string,
         @Param('fileId') fileId: string
     ) {
-        const signedUrl = await this.filesService.downloadClientFile(clientId, fileId, req.user);
+        const signedUrl = await this.filesService.downloadClientFile(clientId, fileId, req.user, true);
         return { url: signedUrl };
     }
 
@@ -108,7 +108,7 @@ export class FilesController {
         @Param('projectId') projectId: string,
         @Param('fileId') fileId: string
     ) {
-        const signedUrl = await this.filesService.downloadProjectFile(projectId, fileId, req.user);
+        const signedUrl = await this.filesService.downloadProjectFile(projectId, fileId, req.user, true);
         return { url: signedUrl };
     }
 
@@ -168,7 +168,7 @@ export class FilesController {
         @Param('findingId') findingId: string,
         @Param('fileId') fileId: string
     ) {
-        const signedUrl = await this.filesService.downloadFindingFile(findingId, fileId, req.user);
+        const signedUrl = await this.filesService.downloadFindingFile(findingId, fileId, req.user, true);
         return { url: signedUrl };
     }
 
