@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
-  ShieldAlert, Filter, Search, Plus, Eye, ArrowRight,
+  ShieldAlert, Filter, Search, Plus, Eye, ArrowRight, Trash2,
   AlertTriangle, CheckCircle, AlertCircle, Calendar, Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -89,6 +89,23 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           : await api.findings.list();
         setFindings(updated);
       }
+    }
+  };
+
+  const handleDeleteFinding = async (f: Finding) => {
+    if (!window.confirm(`Are you sure you want to delete "${f.title}"?`)) return;
+    try {
+      await api.projects.deleteFinding(f.projectId, f.id);
+      toast.success('Finding deleted');
+      if (onRefresh) onRefresh();
+      else {
+        const updated = projectId
+          ? await api.projects.getFindings(projectId)
+          : await api.findings.list();
+        setFindings(updated);
+      }
+    } catch (e) {
+      toast.error('Failed to delete finding');
     }
   };
 
@@ -248,12 +265,30 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                 <td className="p-4 text-slate-300">{f.assignedTo?.name || 'Unassigned'}</td>
                 <td className="p-4 text-slate-400 text-xs">{f.updatedAt ? new Date(f.updatedAt).toLocaleDateString() : '-'}</td>
                 <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm">
+                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-cyan-400"
+                      onClick={() => navigate(`/app/findings/${f.id}`)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <ArrowRight className="w-4 h-4" onClick={() => navigate(`/app/findings/${f.id}`)} />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-rose-400"
+                      onClick={() => handleDeleteFinding(f)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                      onClick={() => navigate(`/app/findings/${f.id}`)}
+                    >
+                      <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                 </td>

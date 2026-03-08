@@ -179,7 +179,7 @@ export class FindingsService {
                 evidence: true
             }
         });
-        this.sla.startOrUpdateTracker(project.orgId, 'FINDING', finding.id, { clientId: project.clientId }).catch(() => {});
+        this.sla.startOrUpdateTracker(project.orgId, 'FINDING', finding.id, { clientId: project.clientId }).catch(() => { });
         const entity = { id: finding.id, projectId, title: finding.title, status: finding.status, assignedToId: finding.assignedToId };
         this.automation.evaluateRules({
             orgId: project.orgId,
@@ -187,7 +187,7 @@ export class FindingsService {
             entityId: finding.id,
             event: AutomationTriggerEvent.CREATED,
             entity,
-        }).catch(() => {});
+        }).catch(() => { });
         if (finding.assignedToId) {
             this.automation.evaluateRules({
                 orgId: project.orgId,
@@ -195,9 +195,9 @@ export class FindingsService {
                 entityId: finding.id,
                 event: AutomationTriggerEvent.ASSIGNED,
                 entity,
-            }).catch(() => {});
+            }).catch(() => { });
         }
-        this.logFindingActivity(projectId, project.orgId, user.id, 'finding.created', finding, `Finding "${finding.title}" reported`).catch(() => {});
+        this.logFindingActivity(projectId, project.orgId, user.id, 'finding.created', finding, `Finding "${finding.title}" reported`).catch(() => { });
         return finding;
     }
 
@@ -211,7 +211,7 @@ export class FindingsService {
             entityId: finding.id,
             description,
             metadata: { title: finding.title },
-        }).catch(() => {});
+        }).catch(() => { });
     }
 
     async update(projectId: string, findingId: string, user: UserWithRoles, dto: UpdateFindingDto) {
@@ -273,7 +273,7 @@ export class FindingsService {
                     event: AutomationTriggerEvent.ASSIGNED,
                     entity,
                     previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
-                }).catch(() => {});
+                }).catch(() => { });
             }
             if (dto.status !== undefined && dto.status !== finding.status) {
                 this.automation.evaluateRules({
@@ -283,9 +283,9 @@ export class FindingsService {
                     event: AutomationTriggerEvent.STATUS_CHANGED,
                     entity,
                     previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
-                }).catch(() => {});
+                }).catch(() => { });
             }
-            this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => {});
+            this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => { });
             return updated;
         }
 
@@ -312,7 +312,7 @@ export class FindingsService {
                 event: AutomationTriggerEvent.ASSIGNED,
                 entity,
                 previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
-            }).catch(() => {});
+            }).catch(() => { });
         }
         if (dto.status !== undefined && dto.status !== finding.status) {
             this.automation.evaluateRules({
@@ -322,9 +322,9 @@ export class FindingsService {
                 event: AutomationTriggerEvent.STATUS_CHANGED,
                 entity,
                 previousEntity: { assignedToId: finding.assignedToId, status: finding.status },
-            }).catch(() => {});
+            }).catch(() => { });
         }
-        this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => {});
+        this.logFindingActivity(projectId, finding.orgId, user.id, 'finding.updated', updated, `Finding "${updated.title}" updated`).catch(() => { });
         return updated;
     }
 
@@ -395,9 +395,10 @@ export class FindingsService {
             throw new ForbiddenException('Only SUPER_ADMIN, OPS, or PM can delete findings');
         }
 
-        return this.prisma.finding.update({
+        await this.prisma.finding.update({
             where: { id: findingId },
             data: { deletedAt: new Date() }
         });
+        return { success: true };
     }
 }
