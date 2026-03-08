@@ -116,11 +116,10 @@ export class FilesController {
     async viewProjectFile(
         @Request() req: any,
         @Param('projectId') projectId: string,
-        @Param('fileId') fileId: string,
-        @Res() res: Response
+        @Param('fileId') fileId: string
     ) {
-        const signedUrl = await this.filesService.downloadProjectFile(projectId, fileId, req.user);
-        return res.redirect(signedUrl);
+        const signedUrl = await this.filesService.downloadProjectFile(projectId, fileId, req.user, false);
+        return { url: signedUrl };
     }
 
     @Delete('projects/:projectId/files/:fileId')

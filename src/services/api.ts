@@ -332,12 +332,13 @@ export const api = {
         return undefined;
       }
     },
-    downloadFile: async (clientId: string, fileId: string): Promise<string | undefined> => {
+    downloadFile: async (clientId: string, fileId: string, download: boolean = true): Promise<string | undefined> => {
       try {
-        const result = await fetchApi(`/clients/${clientId}/files/${fileId}/download`);
+        const mode = download ? 'download' : 'view';
+        const result = await fetchApi(`/clients/${clientId}/files/${fileId}/${mode}`);
         return result.url; // Returns signed URL
       } catch (e) {
-        console.error('Failed to get download URL:', e);
+        console.error('Failed to get file URL:', e);
         return undefined;
       }
     },
@@ -631,12 +632,13 @@ export const api = {
         return undefined;
       }
     },
-    downloadFile: async (projectId: string, fileId: string): Promise<string | undefined> => {
+    downloadFile: async (projectId: string, fileId: string, download: boolean = true): Promise<string | undefined> => {
       try {
-        const result = await fetchApi(`/projects/${projectId}/files/${fileId}/download`);
+        const mode = download ? 'download' : 'view';
+        const result = await fetchApi(`/projects/${projectId}/files/${fileId}/${mode}`);
         return result.url; // Returns signed URL
       } catch (e) {
-        console.error('Failed to get download URL:', e);
+        console.error('Failed to get file URL:', e);
         return undefined;
       }
     },
@@ -991,12 +993,13 @@ export const api = {
         return undefined;
       }
     },
-    downloadFile: async (findingId: string, fileId: string): Promise<string | undefined> => {
+    downloadFile: async (findingId: string, fileId: string, download: boolean = true): Promise<string | undefined> => {
       try {
-        const result = await fetchApi(`/findings/${findingId}/files/${fileId}/download`);
+        const mode = download ? 'download' : 'view';
+        const result = await fetchApi(`/findings/${findingId}/files/${fileId}/${mode}`);
         return result.url;
       } catch (e) {
-        console.error('Failed to get finding download URL:', e);
+        console.error('Failed to get file URL:', e);
         return undefined;
       }
     },

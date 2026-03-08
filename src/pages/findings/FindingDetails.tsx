@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ShieldAlert, CheckCircle, FileText, Image as ImageIcon,
-  Send, Download, Share2, Sparkles
+  Send, Download, Share2, Sparkles, Eye
 } from 'lucide-react';
-import { Badge, Button, GlassCard, Label, Select, TextArea } from "@/components/ui/UIComponents";
+import { Badge, Button, GlassCard, Label, Select, TextArea, Modal } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
 import { Finding, User, isInternalRole } from '@/types';
 import { useAI } from '@/contexts/AIContext';
+import { DocumentViewer } from '@/components/DocumentViewer';
 
 interface RichFinding extends Finding {
   projectName: string;
@@ -27,6 +28,7 @@ export const FindingDetails: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [replyText, setReplyText] = useState('');
   const [comments, setComments] = useState<any[]>([]);
+  const [viewModal, setViewModal] = useState<{ isOpen: boolean; url: string; filename: string; mimeType: string; fileId: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [postingComment, setPostingComment] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -176,11 +178,32 @@ export const FindingDetails: React.FC = () => {
     }
   };
 
-  const handleFileDownload = async (fileId: string) => {
+  const handleFileAction = async (fileId: string, download: boolean = true) => {
     if (!findingId) return;
-    const url = await api.findings.downloadFile(findingId, fileId);
-    if (url) {
-      window.open(url, '_blank');
+    try {
+      const file = finding.evidence?.find(f => f.id === fileId);
+      const url = await api.findings.downloadFile(findingId, fileId, download);
+      if (url) {
+        if (download) {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '';
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else if (file) {
+          setViewModal({
+            isOpen: true,
+            url,
+            filename: file.filename,
+            mimeType: file.mimeType || 'application/octet-stream',
+            fileId: file.id
+          });
+        }
+      }
+    } catch (err) {
+      console.error('File action failed', err);
     }
   };
 
@@ -216,7 +239,7 @@ export const FindingDetails: React.FC = () => {
         </div>
         <div className="flex gap-3 items-center">
           {findingId && (
-            <Button variant="outline" size="sm" onClick={() => openAI({ findingId })} title="AI Analyze">
+            <Button variant="outline" size="sm" onClick={() => openAI({ findingId })}>
               <Sparkles className="w-4 h-4 mr-1" /> AI Analyze
             </Button>
           )}
@@ -320,9 +343,14 @@ export const FindingDetails: React.FC = () => {
                     {file.mimeType?.includes('image') ? <ImageIcon className="w-4 h-4 text-cyan-400" /> : <FileText className="w-4 h-4 text-slate-400" />}
                     <span className="text-xs text-slate-300 truncate" title={file.filename}>{file.filename}</span>
                   </div>
-                  <button onClick={() => handleFileDownload(file.id)}>
-                    <Download className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleFileAction(file.id, false)} title="View inline">
+                      <Eye className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
+                    </button>
+                    <button onClick={() => handleFileAction(file.id, true)} title="Download">
+                      <Download className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {(!finding.evidence || finding.evidence.length === 0) && (
@@ -537,6 +565,23 @@ export const FindingDetails: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewModal && (
+        <Modal
+          isOpen={viewModal.isOpen}
+          onClose={() => setViewModal(null)}
+          title={viewModal.filename}
+          maxWidth="max-w-4xl"
+        >
+          <DocumentViewer
+            url={viewModal.url}
+            filename={viewModal.filename}
+            mimeType={viewModal.mimeType}
+            onDownload={() => handleFileAction(viewModal.fileId, true)}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

@@ -93,7 +93,9 @@ export class StorageService {
                 || (coolifyFqdn ? `https://${coolifyFqdn.split(',')[0]}` : null)
                 || `http://localhost:${process.env.PORT || 3000}`;
             const token = this.generateStreamToken(key, expiresIn);
-            return `${apiUrl}/api/files/stream?token=${token}${download ? '&download=true' : ''}`;
+            const params = new URLSearchParams({ token });
+            if (download) params.append('download', 'true');
+            return `${apiUrl}/api/files/stream?${params.toString()}`;
         } else {
             try {
                 const url = await this.s3!.getSignedUrlPromise('getObject', {

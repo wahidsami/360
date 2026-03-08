@@ -1,10 +1,12 @@
-import { Controller, Get, Query, Res, StreamableFile, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Query, Res, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { StorageService } from '../common/storage.service';
 import { PrismaService } from '../common/prisma.service';
 import type { Response } from 'express';
 
 @Controller('files')
 export class FileStreamController {
+    private readonly logger = new Logger(FileStreamController.name);
+
     constructor(
         private readonly storageService: StorageService,
         private readonly prisma: PrismaService
@@ -29,10 +31,15 @@ export class FileStreamController {
             where: { storageKey: key }
         });
 
+        if (!fileAsset) {
+            this.logger.error(`FileAsset not found in DB for key: ${key}`);
+            throw new NotFoundException('File not found');
+        }
+
         const isDownload = download === 'true';
 
         // Resolve mime-type: Database -> Key extension mapping -> Fallback
-        let mimeType = fileAsset?.mimeType || 'application/octet-stream';
+        let mimeType = fileAsset.mimeType || 'application/octet-stream';
         if (mimeType === 'application/octet-stream' && key.includes('.')) {
             const ext = key.split('.').pop()?.toLowerCase();
             const mimeMap: Record<string, string> = {
@@ -45,18 +52,27 @@ export class FileStreamController {
                 'svg': 'image/svg+xml',
                 'txt': 'text/plain',
                 'mp4': 'video/mp4',
-                'mp3': 'audio/mpeg'
+                'mp3': 'audio/mpeg',
+                'html': 'text/html',
+                'css': 'text/css',
+                'js': 'text/javascript',
+                'json': 'application/json'
             };
             if (ext && mimeMap[ext]) mimeType = mimeMap[ext];
         }
 
+        this.logger.log(`📥 Stream request: ${key} | Download: ${isDownload} | MIME: ${mimeType} | Size: ${fileAsset.sizeBytes}`);
+
         // Set Headers
         res.setHeader('Content-Type', mimeType);
-
-        // Security headers that help with inline rendering
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
         res.setHeader('X-Content-Type-Options', 'nosniff');
 
-        let filename = fileAsset?.filename || 'file';
+        if (fileAsset.sizeBytes) {
+            res.setHeader('Content-Length', fileAsset.sizeBytes.toString());
+        }
+
+        let filename = fileAsset.filename;
         if (key.includes('.') && !filename.includes('.')) {
             const ext = key.split('.').pop();
             filename = `${filename}.${ext}`;
@@ -65,19 +81,28 @@ export class FileStreamController {
         if (isDownload) {
             res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
         } else {
-            // For inline, we only send 'inline' to maximize browser compatibility for viewing
+            // Fix: Strict 'inline' without filename to ensure browser viewing
             res.setHeader('Content-Disposition', 'inline');
         }
 
-        const stream = this.storageService.getObjectStream(key);
+        this.logger.log(`📤 Outgoing headers: Content-Type: ${mimeType}, Content-Disposition: ${res.getHeader('Content-Disposition')}`);
 
-        stream.on('error', (err) => {
-            console.error('Streaming error:', err);
+        try {
+            const stream = this.storageService.getObjectStream(key);
+
+            stream.on('error', (err) => {
+                this.logger.error(`Streaming pipe error: ${key}`, err.stack);
+                if (!res.headersSent) {
+                    res.status(500).send('Error streaming file content');
+                }
+            });
+
+            stream.pipe(res);
+        } catch (error) {
+            this.logger.error(`Failed to get object stream: ${key}`, error.stack);
             if (!res.headersSent) {
-                res.status(500).send('Error streaming file');
+                res.status(404).send('File content not found in storage');
             }
-        });
-
-        stream.pipe(res);
+        }
     }
 }

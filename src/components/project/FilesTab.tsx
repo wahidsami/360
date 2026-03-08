@@ -2,13 +2,14 @@ import React, { useState, useRef } from 'react';
 import { FileAsset, Permission } from '@/types';
 import { Button, GlassCard, Badge, Modal, Input } from '../ui/UIComponents';
 import { Upload, File, FileText, Image, Download, Eye, X, Trash2 } from 'lucide-react';
+import { DocumentViewer } from '../DocumentViewer';
 import { PermissionGate } from '../PermissionGate';
 import { formatDistanceToNow } from 'date-fns';
 
 interface FilesTabProps {
     files: FileAsset[];
     onUpload: (file: File, metadata: { name: string; category: string; visibility: string }) => Promise<void>;
-    onDownload?: (fileId: string) => Promise<string | undefined>;
+    onDownload?: (fileId: string, download?: boolean) => Promise<string | undefined>;
     onDelete?: (fileId: string) => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    const [viewModal, setViewModal] = useState<{ isOpen: boolean; url: string; filename: string; mimeType: string; fileId: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +58,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
         try {
             let url = file.url;
             if (onDownload) {
-                url = (await onDownload(file.id)) || file.url;
+                url = (await onDownload(file.id, true)) || file.url;
             }
             if (url) {
                 const a = document.createElement('a');
@@ -82,10 +84,16 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
         try {
             let url = file.url;
             if (onDownload) {
-                url = (await onDownload(file.id)) || file.url;
+                url = (await onDownload(file.id, false)) || file.url;
             }
             if (url) {
-                window.open(url, '_blank');
+                setViewModal({
+                    isOpen: true,
+                    url,
+                    filename: file.name,
+                    mimeType: file.type || 'application/octet-stream',
+                    fileId: file.id
+                });
             } else {
                 alert('View URL not available.');
             }
@@ -244,6 +252,23 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                     </div>
                 </form>
             </Modal>
+
+            {/* Document Viewer Modal */}
+            {viewModal && (
+                <Modal
+                    isOpen={viewModal.isOpen}
+                    onClose={() => setViewModal(null)}
+                    title={viewModal.filename}
+                    maxWidth="max-w-4xl"
+                >
+                    <DocumentViewer
+                        url={viewModal.url}
+                        filename={viewModal.filename}
+                        mimeType={viewModal.mimeType}
+                        onDownload={() => handleDownload(files.find(f => f.id === viewModal.fileId)!)}
+                    />
+                </Modal>
+            )}
         </div>
     );
 };

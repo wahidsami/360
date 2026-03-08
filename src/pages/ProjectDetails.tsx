@@ -143,9 +143,9 @@ export const ProjectDetails: React.FC = () => {
     }
   };
 
-  const handleDownloadFile = async (fileId: string): Promise<string | undefined> => {
+  const handleDownloadFile = async (fileId: string, download: boolean = true): Promise<string | undefined> => {
     if (!projectId) return undefined;
-    return api.projects.downloadFile(projectId, fileId);
+    return api.projects.downloadFile(projectId, fileId, download);
   };
 
   const handleDeleteFile = async (fileId: string): Promise<void> => {

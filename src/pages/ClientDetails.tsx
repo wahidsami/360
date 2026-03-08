@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock, Eye, Download } from 'lucide-react';
 import { Client, Project, ClientMember, FileAsset, ActivityLog, Role, Permission } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, KpiCard, Input, Label, Select } from '../components/ui/UIComponents';
 import { PermissionGate } from '../components/PermissionGate';
 import { Modal } from '../components/ui/Modal';
+import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 
 export const ClientDetails: React.FC = () => {
@@ -24,6 +25,7 @@ export const ClientDetails: React.FC = () => {
     // Modal States
     const [isMemberModalOpen, setMemberModalOpen] = useState(false);
     const [isFileModalOpen, setFileModalOpen] = useState(false);
+    const [viewModal, setViewModal] = useState<{ isOpen: boolean; url: string; filename: string; mimeType: string; fileId: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form States
@@ -64,7 +66,34 @@ export const ClientDetails: React.FC = () => {
         }
     }, [isMemberModalOpen]);
 
-    // ...
+    const handleFileAction = async (fileId: string, download: boolean = true) => {
+        if (!clientId) return;
+        try {
+            const file = files.find(f => f.id === fileId);
+            const url = await api.clients.downloadFile(clientId, fileId, download);
+            if (url) {
+                if (download) {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '';
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else if (file) {
+                    setViewModal({
+                        isOpen: true,
+                        url,
+                        filename: file.name,
+                        mimeType: file.mimeType || 'application/octet-stream',
+                        fileId: file.id
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('File action failed', err);
+        }
+    };
 
     const handleInviteMember = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -183,46 +212,46 @@ export const ClientDetails: React.FC = () => {
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="space-y-6">
-                        <GlassCard title="At a Glance" className="h-fit">
-                            <dl className="space-y-4 text-sm">
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <Mail className="w-4 h-4 text-cyan-500" /> {client.email}
-                                </div>
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <Phone className="w-4 h-4 text-cyan-500" /> {client.phone || 'N/A'}
-                                </div>
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <Globe className="w-4 h-4 text-cyan-500" /> {client.website || 'N/A'}
-                                </div>
-                            </dl>
-                            <div className="mt-6 pt-6 border-t border-slate-700/50">
-                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Financial Health</h4>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-400">Revenue YTD</span>
-                                            <span className="text-emerald-400">
-                                                {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
+                            <GlassCard title="At a Glance" className="h-fit">
+                                <dl className="space-y-4 text-sm">
+                                    <div className="flex items-center gap-3 text-slate-300">
+                                        <Mail className="w-4 h-4 text-cyan-500" /> {client.email}
                                     </div>
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-400">Outstanding</span>
-                                            <span className="text-rose-400">
-                                                {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
-                                            </span>
+                                    <div className="flex items-center gap-3 text-slate-300">
+                                        <Phone className="w-4 h-4 text-cyan-500" /> {client.phone || 'N/A'}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-slate-300">
+                                        <Globe className="w-4 h-4 text-cyan-500" /> {client.website || 'N/A'}
+                                    </div>
+                                </dl>
+                                <div className="mt-6 pt-6 border-t border-slate-700/50">
+                                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Financial Health</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-slate-400">Revenue YTD</span>
+                                                <span className="text-emerald-400">
+                                                    {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
                                         </div>
-                                        <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '30%' }}></div></div>
+                                        <div>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-slate-400">Outstanding</span>
+                                                <span className="text-rose-400">
+                                                    {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '30%' }}></div></div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </GlassCard>
+                            </GlassCard>
 
-                        <GlassCard className="h-fit">
-                            <CustomFieldsSection entityType="CLIENT" entityId={client.id} />
-                        </GlassCard>
+                            <GlassCard className="h-fit">
+                                <CustomFieldsSection entityType="CLIENT" entityId={client.id} />
+                            </GlassCard>
                         </div>
 
                         <div className="lg:col-span-2 space-y-6">
@@ -346,7 +375,14 @@ export const ClientDetails: React.FC = () => {
                                         <div className="p-2 bg-slate-800 rounded text-cyan-400">
                                             <FileText className="w-6 h-6" />
                                         </div>
-                                        <span className="text-xs font-mono text-slate-500">{f.size}</span>
+                                        <div className="flex items-center gap-1">
+                                            <Button variant="ghost" size="sm" className="p-1 h-7 w-7 text-slate-500 hover:text-white" onClick={() => handleFileAction(f.id, false)}>
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="p-1 h-7 w-7 text-slate-500 hover:text-white" onClick={() => handleFileAction(f.id, true)}>
+                                                <Download className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                     <h4 className="font-medium text-slate-200 truncate" title={f.name}>{f.name}</h4>
                                     <div className="flex justify-between items-center mt-4 text-xs text-slate-500">
@@ -405,6 +441,23 @@ export const ClientDetails: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Document Viewer Modal */}
+            {viewModal && (
+                <Modal
+                    isOpen={viewModal.isOpen}
+                    onClose={() => setViewModal(null)}
+                    title={viewModal.filename}
+                    maxWidth="max-w-4xl"
+                >
+                    <DocumentViewer
+                        url={viewModal.url}
+                        filename={viewModal.filename}
+                        mimeType={viewModal.mimeType}
+                        onDownload={() => handleFileAction(viewModal.fileId, true)}
+                    />
+                </Modal>
+            )}
 
             {/* Add Member Modal */}
             <Modal isOpen={isMemberModalOpen} onClose={() => setMemberModalOpen(false)} title={t('add_member')}>
