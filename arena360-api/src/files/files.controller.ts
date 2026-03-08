@@ -112,6 +112,17 @@ export class FilesController {
         return { url: signedUrl };
     }
 
+    @Get('projects/:projectId/files/:fileId/view')
+    async viewProjectFile(
+        @Request() req: any,
+        @Param('projectId') projectId: string,
+        @Param('fileId') fileId: string,
+        @Res() res: Response
+    ) {
+        const signedUrl = await this.filesService.downloadProjectFile(projectId, fileId, req.user);
+        return res.redirect(signedUrl);
+    }
+
     @Delete('projects/:projectId/files/:fileId')
     async deleteProjectFile(
         @Request() req: any,
