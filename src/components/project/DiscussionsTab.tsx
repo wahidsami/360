@@ -424,7 +424,7 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
             if (attachedFiles.length > 0) {
                 const token = localStorage.getItem('auth_token') || '';
                 // Use the same fallback as api.ts
-                const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
+                const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
                 const links: string[] = [];
                 for (const file of attachedFiles) {
                     const form = new FormData();
@@ -525,7 +525,7 @@ const ThreadPanel: React.FC<{
 
     const uploadFiles = async (files: File[], token: string): Promise<string[]> => {
         const urls: string[] = [];
-        const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
+        const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
         for (const file of files) {
             const form = new FormData();
             form.append('file', file);

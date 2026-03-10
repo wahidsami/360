@@ -17,7 +17,7 @@ import { ChangelogModal } from './ChangelogModal';
 import { useAI } from '../contexts/AIContext';
 import { api } from '../services/api';
 
-const API_WS_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_WS_URL = import.meta.env.VITE_API_URL || '';
 
 const SidebarItem = ({ to, icon: Icon, label, onClick }: any) => (
   <NavLink

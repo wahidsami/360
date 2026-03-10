@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: arena360
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +47,7 @@ services:
       context: ./arena360-api
     container_name: arena360-api
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/arena360?schema=public
       JWT_SECRET: super-secret-key-that-is-at-least-32-chars-long

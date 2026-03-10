@@ -74,7 +74,15 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
                     </div>
                 ))}
                 {updates.length === 0 && (
-                    <div className="ml-6 text-slate-500 italic">No updates posted yet.</div>
+                    <div className="ml-6 py-16 text-center bg-slate-800/10 border border-dashed border-slate-800 rounded-xl px-4">
+                        <MessageSquare className="w-10 h-10 mx-auto mb-3 text-slate-700" />
+                        <p className="text-slate-500 italic text-sm">No project updates have been recorded yet.</p>
+                        <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                            <Button variant="ghost" size="sm" className="mt-4 text-cyan-500" onClick={() => setIsModalOpen(true)}>
+                                <Plus className="w-3 h-3 mr-2" /> Post an Update
+                            </Button>
+                        </PermissionGate>
+                    </div>
                 )}
             </div>
 

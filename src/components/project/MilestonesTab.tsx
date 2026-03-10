@@ -87,7 +87,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                                             {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
                                         </div>
                                         <Badge size="sm" variant={milestone.status === 'completed' ? 'success' : milestone.status === 'in_progress' ? 'info' : 'neutral'}>
-                                            {milestone.status}
+                                            {milestone.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                                         </Badge>
                                     </div>
                                 </div>
@@ -102,9 +102,15 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                     </div>
                 ))}
                 {milestones.length === 0 && (
-                    <div className="text-center py-10 text-slate-500 border border-dashed border-slate-700 rounded-lg">
-                        <Flag className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                        <p>No milestones defined yet.</p>
+                    <div className="text-center py-20 bg-slate-800/20 border border-dashed border-slate-700 rounded-xl">
+                        <Flag className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-20" />
+                        <h4 className="text-slate-300 font-medium italic">No milestones defined yet.</h4>
+                        <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">Milestones help track high-level progress and stage completions.</p>
+                        <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                            <Button variant="secondary" size="sm" className="mt-6" onClick={() => { setEditingMilestone({}); setIsModalOpen(true); }}>
+                                <Plus className="w-4 h-4 mr-2" /> Add Your First Milestone
+                            </Button>
+                        </PermissionGate>
                     </div>
                 )}
             </div>

@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
-import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply } from '../types';
+import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness } from '../types';
 import toast from 'react-hot-toast';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '') + '/api';
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('auth_token');
@@ -385,6 +385,10 @@ export const api = {
         return undefined;
       }
     },
+    getReadiness: async (id: string): Promise<ProjectReadiness> => {
+      return fetchApi(`/projects/${id}/readiness`);
+    },
+    getMetrics: async (id: string) => fetchApi(`/projects/${id}/metrics`),
     create: async (payload: Omit<Project, 'id'>): Promise<Project> => {
       const body = {
         ...payload,

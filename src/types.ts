@@ -213,7 +213,7 @@ export interface Finding {
   severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   description?: string;
-  status: 'open' | 'in_progress' | 'in_review' | 'closed' | 'dismissed';
+  status: 'open' | 'in_progress' | 'in_review' | 'closed' | 'dismissed' | 'blocked';
   visibility: 'INTERNAL' | 'CLIENT';
   ownerName?: string;
   reportedById?: string;
@@ -313,7 +313,7 @@ export interface CommentThread {
 }
 
 // --- TASKS ---
-export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
+export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Task {
@@ -367,3 +367,45 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.CLIENT_MEMBER]: [Permission.VIEW_DASHBOARD],
   [Role.VIEWER]: [Permission.VIEW_DASHBOARD]
 };
+
+export interface ReadinessAction {
+  type: 'navigate_tab' | 'open_edit_project';
+  target?: string;
+}
+
+export interface ReadinessItem {
+  id: string;
+  label: string;
+  status: 'complete' | 'missing' | 'not_applicable';
+  type: 'required' | 'conditional';
+  tab?: string;
+  action?: ReadinessAction;
+}
+
+export interface ReadinessSection {
+  items: ReadinessItem[];
+  summary: string;
+}
+
+export interface ProjectReadiness {
+  stage: 'SETUP' | 'PLANNING' | 'ACTIVE' | 'REVIEW' | 'DONE' | 'READY_FOR_BILLING';
+  stageExplanation: string;
+  sections: {
+    core: ReadinessSection;
+    planning: ReadinessSection;
+    resources: ReadinessSection;
+  };
+  nextAction: {
+    label: string;
+    tab: string;
+    reason?: string;
+    action?: ReadinessAction;
+  };
+  stats: {
+    totalRequired: number;
+    completedRequired: number;
+    totalConditional: number;
+    completedConditional: number;
+  };
+  completeness: number;
+}

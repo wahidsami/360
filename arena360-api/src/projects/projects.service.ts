@@ -210,4 +210,342 @@ export class ProjectsService {
     async getActivity(projectId: string, user: UserWithRoles) {
         return this.activityService.findByProject(projectId, user);
     }
+
+    async getReadiness(id: string, user: UserWithRoles) {
+        const project = await this.prisma.project.findUnique({
+            where: { id },
+            include: {
+                client: true,
+                members: true,
+                milestones: true,
+                tasks: true,
+                taskDependencies: true,
+                updates: true,
+                files: true,
+                findings: true,
+                reports: true,
+                contracts: true,
+                invoices: true,
+                sprints: true,
+                recurringTaskTemplates: true,
+            }
+        });
+
+        if (!project) throw new NotFoundException('Project not found');
+
+        // Helper to count time entries
+        const timeEntriesCount = await this.prisma.timeEntry.count({
+            where: { taskId: { in: project.tasks.map(t => t.id) } }
+        });
+
+        // 1. CORE SECTION
+        const coreItems = [
+            { id: 'name', label: 'Project Name', status: !!project.name ? 'complete' : 'missing', type: 'required', tab: 'overview', action: { type: 'open_edit_project' } },
+            { id: 'client', label: 'Client Assignment', status: !!project.clientId ? 'complete' : 'missing', type: 'required', tab: 'overview', action: { type: 'open_edit_project' } },
+            { id: 'description', label: 'Project Description', status: !!project.description ? 'complete' : 'missing', type: 'required', tab: 'overview', action: { type: 'open_edit_project' } },
+            { id: 'startDate', label: 'Start Date', status: !!project.startDate ? 'complete' : 'missing', type: 'required', tab: 'overview', action: { type: 'open_edit_project' } },
+            { id: 'deadline', label: 'Project Deadline', status: !!project.endDate ? 'complete' : 'missing', type: 'required', tab: 'overview', action: { type: 'open_edit_project' } },
+            { id: 'team', label: 'Team Members', status: project.members.length > 0 ? 'complete' : 'missing', type: 'required', tab: 'team', action: { type: 'navigate_tab', target: 'team' } },
+            { id: 'milestones', label: 'Milestones', status: project.milestones.length > 0 ? 'complete' : 'missing', type: 'required', tab: 'milestones', action: { type: 'navigate_tab', target: 'milestones' } },
+            { id: 'tasks', label: 'Project Tasks', status: project.tasks.length > 0 ? 'complete' : 'missing', type: 'required', tab: 'tasks', action: { type: 'navigate_tab', target: 'tasks' } },
+        ];
+
+        // 2. PLANNING SECTION
+        const planningItems = [
+            { id: 'timeline', label: 'Timeline Configuration', status: (project.tasks.some(t => t.startDate && t.dueDate) || project.taskDependencies.length > 0) ? 'complete' : 'missing', type: 'conditional', tab: 'timeline', action: { type: 'navigate_tab', target: 'timeline' } },
+            { id: 'sprints', label: 'Sprint Planning', status: project.sprints.length > 0 ? 'complete' : 'missing', type: 'conditional', tab: 'sprints', action: { type: 'navigate_tab', target: 'sprints' } },
+            { id: 'recurring', label: 'Recurring Tasks', status: project.recurringTaskTemplates.length > 0 ? 'complete' : 'missing', type: 'conditional', tab: 'recurring', action: { type: 'navigate_tab', target: 'recurring' } },
+            { id: 'findings', label: 'Open Findings', status: project.findings.length === 0 ? 'not_applicable' : project.findings.every(f => f.status === 'CLOSED' || f.status === 'DISMISSED') ? 'complete' : 'missing', type: 'conditional', tab: 'findings', action: { type: 'navigate_tab', target: 'findings' } },
+            { id: 'reports', label: 'Delivery Reports', status: project.reports.length > 0 ? 'complete' : 'missing', type: 'conditional', tab: 'reports', action: { type: 'navigate_tab', target: 'reports' } },
+            { id: 'time', label: 'Time Tracking', status: timeEntriesCount > 0 ? 'complete' : 'missing', type: 'conditional', tab: 'time', action: { type: 'navigate_tab', target: 'time' } },
+        ];
+
+        // 3. RESOURCES SECTION
+        const resourcesItems = [
+            { id: 'files', label: 'Required Files', status: project.files.length > 0 ? 'complete' : 'missing', type: 'required', tab: 'files', action: { type: 'navigate_tab', target: 'files' } },
+            { id: 'financials', label: 'Financial Setup', status: (project.contracts.length > 0 || project.invoices.length > 0) ? 'complete' : 'missing', type: 'conditional', tab: 'financials', action: { type: 'navigate_tab', target: 'financials' } },
+            { id: 'testing', label: 'Testing Access', status: 'not_applicable', type: 'conditional', tab: 'testing-access' },
+        ];
+
+        // Stats
+        const stats = {
+            totalRequired: coreItems.filter(i => i.type === 'required').length + resourcesItems.filter(i => i.type === 'required').length,
+            completedRequired: coreItems.filter(i => i.type === 'required' && i.status === 'complete').length + resourcesItems.filter(i => i.type === 'required' && i.status === 'complete').length,
+            totalConditional: planningItems.length + coreItems.filter(i => i.type === 'conditional').length + resourcesItems.filter(i => i.type === 'conditional').length,
+            completedConditional: planningItems.filter(i => i.status === 'complete').length + coreItems.filter(i => i.type === 'conditional' && i.status === 'complete').length + resourcesItems.filter(i => i.type === 'conditional' && i.status === 'complete').length,
+        };
+
+        const completeness = Math.round((stats.completedRequired / stats.totalRequired) * 100);
+
+        // Stage Logic
+        let stage = 'SETUP' as any;
+        let stageExplanation = 'Initial project parameters and team setup required.';
+
+        const coreRequiredReady = coreItems.filter(i => i.type === 'required').every(i => i.status === 'complete');
+
+        if (coreRequiredReady) {
+            stage = 'PLANNING';
+            stageExplanation = 'Core setup complete. Define milestones and delivery schedule.';
+            if (project.tasks.length > 0 && (project.status === 'ACTIVE' || project.status === 'IN_PROGRESS')) {
+                stage = 'ACTIVE';
+                stageExplanation = 'Project execution in progress. Track tasks and post updates.';
+            }
+            if (project.status === 'TESTING' || (project.findings.length > 0 && project.findings.some(f => f.status !== 'CLOSED'))) {
+                stage = 'REVIEW';
+                stageExplanation = 'Reviewing findings and testing deliverables.';
+            }
+            if (project.status === 'COMPLETED' || project.status === 'DEPLOYED') {
+                stage = 'DONE';
+                stageExplanation = 'Project deliverables accepted and project closed.';
+                const hasPaidInvoices = project.invoices.some(i => i.status === 'PAID');
+                if (hasPaidInvoices) {
+                    stage = 'READY_FOR_BILLING';
+                    stageExplanation = 'Project complete and financials are ready for final audit.';
+                }
+            }
+        }
+
+        // Enhanced Primary Action Intelligence Logic
+        let nextAction: any = null;
+
+        // Priority 1: Critical findings with context
+        const criticalFindings = project.findings.filter(
+            f => (f.severity === 'CRITICAL' || f.severity === 'HIGH') && f.status !== 'CLOSED' && f.status !== 'DISMISSED'
+        );
+        if (criticalFindings.length > 0) {
+            const blockingTasks = project.tasks.filter(t =>
+                criticalFindings.some(f => f.id === t.id) // simplistic assumption for affectedTasks matching
+            );
+            nextAction = {
+                type: 'critical_findings',
+                title: 'Critical Issues Blocking Progress',
+                description: `${criticalFindings.length} critical finding(s) require action`,
+                details: {
+                    findings: criticalFindings.map(f => f.title),
+                    affectedTasks: blockingTasks.length,
+                    recommendation: blockingTasks.length > 0
+                        ? 'Resolve findings to unblock tasks'
+                        : 'Address findings to prevent future issues'
+                },
+                actions: [
+                    { label: 'Review Findings', route: 'findings', primary: true },
+                    { label: 'View Affected Tasks', route: 'tasks', filter: 'blocked' }
+                ]
+            };
+        } else {
+            // Priority 2: Overdue tasks with impact analysis
+            const overdueTasks = project.tasks.filter(
+                t => t.status !== 'DONE' && t.dueDate && new Date(t.dueDate) < new Date()
+            );
+            if (overdueTasks.length > 0) {
+                const dependentTasks = project.tasks.filter(t =>
+                    (t as any).dependencies?.some((d: any) => overdueTasks.some(ot => ot.id === d.dependsOnId))
+                ) || [];
+                const affectedMilestones = project.milestones.filter(m =>
+                    (m as any).tasks?.some((mt: any) => overdueTasks.some(ot => ot.id === mt.id))
+                ) || [];
+
+                nextAction = {
+                    type: 'overdue_tasks',
+                    title: `${overdueTasks.length} Task(s) Past Deadline`,
+                    description: `Impacting ${affectedMilestones.length} milestone(s) and blocking ${dependentTasks.length} task(s)`,
+                    details: {
+                        mostOverdue: overdueTasks.sort((a, b) =>
+                            new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
+                        )[0],
+                        totalDaysLate: overdueTasks.reduce((sum, t) =>
+                            sum + Math.floor((new Date().getTime() - new Date(t.dueDate!).getTime()) / (1000 * 60 * 60 * 24)), 0
+                        ),
+                        recommendation: dependentTasks.length > 0
+                            ? `Prioritize tasks blocking ${dependentTasks.length} other items`
+                            : 'Update task status or extend deadlines'
+                    },
+                    actions: [
+                        { label: 'Address Overdue Tasks', route: 'tasks', filter: 'overdue', primary: true },
+                        { label: 'Adjust Schedule', route: 'milestones' }
+                    ]
+                };
+            } else {
+                // Priority 3: At-risk milestones
+                const atRiskMilestones = project.milestones.filter(
+                    m => m.status !== 'COMPLETED' && m.dueDate && new Date(m.dueDate) < new Date()
+                );
+                if (atRiskMilestones.length > 0) {
+                    nextAction = {
+                        type: 'at_risk_milestones',
+                        title: `${atRiskMilestones.length} Milestone(s) Missed`,
+                        description: atRiskMilestones.map(m => m.title).join(', '),
+                        details: {
+                            oldestMissed: Math.floor(
+                                (new Date().getTime() - new Date(atRiskMilestones[0].dueDate!).getTime()) / (1000 * 60 * 60 * 24)
+                            ),
+                            recommendation: 'Update milestone status or reschedule project timeline'
+                        },
+                        actions: [
+                            { label: 'Update Milestones', route: 'milestones', primary: true },
+                            { label: 'Adjust Timeline', route: 'timeline' }
+                        ]
+                    };
+                } else {
+                    // Priority 4: Communication gaps
+                    const lastUpdate = project.updates[0];
+                    const daysSinceUpdate = lastUpdate
+                        ? Math.floor((new Date().getTime() - new Date(lastUpdate.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+                        : null;
+
+                    if ((project.status === 'ACTIVE' || project.status === 'IN_PROGRESS') && (daysSinceUpdate === null || daysSinceUpdate > 7)) {
+                        nextAction = {
+                            type: 'stale_communication',
+                            title: 'Project Update Needed',
+                            description: daysSinceUpdate !== null ? `Last update was ${daysSinceUpdate} days ago` : 'No project updates posted yet',
+                            details: {
+                                recommendation: 'Post weekly updates to keep stakeholders informed'
+                            },
+                            actions: [
+                                { label: 'Post Update', route: 'updates', primary: true }
+                            ]
+                        };
+                    } else {
+                        // Priority 5: Required Core/Resource Items (Setup Blockers)
+                        const firstMissingCore = coreItems.find(i => i.status === 'missing' && i.type === 'required');
+                        const firstMissingResource = resourcesItems.find(i => i.status === 'missing' && i.type === 'required');
+
+                        if (firstMissingCore) {
+                            nextAction = {
+                                type: 'setup_required',
+                                title: `${firstMissingCore.label} Missing`,
+                                description: `Required item from Core Setup is missing.`,
+                                details: { recommendation: 'Complete core setup to unblock planning' },
+                                actions: [{ label: 'Complete Setup', route: firstMissingCore.tab, primary: true }]
+                            };
+                        } else if (firstMissingResource) {
+                            nextAction = {
+                                type: 'setup_required',
+                                title: `${firstMissingResource.label} Missing`,
+                                description: `Required item from Resources is missing.`,
+                                details: { recommendation: 'Upload necessary resources to proceed' },
+                                actions: [{ label: 'Complete Setup', route: firstMissingResource.tab, primary: true }]
+                            };
+                        } else if (stage === 'PLANNING' && planningItems.some(i => i.status === 'missing')) {
+                            const firstPlanning = planningItems.find(i => i.status === 'missing');
+                            nextAction = {
+                                type: 'planning_required',
+                                title: `${firstPlanning?.label || 'Timeline'} Missing`,
+                                description: `Define the schedule for project delivery.`,
+                                details: { recommendation: 'Complete planning modules' },
+                                actions: [{ label: 'Configure Planning', route: firstPlanning?.tab || 'timeline', primary: true }]
+                            };
+                        } else {
+                            // Default action
+                            nextAction = {
+                                type: 'on_track',
+                                title: 'Project On Track',
+                                description: 'All major requirements and tasks are up to date.',
+                                details: { recommendation: 'Review team discussions or adjust timeline as needed.' },
+                                actions: [{ label: 'View Discussions', route: 'discussions', primary: true }]
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        return {
+            stage,
+            stageExplanation,
+            sections: {
+                core: {
+                    items: coreItems,
+                    summary: `${coreItems.filter(i => i.status === 'complete').length} of ${coreItems.length} core parameters set.`
+                },
+                planning: {
+                    items: planningItems,
+                    summary: `${planningItems.filter(i => i.status === 'complete').length} of ${planningItems.length} planning modules active.`
+                },
+                resources: {
+                    items: resourcesItems,
+                    summary: `${resourcesItems.filter(i => i.status === 'complete').length} of ${resourcesItems.length} resources available.`
+                },
+            },
+            nextAction,
+            stats,
+            completeness
+        };
+    }
+
+    async getMetrics(id: string, user: UserWithRoles) {
+        const project = await this.prisma.project.findUnique({
+            where: { id },
+            include: {
+                invoices: true,
+                contracts: true,
+                members: { include: { user: true } },
+                tasks: true,
+                findings: true
+            }
+        });
+
+        if (!project) throw new NotFoundException('Project not found');
+
+        // 1. Budget
+        const totalBudget = project.budget || project.contracts.reduce((sum: number, c: any) => sum + (+c.amount || 0), 0);
+        const spent = project.invoices.filter((i: any) => i.status?.toLowerCase() === 'paid').reduce((sum: number, i: any) => sum + (+i.amount || 0), 0);
+        const remaining = Math.max(0, totalBudget - spent);
+        const percentSpent = totalBudget > 0 ? (spent / totalBudget) * 100 : (spent > 0 ? 100 : 0);
+
+        const budget = {
+            total: totalBudget,
+            spent,
+            remaining,
+            percentSpent: Math.round(percentSpent),
+            isOverBudget: percentSpent > 100
+        };
+
+        // 2. Capacity
+        const capacityMembers = project.members.map((member: any) => {
+            const assignedTasks = project.tasks.filter((t: any) => t.assigneeId === member.userId && t.status?.toUpperCase() !== 'DONE');
+            const taskCount = assignedTasks.length;
+
+            return {
+                id: member.userId,
+                name: member.user.name,
+                taskCount,
+                status: taskCount === 0 ? 'available' :
+                    taskCount <= 3 ? 'low' :
+                        taskCount <= 5 ? 'medium' : 'high'
+            };
+        }).sort((a: any, b: any) => b.taskCount - a.taskCount);
+
+        const capacity = {
+            members: capacityMembers,
+            highLoad: capacityMembers.filter((m: any) => m.status === 'high'),
+            available: capacityMembers.filter((m: any) => m.status === 'available')
+        };
+
+        // 3. Blockers
+        const activeBlockers: any[] = [];
+
+        // Add blocked tasks
+        const blockedTasks = project.tasks.filter((t: any) => t.status?.toUpperCase() === 'BLOCKED');
+        for (const bt of blockedTasks) {
+            activeBlockers.push({ id: bt.id, title: `Task Blocked: ${bt.title}` });
+        }
+
+        // Add critical findings (if we wanted to extend blockers, but to keep it simple, just tasks for now)
+        const criticalFindings = project.findings?.filter((f: any) => f.status === 'OPEN' && f.severity === 'CRITICAL') || [];
+        for (const cf of criticalFindings) {
+            activeBlockers.push({ id: cf.id, title: `Critical Finding: ${cf.title}` });
+        }
+
+        const blockers = {
+            active: activeBlockers,
+            resolved: []
+        };
+
+        return {
+            budget,
+            capacity,
+            blockers
+        };
+    }
 }

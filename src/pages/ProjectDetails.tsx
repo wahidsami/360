@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Sparkles } from 'lucide-react';
-import { Project, Client, Milestone, ProjectUpdate, EnvironmentAccess, Invoice, Contract, Discussion, DiscussionReply, Permission, ActivityLog, FileAsset, ProjectMember, Role, Finding, Report, Task, isInternalRole } from '../types';
+import { Project, Client, Milestone, ProjectUpdate, EnvironmentAccess, Invoice, Contract, Discussion, DiscussionReply, Permission, ActivityLog, FileAsset, ProjectMember, Role, Finding, Report, Task, isInternalRole, ProjectReadiness, ReadinessAction } from '../types';
 import { api } from '../services/api';
 import { Button, Badge, KpiCard } from '../components/ui/UIComponents';
 import { PermissionGate } from '../components/PermissionGate';
@@ -12,6 +12,34 @@ import { RecurringTasksTab } from '../components/project/RecurringTasksTab';
 import { useAuth } from '../contexts/AuthContext';
 import { useAI } from '../contexts/AIContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
+
+// --- TAB CONFIGURATION (PHASE 1) ---
+const TAB_GROUPS = [
+  { id: 'core', label: 'Core', color: 'text-cyan-400' },
+  { id: 'planning', label: 'Planning & Delivery', color: 'text-indigo-400' },
+  { id: 'resources', label: 'Resources', color: 'text-slate-400' }
+];
+
+const TAB_DEFINITIONS = [
+  { id: 'overview', label: 'Overview', group: 'core', order: 1 },
+  { id: 'discussions', label: 'Discussions', group: 'core', order: 2 },
+  { id: 'tasks', label: 'Tasks', group: 'core', internalOnly: true, order: 3 },
+  { id: 'milestones', label: 'Milestones', group: 'core', order: 4 },
+  { id: 'updates', label: 'Updates', group: 'core', order: 5 },
+
+  { id: 'timeline', label: 'Timeline', group: 'planning', internalOnly: true, order: 1 },
+  { id: 'sprints', label: 'Sprints', group: 'planning', internalOnly: true, order: 2 },
+  { id: 'findings', label: 'Findings', group: 'planning', order: 3 },
+  { id: 'reports', label: 'Reports', group: 'planning', order: 4 },
+  { id: 'time', label: 'Time', group: 'planning', internalOnly: true, order: 5 },
+  { id: 'recurring', label: 'Recurring', group: 'planning', internalOnly: true, order: 6 },
+
+  { id: 'files', label: 'Files', group: 'resources', order: 1 },
+  { id: 'team', label: 'Team', group: 'resources', order: 2 },
+  { id: 'financials', label: 'Financials', group: 'resources', order: 3 },
+  { id: 'testing', label: 'Testing Access', group: 'resources', order: 4 },
+  { id: 'activity', label: 'Activity', group: 'resources', order: 5 },
+];
 
 export const ProjectDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -35,6 +63,39 @@ export const ProjectDetails: React.FC = () => {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [readiness, setReadiness] = useState<ProjectReadiness | null>(null);
+  const [metrics, setMetrics] = useState<any>(null);
+
+  // --- Role-Based Tab Selection (Fixed Hook Order) ---
+  const isInternal = user && isInternalRole(user.role);
+  const visibleTabs = TAB_DEFINITIONS
+    .filter(tab => !tab.internalOnly || isInternal)
+    .sort((a, b) => (a.order || 99) - (b.order || 99));
+
+  // --- Safe Role-Based Default Tab Selection ---
+  useEffect(() => {
+    if (!project || !user) return;
+
+    // 1. Only auto-switch if we are on 'overview' (the default state)
+    // and haven't explicitly navigated elsewhere.
+    if (activeTab !== 'overview') return;
+
+    const roleDefaults: Record<string, string> = {
+      [Role.DEV]: 'tasks',
+      [Role.FINANCE]: 'financials',
+      [Role.CLIENT_OWNER]: 'overview',
+      [Role.CLIENT_MANAGER]: 'overview',
+      [Role.CLIENT_MEMBER]: 'overview',
+      [Role.SUPER_ADMIN]: 'overview'
+    };
+
+    const targetTab = roleDefaults[user.role] || 'overview';
+
+    // 2. Critical: Check if the user actually has visibility for this tab
+    if (targetTab !== 'overview' && visibleTabs.some(t => t.id === targetTab)) {
+      setActiveTab(targetTab);
+    }
+  }, [project?.id, user?.role]); // Only re-run if project or role changes
 
   useEffect(() => {
     if (projectId) {
@@ -43,6 +104,24 @@ export const ProjectDetails: React.FC = () => {
     }
     return () => setContext({});
   }, [projectId, setContext]);
+
+  const refreshReadiness = async () => {
+    if (!projectId) return;
+    // Small delay to ensure backend state is committed and processed
+    setTimeout(async () => {
+      try {
+        const [rd, met] = await Promise.all([
+          api.projects.getReadiness(projectId),
+          api.projects.getMetrics(projectId)
+        ]);
+        setReadiness(rd as any);
+        setMetrics(met);
+        console.log("Readiness and metrics refreshed");
+      } catch (e) {
+        console.error('Readiness refresh failed', e);
+      }
+    }, 300);
+  };
 
   const loadData = async () => {
     if (!projectId) return;
@@ -58,7 +137,7 @@ export const ProjectDetails: React.FC = () => {
 
       // Parallel fetch with error handling
       try {
-        const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
+        const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk, rd, met] = await Promise.all([
           api.projects.getMilestones(projectId).catch(e => { console.error('Milestones failed', e); return []; }),
           api.projects.getUpdates(projectId).catch(e => { console.error('Updates failed', e); return []; }),
           api.projects.getEnvironments(projectId).catch(e => { console.error('Environments failed', e); return []; }),
@@ -69,7 +148,9 @@ export const ProjectDetails: React.FC = () => {
           api.projects.getMembers(projectId).catch(e => { console.error('Members failed', e); return []; }),
           api.projects.getFindings(projectId).catch(e => { console.error('Findings failed', e); return []; }),
           api.projects.getReports(projectId).catch(e => { console.error('Reports failed', e); return []; }),
-          api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; })
+          api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; }),
+          api.projects.getReadiness(projectId).catch(e => { console.error('Readiness failed', e); return null; }),
+          api.projects.getMetrics(projectId).catch(e => { console.error('Metrics failed', e); return null; })
         ]);
 
         startTransition(() => {
@@ -84,7 +165,10 @@ export const ProjectDetails: React.FC = () => {
           setFindings(fnd);
           setReports(rep);
           setTasks(tsk);
+          setReadiness(rd as any);
+          setMetrics(met);
         });
+
       } catch (error) {
         console.error("Critical error loading project data", error);
       }
@@ -114,6 +198,7 @@ export const ProjectDetails: React.FC = () => {
     } as Milestone);
     const ms = await api.projects.getMilestones(projectId);
     setMilestones(ms);
+    refreshReadiness();
   };
 
   const handleDeleteMilestone = async (id: string) => {
@@ -121,6 +206,7 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.deleteMilestone(projectId, id);
     const ms = await api.projects.getMilestones(projectId);
     setMilestones(ms);
+    refreshReadiness();
   };
 
   const handleUploadFile = async (file: File, metadata: { name: string; category: string; visibility: string }) => {
@@ -137,6 +223,7 @@ export const ProjectDetails: React.FC = () => {
 
       const fl = await api.projects.getFiles(projectId);
       setFiles(fl);
+      refreshReadiness();
     } catch (error) {
       console.error("Failed to upload file:", error);
       alert("Failed to upload file. Please try again.");
@@ -154,6 +241,7 @@ export const ProjectDetails: React.FC = () => {
     if (success) {
       const fl = await api.projects.getFiles(projectId);
       setFiles(fl);
+      refreshReadiness();
     } else {
       alert('Failed to delete file. Please try again.');
     }
@@ -195,6 +283,7 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.updateMemberRole(projectId, userId, role);
     const mem = await api.projects.getMembers(projectId);
     setMembers(mem);
+    refreshReadiness();
   };
 
   const handleAddMember = async (userId: string, role: Role) => {
@@ -202,6 +291,7 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.addMember(projectId, userId, role);
     const mem = await api.projects.getMembers(projectId);
     setMembers(mem);
+    refreshReadiness();
   };
 
   const handleRemoveMember = async (userId: string) => {
@@ -209,6 +299,7 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.removeMember(projectId, userId);
     const mem = await api.projects.getMembers(projectId);
     setMembers(mem);
+    refreshReadiness();
   };
 
   // --- Finding Handlers ---
@@ -230,7 +321,7 @@ export const ProjectDetails: React.FC = () => {
       };
       const { id, projectId: _pid, sourceRecurringId, createdAt, updatedAt,
         assignedTo, assignedToId: _aid, sprintId: _sid, sprint,
-        dependencies, ...rest } = t as any;
+        dependencies, assigneeName, ...rest } = t as any;
       const payload = {
         ...rest,
         startDate: toYMD(rest.startDate),
@@ -242,6 +333,7 @@ export const ProjectDetails: React.FC = () => {
     }
     const newTasks = await api.projects.getTasks(projectId);
     setTasks(newTasks);
+    refreshReadiness();
   };
 
   const handleDeleteTask = async (id: string) => {
@@ -249,6 +341,7 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.deleteTask(projectId, id);
     const newTasks = await api.projects.getTasks(projectId);
     setTasks(newTasks);
+    refreshReadiness();
   };
 
   const handleMoveTask = async (id: string, status: any) => {
@@ -256,28 +349,35 @@ export const ProjectDetails: React.FC = () => {
     await api.projects.moveTaskStatus(projectId, id, status);
     const newTasks = await api.projects.getTasks(projectId);
     setTasks(newTasks);
+    refreshReadiness();
+  };
+
+  const handleReadinessAction = (action: ReadinessAction) => {
+    const currentProjectId = projectId || project?.id;
+    console.log("Guided Action Triggered:", action, "Project ID:", currentProjectId);
+
+    if (action.type === 'navigate_tab' && action.target) {
+      if (visibleTabs.some(t => t.id === action.target)) {
+        console.log("Navigating to tab:", action.target);
+        setActiveTab(action.target);
+      } else {
+        console.warn("Target tab not visible or restricted:", action.target);
+      }
+    } else if (action.type === 'open_edit_project') {
+      const editPath = `/app/projects/${currentProjectId}/edit`;
+      const hasPerm = can(Permission.MANAGE_PROJECTS);
+      console.log("Action: Open Edit Project", { path: editPath, hasPermission: hasPerm, userRole: user?.role });
+
+      if (hasPerm) {
+        navigate(editPath);
+      } else {
+        console.error("Permission Denied for Edit Project Action");
+        alert("You do not have permission to edit this mission's parameters. Please contact an administrator.");
+      }
+    }
   };
 
   if (!project) return <div className="p-10 text-center text-slate-500">Loading mission data...</div>;
-
-  const tabs = [
-    { id: 'overview', label: t('overview') },
-    { id: 'tasks', label: t('tasks'), hidden: user && !isInternalRole(user.role) },
-    { id: 'time', label: t('time'), hidden: user && !isInternalRole(user.role) },
-    { id: 'timeline', label: t('timeline'), hidden: user && !isInternalRole(user.role) },
-    { id: 'sprints', label: t('sprints'), hidden: user && !isInternalRole(user.role) },
-    { id: 'recurring', label: t('recurring'), hidden: user && !isInternalRole(user.role) },
-    { id: 'milestones', label: t('milestones') },
-    { id: 'updates', label: t('updates') },
-    { id: 'files', label: t('files') },
-    { id: 'team', label: t('team') },
-    { id: 'findings', label: t('findings') },
-    { id: 'reports', label: t('reports') },
-    { id: 'testing', label: t('testing_access') },
-    { id: 'financials', label: t('financials') },
-    { id: 'discussions', label: t('discussions') },
-    { id: 'activity', label: t('activity') || 'Activity' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -305,7 +405,9 @@ export const ProjectDetails: React.FC = () => {
           <Button variant="outline" size="sm" onClick={() => openAI({ projectId: project.id })} title="AI Assistant">
             <Sparkles className="w-4 h-4 mr-1" /> AI
           </Button>
-          <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'deployed' ? 'success' : 'neutral'}>{project.status}</Badge>
+          <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'deployed' ? 'success' : 'neutral'}>
+            {project.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+          </Badge>
           <PermissionGate permission={Permission.MANAGE_PROJECTS}>
             <Button variant="secondary" size="sm" onClick={() => navigate(`/app/projects/${project.id}/edit`)}>
               <Edit className="w-4 h-4 mr-2" /> Edit
@@ -314,22 +416,43 @@ export const ProjectDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs Nav */}
-      <div className="flex border-b border-slate-700/50 overflow-x-auto scrollbar-none gap-8">
-        {tabs.filter(t => !t.hidden).map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              startTransition(() => {
-                setActiveTab(tab.id);
-              });
-            }}
-            className={`pb-4 px-2 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'
-              } ${isPending ? 'opacity-50' : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Tabs Nav (Grouped) */}
+      <div className="flex flex-col gap-4 border-b border-slate-700/50 pb-1">
+        <div className="flex items-center overflow-x-auto scrollbar-none gap-2">
+          {TAB_GROUPS.map((group, idx) => {
+            const groupTabs = visibleTabs.filter(t => t.group === group.id);
+            if (groupTabs.length === 0) return null;
+
+            return (
+              <React.Fragment key={group.id}>
+                {idx > 0 && <div className="h-6 w-px bg-slate-700/50 mx-2 self-center shrink-0" />}
+                <div className="flex items-center gap-1">
+                  <span className={`text-[10px] uppercase tracking-widest font-bold ${group.color} opacity-40 px-2 select-none whitespace-nowrap hidden lg:inline`}>
+                    {group.label}
+                  </span>
+                  <div className="flex gap-0.5">
+                    {groupTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          startTransition(() => {
+                            setActiveTab(tab.id);
+                          });
+                        }}
+                        className={`py-1.5 px-2.5 rounded-lg font-medium text-xs transition-all whitespace-nowrap ${activeTab === tab.id
+                          ? 'bg-cyan-500/10 text-cyan-400'
+                          : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+                          } ${isPending ? 'opacity-50' : ''}`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -346,19 +469,35 @@ export const ProjectDetails: React.FC = () => {
                 stats={{
                   taskCount: tasks.length,
                   completedTasks: tasks.filter(t => t.status?.toLowerCase() === 'done').length,
+                  overdueTasks: tasks.filter(t => t.status?.toLowerCase() !== 'done' && t.dueDate && new Date(t.dueDate) < new Date()).length,
                   milestoneCount: milestones.length,
                   completedMilestones: milestones.filter(m => m.status?.toLowerCase() === 'completed').length,
+                  atRiskMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) < new Date()).length,
+                  upcomingMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) > new Date() && new Date(m.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length,
+                  findingCount: findings.length,
+                  unresolvedFindings: findings.filter(f => !['closed', 'dismissed'].includes(f.status.toLowerCase())).length,
+                  pendingReports: reports.filter(r => r.status === 'DRAFT').length,
                   budget: project.budget || financials.contract?.amount || 0,
                   spent: financials.invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((sum, i) => sum + i.amount, 0)
                 }}
+                tasks={tasks}
+                findings={findings}
+                milestones={milestones}
                 recentUpdates={updates.slice(0, 5)}
+                onNavigate={(tab) => setActiveTab(tab)}
+                onAction={handleReadinessAction}
+                onRefresh={loadData}
+                allowedTabs={visibleTabs.map(t => t.id)}
+                readiness={readiness}
+                metrics={metrics}
+                activity={activity}
               />
             )}
             {activeTab === 'tasks' && <TasksTab projectId={projectId!} tasks={tasks} milestones={milestones} members={members} onUpsert={handleUpsertTask} onDelete={handleDeleteTask} onMove={handleMoveTask} onJoin={() => handleAddMember(user?.id || '', user?.role as any)} currentUserId={user?.id || ''} />}
             {activeTab === 'time' && projectId && <TimeTab projectId={projectId} tasks={tasks} currentUserId={user?.id} />}
-            {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
-            {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} onUpsertTask={handleUpsertTask} />}
-            {activeTab === 'recurring' && projectId && <RecurringTasksTab projectId={projectId} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); } }} />}
+            {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} />}
+            {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} onUpsertTask={handleUpsertTask} />}
+            {activeTab === 'recurring' && projectId && <RecurringTasksTab projectId={projectId} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} />}
             {activeTab === 'milestones' && <MilestonesTab milestones={milestones} onUpsert={handleUpsertMilestone} onDelete={handleDeleteMilestone} />}
             {activeTab === 'updates' && <UpdatesTab updates={updates} onPost={handlePostUpdate} />}
             {activeTab === 'files' && <FilesTab files={files} onUpload={handleUploadFile} onDownload={handleDownloadFile} onDelete={handleDeleteFile} />}

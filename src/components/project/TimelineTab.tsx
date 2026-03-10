@@ -79,17 +79,33 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
     return tasks
       .filter((t) => {
         try {
-          const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
-          const end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
-          return !isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start;
+          // Use a more robust date parsing that handles empty strings, nulls, and undefined
+          const parseDate = (d: any) => {
+            if (!d || d === "") return null;
+            const date = new Date(d);
+            return isNaN(date.getTime()) ? null : date;
+          };
+
+          const createdAtDate = parseDate(t.createdAt) || new Date();
+          const start = parseDate(t.startDate) || createdAtDate;
+          const end = parseDate(t.dueDate) || new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+          return !isNaN(start.getTime()) && !isNaN(end.getTime());
         } catch {
           return false;
         }
       })
       .map((t) => {
         try {
-          const start = t.startDate ? new Date(t.startDate) : t.createdAt ? new Date(t.createdAt) : new Date();
-          let end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          const parseDate = (d: any) => {
+            if (!d || d === "") return null;
+            const date = new Date(d);
+            return isNaN(date.getTime()) ? null : date;
+          };
+
+          const createdAtDate = parseDate(t.createdAt) || new Date();
+          const start = parseDate(t.startDate) || createdAtDate;
+          let end = parseDate(t.dueDate) || new Date(start.getTime() + 24 * 60 * 60 * 1000);
 
           // Ensure end is at least 1 day after start for Frappe Gantt stability
           if (end <= start) {

@@ -20,6 +20,7 @@ interface TasksTabProps {
 
 const KANBAN_COLUMNS = [
     { id: 'backlog', label: 'Backlog', color: 'text-slate-400', border: 'border-slate-700' },
+    { id: 'blocked', label: 'Blocked', color: 'text-rose-400', border: 'border-rose-800' },
     { id: 'todo', label: 'To Do', color: 'text-blue-400', border: 'border-blue-800' },
     { id: 'in_progress', label: 'In Progress', color: 'text-cyan-400', border: 'border-cyan-800' },
     { id: 'review', label: 'Review', color: 'text-amber-400', border: 'border-amber-800' },
@@ -85,6 +86,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
             case 'done': return 'success';
             case 'in_progress': return 'info';
             case 'review': return 'warning';
+            case 'blocked': return 'danger';
             case 'todo': return 'neutral';
             default: return 'neutral';
         }
@@ -241,6 +243,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                     <div className="grid grid-cols-2 gap-4">
                         <Select name="status" label="Status" value={selectedTask.status || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTask({ ...selectedTask, status: e.target.value as any })}>
                             <option value="backlog">Backlog</option>
+                            <option value="blocked">Blocked</option>
                             <option value="todo">To Do</option>
                             <option value="in_progress">In Progress</option>
                             <option value="review">Review</option>

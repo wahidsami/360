@@ -316,9 +316,20 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                     </GlassCard>
                 ))}
                 {reports.length === 0 && (
-                    <div className="col-span-full py-16 text-center text-slate-500 border-2 border-dashed border-slate-700 rounded-xl">
-                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <p>No reports subject created.</p>
+                    <div className="col-span-full py-20 text-center bg-slate-800/20 border border-dashed border-slate-700 rounded-xl">
+                        <FileText className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-20" />
+                        <h4 className="text-slate-300 font-medium italic">No reports found for this project.</h4>
+                        <p className="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Reports provide structured summaries of project health, security, and performance for stakeholders.</p>
+                        <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                            <div className="flex gap-3 justify-center mt-8">
+                                <Button variant="outline" size="sm" onClick={() => setGenerateModalOpen(true)}>
+                                    <FileDown className="w-4 h-4 mr-2" /> Generate Now
+                                </Button>
+                                <Button size="sm" onClick={() => { setEditingReport(null); setIsModalOpen(true); }}>
+                                    <Plus className="w-4 h-4 mr-2" /> Create Subject
+                                </Button>
+                            </div>
+                        </PermissionGate>
                     </div>
                 )}
             </div>

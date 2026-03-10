@@ -1,7 +1,7 @@
 import React from 'react';
-import { Project, ProjectUpdate, Milestone, Task } from '@/types';
-import { GlassCard, KpiCard, ProgressBar, Badge } from '../ui/UIComponents';
-import { Activity, Calendar, CheckSquare, Clock, DollarSign, Flag } from 'lucide-react';
+import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Permission } from '@/types';
+import { GlassCard, KpiCard, ProgressBar, Badge, Button } from '../ui/UIComponents';
+import { Activity, Calendar, Clock, DollarSign, Flag, ArrowRight, CheckCircle, XCircle, AlertCircle, Info, Sparkles, Lock } from 'lucide-react';
 import { formatSAR } from '../../utils/currency';
 import { formatDistanceToNow } from 'date-fns';
 import { CustomFieldsSection } from '../CustomFieldsSection';
@@ -12,123 +12,893 @@ interface OverviewTabProps {
     stats?: {
         taskCount: number;
         completedTasks: number;
+        overdueTasks: number;
         milestoneCount: number;
         completedMilestones: number;
+        atRiskMilestones: number;
+        upcomingMilestones: number;
+        findingCount: number;
+        unresolvedFindings: number;
+        pendingReports: number;
         budget: number;
         spent: number;
     };
+    tasks?: any[]; // Full Task objects for inline previews
+    findings?: any[]; // For severity analysis inside component
+    milestones?: any[]; // For next milestone logic
     recentUpdates?: ProjectUpdate[];
+    onAction?: (action: ReadinessAction) => void;
+    onNavigate?: (tab: string) => void; // Keep for backward compatibility/quick links
+    allowedTabs?: string[];
+    readiness?: ProjectReadiness | null;
+    metrics?: any;
+    activity?: any[];
 }
 
-export const OverviewTab: React.FC<OverviewTabProps> = ({ project, clientName, stats, recentUpdates = [] }) => {
-    // Calculate progress if not provided
-    const taskProgress = stats?.taskCount ? Math.round((stats.completedTasks / stats.taskCount) * 100) : 0;
-    const milestoneProgress = stats?.milestoneCount ? Math.round((stats.completedMilestones / stats.milestoneCount) * 100) : 0;
+// --- NEW SUB-COMPONENTS ---
+function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { title: string, items: any[], isComplete: boolean, onAction?: any, onNavigate?: any }) {
+    const [isExpanded, setIsExpanded] = React.useState(!isComplete);
 
     return (
-        <div className="space-y-6">
-            {/* Top Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KpiCard
-                    label="Project Health"
-                    value={<Badge variant={project.health === 'good' || project.health === 'GOOD' ? 'success' : project.health === 'at-risk' || project.health === 'AT_RISK' ? 'warning' : 'danger'}>{project.health}</Badge>}
-                    icon={<Activity />}
-                />
-                <KpiCard
-                    label="Progress"
-                    value={`${project.progress}%`}
-                    icon={<Clock />}
-                    trend={taskProgress > 0 ? `Tasks: ${taskProgress}%` : undefined}
-                    trendUp={true}
-                />
-                <KpiCard
-                    label="Budget"
-                    value={formatSAR(stats?.budget || 0)}
-                    icon={<DollarSign />}
-                    trend={stats?.spent ? `Spent: ${formatSAR(stats.spent)}` : undefined}
-                />
-                <KpiCard
-                    label="Milestones"
-                    value={`${stats?.completedMilestones || 0}/${stats?.milestoneCount || 0}`}
-                    icon={<Flag />}
-                />
+        <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-5 flex flex-col mb-4">
+            <div
+                className="flex items-center justify-between cursor-pointer mb-2"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-2">
+                    <Badge variant="neutral" className="bg-cyan-500/10 text-cyan-400 border-cyan-400/20 uppercase text-[9px] tracking-widest font-black">{title}</Badge>
+                    <CheckCircle className={`w-3.5 h-3.5 ${isComplete ? 'text-emerald-500' : 'text-slate-700'}`} />
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 font-bold">{items.filter(i => i.status === 'complete').length}/{items.length}</span>
+                    <span className="text-slate-500 text-[10px]">{isExpanded ? '▼' : '▶'}</span>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Info */}
-                <div className="lg:col-span-2 space-y-6">
-                    <GlassCard className="p-6">
-                        <h3 className="text-lg font-bold text-white mb-4">Project Description</h3>
-                        <p className="text-slate-300 leading-relaxed">
-                            {project.description || "No description provided for this project."}
-                        </p>
-
-                        <div className="mt-6">
-                            <h4 className="text-sm font-medium text-slate-400 mb-2">Overall Progress</h4>
-                            <ProgressBar progress={project.progress} className="h-4" />
+            {isExpanded && (
+                <div className="space-y-1.5 max-h-[160px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2 mt-2">
+                    {items.filter(i => i.status !== 'not_applicable').map((item) => (
+                        <div key={item.id} className={`flex items-center gap-3 p-1.5 rounded transition-colors ${item.status === 'complete' ? 'opacity-40' : item.status === 'missing' && item.type === 'required' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-slate-800/20'}`}>
+                            <div className="shrink-0">
+                                {item.status === 'complete' ? <CheckCircle className="w-3 h-3 text-slate-400" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-400" />}
+                            </div>
+                            <div className="flex-grow flex justify-between items-center break-all text-left">
+                                <span className={`text-[10px] font-bold tracking-wider ${item.status === 'complete' ? 'text-slate-400' : item.status === 'missing' && item.type === 'required' ? 'text-white' : 'text-slate-300'}`}>{item.label}</span>
+                                {item.action && item.status !== 'complete' && (
+                                    <Button variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-black text-rose-400 hover:text-rose-300 px-2" onClick={(e) => { e.stopPropagation(); if (item.action.type === 'navigate_tab') { onNavigate?.(item.action.target); } else { onAction?.(item.action); } }}>
+                                        Fix &rarr;
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                    </GlassCard>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
-                    <GlassCard className="p-6">
-                        <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>
-                        <div className="space-y-4">
-                            {recentUpdates.length === 0 ? (
-                                <p className="text-slate-500">No recent updates.</p>
-                            ) : (
-                                recentUpdates.map(update => (
-                                    <div key={update.id} className="flex gap-4 border-b border-slate-700/50 pb-4 last:border-0 last:pb-0">
-                                        <div className="mt-1 p-2 rounded-full bg-slate-800 text-cyan-400">
-                                            <Activity className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-200">{update.title}</p>
-                                            <p className="text-xs text-slate-400 mt-1">{update.content}</p>
-                                            <p className="text-[10px] text-slate-500 mt-1">
-                                                {formatDistanceToNow(new Date(update.timestamp), { addSuffix: true })} by {update.authorName}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
+function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigate?: any }) {
+    const getActivityIcon = (type: string) => {
+        const icons: Record<string, string> = { task_overdue: '⏰', task_completed: '✅', finding_created: '📝', milestone_completed: '🎯', milestone_missed: '⚠️', budget_alert: '💰', member_added: '👤', file_uploaded: '📄', update_posted: '📢', blocker_created: '🚧' };
+        return icons[type] || '•';
+    };
+
+    return (
+        <GlassCard className="p-5 border-slate-800">
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2">
+                {activities.map(activity => (
+                    <div key={activity.id} className="flex gap-3 text-sm">
+                        <div className="shrink-0 w-6 h-6 flex justify-center items-center bg-slate-800/50 rounded-full text-[10px] border border-slate-700">
+                            {getActivityIcon(activity.action || activity.type)}
+                        </div>
+                        <div className="flex-grow">
+                            <p className="text-[10px] text-slate-500 mb-0.5">{formatDistanceToNow(new Date(activity.createdAt || activity.timestamp || Date.now()), { addSuffix: true })}</p>
+                            <p className="text-xs text-slate-300">{activity.description || 'Action performed'}</p>
+                        </div>
+                    </div>
+                ))}
+                {activities.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">No recent activity.</p>}
+            </div>
+        </GlassCard>
+    );
+}
+
+function calculateVelocity(tasks: any[]) {
+    const completedTasks = tasks.filter(t => t.status?.toLowerCase() === 'done' && (t.completedAt || t.updatedAt));
+    if (completedTasks.length === 0) return 0;
+
+    const oldestCompletion = new Date(Math.min(...completedTasks.map(t => new Date(t.completedAt || t.updatedAt).getTime())));
+    const daysSinceFirstCompletion = (Date.now() - oldestCompletion.getTime()) / (1000 * 60 * 60 * 24);
+
+    return completedTasks.length / Math.max(daysSinceFirstCompletion, 1);
+}
+
+function PredictiveInsights({ project, tasks, milestones, metrics }: { project: any, tasks: any[], milestones: any[], metrics: any }) {
+    const insights = React.useMemo(() => {
+        const predictions: any[] = [];
+
+        // Completion date prediction
+        const completedTasks = tasks.filter(t => t.status?.toLowerCase() === 'done').length;
+        const totalTasks = tasks.length;
+        const velocity = calculateVelocity(tasks);
+
+        if (velocity > 0 && totalTasks > completedTasks) {
+            const remainingTasks = totalTasks - completedTasks;
+            const daysToComplete = Math.ceil(remainingTasks / velocity);
+            const projectedDate = new Date(Date.now() + daysToComplete * 24 * 60 * 60 * 1000);
+            const plannedDate = new Date(project.deadline || project.endDate || Date.now());
+            const variance = Math.ceil((projectedDate.getTime() - plannedDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (variance > 0) {
+                predictions.push({
+                    type: 'schedule_risk',
+                    severity: variance > 14 ? 'high' : 'medium',
+                    message: `At current velocity, projected completion: ${projectedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`,
+                    impact: `${variance} days late`,
+                    icon: '📊'
+                });
+            }
+        }
+
+        // Unassigned blocker detection
+        const unassignedTasks = tasks.filter(t => (!t.assigneeId && !t.assignee) && t.status?.toLowerCase() !== 'done');
+        const dependentTasks = tasks.filter((t: any) =>
+            t.dependencies?.some((depId: string) => unassignedTasks.find(ut => ut.id === depId)) ||
+            project.taskDependencies?.some((td: any) => td.dependentTaskId === t.id && unassignedTasks.find(ut => ut.id === td.dependsOnId))
+        );
+
+        if (unassignedTasks.length > 0 && dependentTasks.length > 0) {
+            predictions.push({
+                type: 'assignment_gap',
+                severity: 'medium',
+                message: `${unassignedTasks.length} unassigned tasks blocking ${dependentTasks.length} dependent items`,
+                impact: 'Work cannot proceed',
+                icon: '👤'
+            });
+        }
+
+        // Team overallocation
+        const overallocated = metrics?.capacity?.overallocated || [];
+        if (overallocated.length > 0) {
+            const totalOverallocation = overallocated.reduce((sum: number, m: any) => sum + (m.allocationPercent - 100), 0);
+            predictions.push({
+                type: 'capacity_risk',
+                severity: totalOverallocation > 50 ? 'high' : 'medium',
+                message: `Team overallocated by ${Math.round(totalOverallocation)}%`,
+                impact: `${overallocated.length} member(s) at risk of burnout`,
+                icon: '⚡'
+            });
+        }
+
+        return predictions;
+    }, [project, tasks, milestones, metrics]);
+
+    if (insights.length === 0) return null;
+
+    return (
+        <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 flex flex-col gap-3 mb-4">
+            <div className="flex items-center gap-2 mb-1">
+                <span className="text-base">🔮</span>
+                <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-400">Predictive Insights</h3>
+            </div>
+            <div className="space-y-2">
+                {insights.map((insight, idx) => (
+                    <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border ${insight.severity === 'high' ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' : 'bg-amber-500/10 border-amber-500/20 text-amber-300'}`}>
+                        <span className="text-lg opacity-80 mt-0.5">{insight.icon}</span>
+                        <div>
+                            <p className="text-sm font-bold leading-tight mb-0.5">{insight.message}</p>
+                            <p className="text-[10px] uppercase font-black tracking-wider opacity-70">{insight.impact}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function PrimaryActionCard({ action, onNavigate }: { action: any, onNavigate?: any }) {
+    if (!action) return null;
+
+    // Map severity to colors
+    const severityColors: Record<string, string> = {
+        critical_findings: 'bg-rose-500/10 border-rose-500/20',
+        overdue_tasks: 'bg-orange-500/10 border-orange-500/20',
+        at_risk_milestones: 'bg-amber-500/10 border-amber-500/20',
+        stale_communication: 'bg-indigo-500/10 border-indigo-500/20',
+        setup_required: 'bg-cyan-500/10 border-cyan-500/20',
+        planning_required: 'bg-blue-500/10 border-blue-500/20',
+        on_track: 'bg-emerald-500/10 border-emerald-500/20'
+    };
+
+    const iconColors: Record<string, string> = {
+        critical_findings: 'text-rose-400 bg-rose-500/20',
+        overdue_tasks: 'text-orange-400 bg-orange-500/20',
+        at_risk_milestones: 'text-amber-400 bg-amber-500/20',
+        stale_communication: 'text-indigo-400 bg-indigo-500/20',
+        setup_required: 'text-cyan-400 bg-cyan-500/20',
+        planning_required: 'text-blue-400 bg-blue-500/20',
+        on_track: 'text-emerald-400 bg-emerald-500/20'
+    };
+
+    return (
+        <div className={`${severityColors[action.type] || 'bg-slate-800/50 border-slate-700'} border rounded-2xl p-4 flex flex-col gap-4`}>
+            <div className="flex items-start gap-4">
+                <div className={`shrink-0 p-2 rounded-lg ${iconColors[action.type] || 'text-slate-400 bg-slate-800'}`}>
+                    <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="flex-grow">
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">PRIMARY ACTION</p>
+                    <h3 className="text-sm font-bold text-white leading-tight">{action.title}</h3>
+                    <p className="text-xs text-slate-300 mt-1">{action.description}</p>
+
+                    {action.details && (
+                        <div className="mt-3 space-y-2">
+                            {action.details.recommendation && (
+                                <p className="text-[11px] font-medium italic opacity-90 border-l-2 pl-2 border-current">{action.details.recommendation}</p>
+                            )}
+                            {action.details.findings && (
+                                <div className="text-[10px] bg-black/20 rounded p-2 mt-2">
+                                    <strong className="text-white/90">Critical findings:</strong>
+                                    <ul className="list-disc list-inside mt-1 text-slate-300 space-y-0.5">
+                                        {action.details.findings.slice(0, 2).map((f: any, i: number) => (
+                                            <li key={i} className="truncate">{f}</li>
+                                        ))}
+                                    </ul>
+                                </div>
                             )}
                         </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 mt-auto">
+                {action.actions?.map((btn: any, idx: number) => (
+                    <React.Fragment key={idx}>
+                        <Button
+                            size="sm"
+                            variant={btn.primary ? 'primary' : 'ghost'}
+                            className={`w-full sm:w-auto font-bold uppercase tracking-widest text-[10px] px-4 ${btn.primary ? 'bg-white/10 hover:bg-white/20 text-white' : 'text-slate-300 hover:text-white bg-black/20 hover:bg-black/40'}`}
+                            onClick={() => onNavigate?.(btn.route)}
+                        >
+                            {btn.label} <ArrowRight className="ml-1.5 w-3 h-3" />
+                        </Button>
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function QuickActionsPanel({ onNavigate, onRefresh, overdueCount }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number }) {
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    return (
+        <div className="relative">
+            <Button
+                onClick={() => setIsOpen(!isOpen)}
+                variant="primary"
+                className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 border-none shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_20px_rgba(34,211,238,0.5)] font-black uppercase tracking-widest text-[10px] px-6 h-10 transition-all rounded-xl"
+            >
+                ⚡ Quick Actions
+            </Button>
+
+            {isOpen && (
+                <div className="absolute top-12 right-0 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                        <span className="text-emerald-400">➕</span> Add Task
+                    </button>
+                    <button onClick={() => { setIsOpen(false); onNavigate?.('updates'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                        <span className="text-cyan-400">📋</span> Post Update
+                    </button>
+                    <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                        <span className="text-rose-400">⚠️</span> Log Risk/Finding
+                    </button>
+
+                    {overdueCount > 0 && (
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors mt-1 border border-orange-500/20 bg-orange-500/5">
+                            <span>✅</span> Complete Overdue ({overdueCount})
+                        </button>
+                    )}
+
+                    <div className="h-px bg-slate-800 my-1 mx-2" />
+
+                    <button onClick={() => { setIsOpen(false); alert('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                        <span className="text-indigo-400">📊</span> Export Report
+                    </button>
+                    <button onClick={() => {
+                        setIsOpen(false);
+                        if (onRefresh) onRefresh();
+                    }}
+                        className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
+                    >
+                        <span className="text-blue-400">🔄</span> Refresh Data
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, clientName, stats, tasks = [], findings = [], milestones = [], recentUpdates = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [] }) => {
+    // Derived operational metrics
+    const taskCount = stats?.taskCount || 0;
+    const completedTasks = stats?.completedTasks || 0;
+    const overdueTasks = stats?.overdueTasks || 0;
+    const activeTasks = Math.max(0, taskCount - completedTasks - overdueTasks);
+
+    const formatRelativeDate = (date: string) => {
+        const due = new Date(date);
+        due.setHours(23, 59, 59, 999);
+        const days = Math.ceil((due.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (days === 0) return 'today';
+        if (days === 1) return 'tomorrow';
+        if (days > 1 && days < 7) return `in ${days} days`;
+        return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    };
+
+    const taskPreviews = (tasks || [])
+        .filter(t => t.status?.toLowerCase() !== 'done')
+        .map(t => {
+            let isOverdue = false;
+            let daysRef = Infinity;
+            let dueText = 'No due date';
+
+            if (t.dueDate) {
+                const due = new Date(t.dueDate);
+                due.setHours(23, 59, 59, 999);
+                const now = new Date();
+
+                daysRef = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                isOverdue = daysRef < 0;
+
+                if (isOverdue) {
+                    const daysLate = Math.ceil(Math.abs(daysRef));
+                    dueText = `${daysLate} day${daysLate === 1 ? '' : 's'} late`;
+                } else {
+                    dueText = `Due ${formatRelativeDate(t.dueDate)}`;
+                }
+            }
+
+            return { ...t, isOverdue, daysRef, dueText };
+        })
+        .sort((a, b) => {
+            if (a.isOverdue && !b.isOverdue) return -1;
+            if (!a.isOverdue && b.isOverdue) return 1;
+            return a.daysRef - b.daysRef;
+        });
+
+    const milestoneCount = stats?.milestoneCount || 0;
+    const completedMilestones = stats?.completedMilestones || 0;
+    const atRiskMilestones = stats?.atRiskMilestones || 0;
+    const missedMilestonesList = (milestones || []).filter(m => m.status?.toUpperCase() !== 'COMPLETED' && m.dueDate && new Date(m.dueDate) < new Date());
+
+    const daysUntilDeadline = project.deadline || (project as any).endDate
+        ? Math.ceil((new Date(project.deadline || (project as any).endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null;
+
+    const findingCount = stats?.findingCount || 0;
+    const unresolvedFindings = stats?.unresolvedFindings || 0;
+    const resolvedFindings = Math.max(0, findingCount - unresolvedFindings);
+
+    const findingsBySeverity = (findings || []).reduce((acc: any, f) => {
+        const status = f.status?.toUpperCase();
+        if (status !== 'CLOSED' && status !== 'DISMISSED') {
+            const sev = f.severity?.toUpperCase() || 'LOW';
+            acc[sev] = (acc[sev] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const openFindings = (findings || []).filter(f => !['CLOSED', 'DISMISSED'].includes(f.status?.toUpperCase()));
+    const mostCriticalFinding = openFindings.sort((a, b) => {
+        const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        return (severityOrder[a.severity?.toUpperCase()] ?? 4) - (severityOrder[b.severity?.toUpperCase()] ?? 4);
+    })[0];
+
+    const nextMilestone = (milestones || [])
+        .filter(m => m.status?.toUpperCase() !== 'COMPLETED')
+        .sort((a, b) => {
+            const timeA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+            const timeB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+            return timeA - timeB;
+        })[0];
+
+    const lastUpdateAge = recentUpdates[0] ? formatDistanceToNow(new Date(recentUpdates[0].timestamp), { addSuffix: true }) : 'No update posted yet';
+    const isStale = recentUpdates[0] ? (Date.now() - new Date(recentUpdates[0].timestamp).getTime()) > 7 * 24 * 60 * 60 * 1000 : true;
+
+    const canSee = (tabId: string) => allowedTabs.includes(tabId);
+
+    return (
+        <div className="space-y-6 pb-12">
+            <div className="flex justify-between items-center w-full">
+                <h2 className="text-xl font-black text-white px-2">Dashboard</h2>
+                <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} />
+            </div>
+
+            {/* TOP ROW: Stage, Status & Next Best Action */}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                {/* Stage & Status Banner */}
+                <GlassCard className="xl:col-span-3 p-0 overflow-hidden border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-500/5 shadow-xl shadow-cyan-500/5">
+                    <div className="flex flex-col md:flex-row h-full">
+                        {/* Status Sidebar */}
+                        <div className="w-full md:w-48 bg-cyan-500/10 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-cyan-500/20">
+                            <div className="p-3 bg-cyan-500/20 rounded-2xl text-cyan-400 mb-3 shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+                                <Activity className="w-8 h-8" />
+                            </div>
+                            <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'completed' ? 'success' : 'neutral'} className="px-3 py-1 text-xs uppercase tracking-widest font-black">
+                                {project.status.replace(/_/g, ' ')}
+                            </Badge>
+                            <p className="text-[10px] text-cyan-400/60 font-bold mt-2 uppercase tracking-tighter">Current Status</p>
+                        </div>
+
+                        {/* Stage Progress */}
+                        <div className="flex-grow p-6 flex flex-col justify-center gap-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                                        STAGE: <span className="text-cyan-400">{readiness?.stage.replace(/_/g, ' ') || 'SETUP'}</span>
+                                    </h2>
+                                    <p className="text-sm text-slate-400 font-medium">
+                                        {readiness?.stageExplanation || 'Initial project parameters and team setup required.'}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-0 pt-2 pb-6 mr-4 sm:mr-8 md:mr-10">
+                                    {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
+                                        const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
+                                        const isCurrent = (readiness?.stage || 'SETUP') === s;
+                                        const isPassed = stages.indexOf(readiness?.stage || 'SETUP') > idx;
+                                        return (
+                                            <div key={s} className="flex items-center">
+                                                <div className="flex flex-col items-center relative">
+                                                    <div
+                                                        className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
+                                                        title={s}
+                                                    />
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
+                                                        {s}
+                                                    </span>
+                                                </div>
+                                                {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Predictive Insights */}
+                            <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
+
+                            {/* Primary Alert / Action Card */}
+                            <PrimaryActionCard action={readiness?.nextAction} onNavigate={onNavigate} />
+                        </div>
+                    </div>
+                </GlassCard>
+
+                {/* Readiness Score (Compressed) */}
+                <GlassCard className="p-6 flex flex-col items-center justify-center gap-3 border-slate-800 bg-slate-900/50">
+                    <div className="relative w-24 h-24">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center flex-col">
+                            <span className="text-xl font-black text-white">{readiness?.completeness || 0}%</span>
+                        </div>
+                    </div>
+                    <div className="text-center">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Workflow Readiness</h4>
+                        <p className="text-[10px] text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} setup checks complete</p>
+                    </div>
+                </GlassCard>
+            </div>
+
+            {/* MIDDLE ROW: Operational Health Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {/* Task Health */}
+                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('tasks')}>
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                                <CheckCircle className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <span className="text-2xl font-black text-white leading-none">{taskCount - completedTasks}</span>
+                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Tasks</h3>
+                            </div>
+                        </div>
+                        {overdueTasks > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{overdueTasks} Overdue</Badge>}
+                    </div>
+
+                    <div className="space-y-3 mb-5">
+                        <div className="flex h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div className="bg-emerald-500" style={{ width: `${(completedTasks / (taskCount || 1)) * 100}%` }} title="Done" />
+                            <div className="bg-blue-500" style={{ width: `${(activeTasks / (taskCount || 1)) * 100}%` }} title="Active" />
+                            <div className="bg-rose-500" style={{ width: `${(overdueTasks / (taskCount || 1)) * 100}%` }} title="Overdue" />
+                        </div>
+                        <div className="flex justify-between text-[9px] font-bold uppercase tracking-tight text-slate-500 px-1">
+                            <span className="text-emerald-500/80">{completedTasks} Done</span>
+                            <span className="text-blue-400/80">{activeTasks} Active</span>
+                            <span className={overdueTasks > 0 ? 'text-rose-400/80' : ''}>{overdueTasks} Overdue</span>
+                        </div>
+                    </div>
+
+                    <div className="flex-grow space-y-2 mt-auto">
+                        {taskPreviews.slice(0, 3).map((task) => (
+                            <div key={task.id} className={`flex flex-col gap-1 text-xs p-2 rounded-lg border ${task.isOverdue ? 'bg-rose-500/5 border-rose-500/10' : 'bg-slate-800/30 border-slate-700/50'}`}>
+                                <span className={`font-semibold truncate ${task.isOverdue ? 'text-rose-300' : 'text-slate-300'}`}>{task.title}</span>
+                                <div className="flex items-center justify-between mt-1">
+                                    <span className="text-[10px] text-slate-500 truncate max-w-[100px]">{task.assigneeName || task.assignee?.name || 'Unassigned'}</span>
+                                    <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${task.isOverdue ? 'bg-rose-500/10 text-rose-400' : 'text-slate-400'}`}>
+                                        {task.dueText}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {taskPreviews.length > 3 && (
+                        <div className="mt-4 text-center">
+                            <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all {taskPreviews.length} tasks &rarr;</span>
+                        </div>
+                    )}
+                </GlassCard>
+
+                {/* Schedule / Milestone Health */}
+                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('milestones')}>
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+                                <Calendar className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Schedule</h3>
+                        </div>
+                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">At Risk</Badge>}
+                    </div>
+
+                    <div className="space-y-4 mb-4">
+                        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Project Deadline</p>
+                            <div className="flex items-end justify-between">
+                                <p className="text-lg font-black text-white">
+                                    {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'NOT SET'}
+                                </p>
+                                {daysUntilDeadline !== null && (
+                                    <span className={`text-xs font-bold ${daysUntilDeadline < 14 ? 'text-amber-400' : 'text-slate-400'}`}>
+                                        {daysUntilDeadline}d remain
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
+                            <p className="text-[10px] text-amber-500/70 font-bold uppercase tracking-wider mb-1">Next Milestone</p>
+                            {nextMilestone ? (
+                                <>
+                                    <p className="text-sm font-bold text-amber-400 truncate mb-1">{nextMilestone.title}</p>
+                                    <p className="text-[10px] text-amber-400/80 font-medium">Due {formatRelativeDate(nextMilestone.dueDate)}</p>
+                                </>
+                            ) : (
+                                <p className="text-xs text-slate-500 font-medium italic">No upcoming milestones</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex-grow mt-auto space-y-3">
+                        {missedMilestonesList.length > 0 && (
+                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                                    <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">{missedMilestonesList.length} Missed</span>
+                                </div>
+                                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                                    {missedMilestonesList.slice(0, 2).map((m: any) => (
+                                        <li key={m.id} className="truncate">{m.title}</li>
+                                    ))}
+                                    {missedMilestonesList.length > 2 && <li className="text-[10px] text-slate-500 italic list-none ml-2">+{missedMilestonesList.length - 2} more...</li>}
+                                </ul>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between py-2 border-t border-slate-800 mx-1">
+                            <div className="flex items-center gap-2">
+                                <Flag className="w-3.5 h-3.5 text-slate-500" />
+                                <span className="text-[11px] font-bold text-slate-400">
+                                    <span className="text-white">{completedMilestones}</span> / {milestoneCount} Milestones Met
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </GlassCard>
+
+                {/* Findings Summary */}
+                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('findings')}>
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-rose-500/10 rounded-lg text-rose-400">
+                                <AlertCircle className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Quality</h3>
+                        </div>
+                        <Badge variant={unresolvedFindings > 0 ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">
+                            {unresolvedFindings} Open
+                        </Badge>
+                    </div>
+
+                    {unresolvedFindings === 0 ? (
+                        <div className="flex-grow flex flex-col items-center justify-center py-6 text-center">
+                            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
+                                <CheckCircle className="w-6 h-6 text-emerald-400" />
+                            </div>
+                            <p className="text-sm font-bold text-emerald-400 mb-1">No Open Findings</p>
+                            <p className="text-xs text-slate-500">{resolvedFindings} resolved historically</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2 mb-5">
+                                {findingsBySeverity.CRITICAL && findingsBySeverity.CRITICAL > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+                                        <span className="text-sm font-black text-rose-400 w-6">{findingsBySeverity.CRITICAL}</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Critical</span>
+                                    </div>
+                                )}
+                                {findingsBySeverity.HIGH && findingsBySeverity.HIGH > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                                        <span className="text-sm font-black text-orange-400 w-6">{findingsBySeverity.HIGH}</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">High</span>
+                                    </div>
+                                )}
+                                {findingsBySeverity.MEDIUM && findingsBySeverity.MEDIUM > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                        <span className="text-sm font-black text-amber-400 w-6">{findingsBySeverity.MEDIUM}</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Medium</span>
+                                    </div>
+                                )}
+                                {findingsBySeverity.LOW && findingsBySeverity.LOW > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                        <span className="text-sm font-black text-blue-400 w-6">{findingsBySeverity.LOW}</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Low</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {mostCriticalFinding && (
+                                <div className="mt-auto bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Oldest / Most Severe</p>
+                                    <p className="text-xs font-semibold text-slate-300 truncate mb-2">{mostCriticalFinding.title}</p>
+                                    <div className="flex justify-between items-center text-[9px] text-slate-500 font-medium">
+                                        <span className="truncate max-w-[100px]">Assigned: {mostCriticalFinding.assignedToName || mostCriticalFinding.assignedTo?.name || 'Unassigned'}</span>
+                                        <span>Age: {mostCriticalFinding.createdAt ? Math.floor((Date.now() - new Date(mostCriticalFinding.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0}d</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-4 text-center">
+                                <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all findings &rarr;</span>
+                            </div>
+                        </>
+                    )}
+                </GlassCard>
+
+                {/* Updates / Review Health */}
+                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
+                            <Clock className="w-5 h-5" />
+                        </div>
+                        <Badge variant={isStale ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold">
+                            {isStale ? 'Update Overdue' : 'Up to Date'}
+                        </Badge>
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Review & Communication</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Last Weekly Update</p>
+                            <p className="text-lg font-black text-white truncate">{lastUpdateAge}</p>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-white font-bold">{recentUpdates.length}</span>
+                                <span className="text-[9px] text-slate-500 uppercase font-black">Total Updates</span>
+                            </div>
+                            <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase font-black text-cyan-400" onClick={() => onNavigate?.('updates')}>Post Update</Button>
+                        </div>
+                    </div>
+                </GlassCard>
+            </div>
+
+            {/* PM METRICS ROW */}
+            {metrics && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {metrics.budget.total > 0 && (
+                        <GlassCard className="p-5 border-slate-800 relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <DollarSign className="w-4 h-4 text-emerald-500" /> BUDGET
+                                </h3>
+                                {metrics.budget.isOverBudget && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5">OVER BUDGET</Badge>}
+                            </div>
+                            <div className="text-xl font-black text-white mb-2">
+                                {formatSAR(metrics.budget.spent)} / <span className="text-slate-500">{formatSAR(metrics.budget.total)}</span>
+                            </div>
+                            <ProgressBar progress={metrics.budget.percentSpent} className={`h-1.5 mb-2 ${metrics.budget.percentSpent > 90 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{metrics.budget.percentSpent}% spent · {formatSAR(metrics.budget.remaining)} remaining</p>
+                        </GlassCard>
+                    )}
+
+                    {metrics.capacity.members && (
+                        <GlassCard className="p-5 border-slate-800 relative cursor-pointer hover:border-slate-700 transition-colors" onClick={() => onNavigate?.('team')}>
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-blue-500" /> TEAM CAPACITY
+                                </h3>
+                                {metrics.capacity.highLoad?.length > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 shadow-sm">{metrics.capacity.highLoad.length} High Load</Badge>}
+                            </div>
+
+                            <table className="w-full text-left border-collapse mb-1">
+                                <thead>
+                                    <tr className="border-b border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <th className="pb-2 font-medium">Member</th>
+                                        <th className="pb-2 font-medium text-center">Tasks</th>
+                                        <th className="pb-2 font-medium text-right">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {metrics.capacity.members.map((member: any) => {
+                                        const getStatusColor = (status: string) => {
+                                            switch (status) {
+                                                case 'high': return '#ef4444';
+                                                case 'medium': return '#f59e0b';
+                                                case 'low': return '#22c55e';
+                                                case 'available': return '#94a3b8';
+                                                default: return '#94a3b8';
+                                            }
+                                        };
+                                        const getStatusLabel = (status: string) => {
+                                            switch (status) {
+                                                case 'high': return '🔴 High';
+                                                case 'medium': return '🟡 Medium';
+                                                case 'low': return '🟢 Low';
+                                                case 'available': return '⚪ Available';
+                                                default: return '⚪ Unknown';
+                                            }
+                                        };
+                                        const statusColor = getStatusColor(member.status);
+                                        return (
+                                            <tr key={member.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm border border-slate-700">
+                                                            {member.name.charAt(0)}
+                                                        </div>
+                                                        <span className="text-[11px] font-semibold text-slate-300 truncate max-w-[80px]">{member.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-2 text-center">
+                                                    <span className="text-xs font-black" style={{ color: statusColor }}>
+                                                        {member.taskCount}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 text-right">
+                                                    <span className="text-[10px] font-bold tracking-wider" style={{ color: statusColor }}>
+                                                        {getStatusLabel(member.status)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+
+                            {metrics.capacity.available?.length > 0 && (
+                                <div className="mt-4 p-2 bg-emerald-500/10 rounded border border-emerald-500/20 text-center">
+                                    <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
+                                        {metrics.capacity.available.length} member(s) available
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="mt-4 text-center pt-1 border-t border-slate-800/50">
+                                <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">View Team Details &rarr;</span>
+                            </div>
+                        </GlassCard>
+                    )}
+
+                    <GlassCard className="p-5 border-slate-800 text-center flex flex-col items-center justify-center">
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest w-full text-left flex items-center gap-2 absolute top-5 left-5">
+                            <Lock className="w-4 h-4 text-rose-500" /> BLOCKERS
+                        </h3>
+                        {metrics.blockers.active.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center pt-6">
+                                <div className="p-2 bg-emerald-500/10 rounded-full mb-2"><CheckCircle className="w-6 h-6 text-emerald-500" /></div>
+                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Work Unblocked</span>
+                            </div>
+                        ) : (
+                            <div className="pt-6 w-full text-left">
+                                <div className="space-y-2 mb-2">
+                                    {metrics.blockers.active.slice(0, 2).map((blk: any) => (
+                                        <div key={blk.id} className="text-xs text-rose-300 p-2 bg-rose-500/10 rounded border border-rose-500/20">{blk.title}</div>
+                                    ))}
+                                </div>
+                                <Button variant="ghost" size="sm" className="w-full text-[9px] uppercase tracking-widest text-cyan-400" onClick={() => onNavigate?.('tasks')}>Manage Blockers</Button>
+                            </div>
+                        )}
                     </GlassCard>
                 </div>
+            )}
 
-                {/* Sidebar Info */}
+            {/* LOWER SECTION: Setup & Checklists vs Sidebar */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Adaptive Checklists */}
+                        <div className="space-y-2">
+                            <ChecklistSection
+                                title="Core Setup"
+                                items={readiness?.sections.core.items || []}
+                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
+                                onAction={onAction} onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title="Planning"
+                                items={readiness?.sections.planning.items || []}
+                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction} onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title="Resources"
+                                items={readiness?.sections.resources.items || []}
+                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction} onNavigate={onNavigate}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sidebar Workspace Context & Activity Feed */}
                 <div className="space-y-6">
-                    <GlassCard className="p-6">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Details</h3>
+                    <ActivityFeed activities={activity} onNavigate={onNavigate} />
+
+                    <GlassCard className="p-5 border-slate-800">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Project Context</h4>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs text-slate-500">Client</label>
-                                <p className="text-slate-200 font-medium">{clientName || "Unknown Client"}</p>
+                                <label className="text-[9px] text-slate-600 uppercase font-black">Client Account</label>
+                                <p className="text-sm font-bold text-white leading-tight mt-0.5">{clientName || 'Unassigned'}</p>
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Start Date</label>
-                                <p className="text-slate-200 font-medium">
-                                    {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}
-                                </p>
+                            <div className="pt-3 border-t border-slate-800/50">
+                                <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('discussions')}>
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">Team Discussions</span>
+                                    <ArrowRight className="w-3 h-3 text-slate-600" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-500">End Date</label>
-                                <p className="text-slate-200 font-medium">
-                                    {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString() : 'Not set'}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Status</label>
-                                <div className="mt-1">
-                                    <Badge>{project.status}</Badge>
+                            <div className="pt-3 border-t border-slate-800/50">
+                                <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('files')}>
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">Project Files</span>
+                                    <ArrowRight className="w-3 h-3 text-slate-600" />
                                 </div>
                             </div>
                         </div>
                     </GlassCard>
-
-                    <GlassCard className="p-6">
-                        <CustomFieldsSection entityType="PROJECT" entityId={project.id} />
-                    </GlassCard>
                 </div>
             </div>
+
+            {/* Project Overview / Description Section - Full Width */}
+            <GlassCard className="p-6 border-slate-800/50 bg-slate-900/30">
+                <div className="flex items-center gap-3 mb-4">
+                    <Info className="w-5 h-5 text-slate-400" />
+                    <h3 className="text-lg font-bold text-white">Project Brief & Scope</h3>
+                </div>
+                <div className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
+                    {project.description || "No project description provided. Add a scope summary to align the team."}
+                </div>
+            </GlassCard>
         </div>
     );
 };

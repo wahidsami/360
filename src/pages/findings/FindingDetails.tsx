@@ -111,9 +111,27 @@ export const FindingDetails: React.FC = () => {
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!findingId || !finding) return;
-    const updatedFinding = await api.findings.update(finding.projectId, findingId, { status: newStatus });
-    if (updatedFinding) {
-      setFinding({ ...finding, status: updatedFinding.status });
+    try {
+      const updated = await api.findings.update(finding.projectId, findingId, { status: newStatus as any });
+      if (updated) {
+        setFinding({ ...finding, status: updated.status });
+        toast.success('Status updated');
+      }
+    } catch (e) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleSeverityUpdate = async (newSev: string) => {
+    if (!findingId || !finding) return;
+    try {
+      const updated = await api.findings.update(finding.projectId, findingId, { severity: newSev as any });
+      if (updated) {
+        setFinding({ ...finding, severity: updated.severity });
+        toast.success('Severity updated');
+      }
+    } catch (e) {
+      toast.error('Failed to update severity');
     }
   };
 
@@ -288,7 +306,7 @@ export const FindingDetails: React.FC = () => {
             <div className="space-y-4 text-sm">
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
                 <span className="text-slate-400">Status</span>
-                <Badge variant={finding.status === 'open' ? 'danger' : finding.status === 'closed' ? 'success' : 'warning'}>{finding.status.toUpperCase()}</Badge>
+                <Badge variant={finding.status === 'open' ? 'danger' : finding.status === 'closed' ? 'success' : finding.status === 'blocked' ? 'danger' : 'warning'}>{finding.status.toUpperCase()}</Badge>
               </div>
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
                 <span className="text-slate-400">Project</span>
@@ -324,8 +342,23 @@ export const FindingDetails: React.FC = () => {
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
                   <option value="in_review">In Review</option>
+                  <option value="blocked">Blocked</option>
                   <option value="closed">Closed</option>
                   <option value="dismissed">Dismissed</option>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Update Severity</Label>
+                <Select
+                  className="mt-1 text-sm py-1.5"
+                  value={finding.severity}
+                  onChange={(e) => handleSeverityUpdate(e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
                 </Select>
               </div>
 

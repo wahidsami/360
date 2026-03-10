@@ -30,6 +30,16 @@ export class ProjectsController {
         return this.projectsService.getActivity(id, req.user);
     }
 
+    @Get(':id/readiness')
+    getReadiness(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.getReadiness(id, req.user);
+    }
+
+    @Get(':id/metrics')
+    getMetrics(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.getMetrics(id, req.user);
+    }
+
     @Patch(':id')
     update(@Request() req: any, @Param('id') id: string, @Body() updateDto: UpdateProjectDto) {
         return this.projectsService.update(id, req.user, updateDto);

@@ -145,6 +145,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       case 'open': return <Badge variant="danger">OPEN</Badge>;
       case 'in_review': return <Badge variant="warning">IN REVIEW</Badge>;
       case 'in_progress': return <Badge variant="info">IN PROGRESS</Badge>;
+      case 'blocked': return <Badge variant="danger">BLOCKED</Badge>;
       default: return <Badge variant="neutral">{status.toUpperCase()}</Badge>;
     }
   };
@@ -213,6 +214,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="in_review">In Review</option>
+              <option value="blocked">Blocked</option>
               <option value="closed">Closed</option>
               <option value="dismissed">Dismissed</option>
             </Select>
@@ -296,9 +298,15 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
             ))}
             {filteredData.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-12 text-center text-slate-500 flex flex-col items-center justify-center">
-                  <AlertTriangle className="w-8 h-8 mb-2 opacity-50" />
-                  No findings match current filters.
+                <td colSpan={7} className="p-20 text-center">
+                  <div className="flex flex-col items-center justify-center bg-slate-800/20 border border-dashed border-slate-700 rounded-xl py-12">
+                    <ShieldAlert className="w-12 h-12 mb-4 text-slate-600 opacity-20" />
+                    <h4 className="text-slate-300 font-medium italic">No findings to display.</h4>
+                    <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">This project currently has no recorded vulnerabilities or quality issues.</p>
+                    <Button variant="secondary" size="sm" className="mt-6" onClick={() => setIsModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" /> Report First Finding
+                    </Button>
+                  </div>
                 </td>
               </tr>
             )}
@@ -334,6 +342,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="in_review">In Review</option>
+              <option value="blocked">Blocked</option>
               <option value="closed">Closed</option>
               <option value="dismissed">Dismissed</option>
             </Select>
