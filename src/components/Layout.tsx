@@ -55,6 +55,12 @@ export const Layout: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
+
+    // QA Default Redirection
+    if (user.role === Role.QA && window.location.pathname === '/app/dashboard') {
+      navigate('/app/my-work');
+    }
+
     api.org.get().then((o: any) => {
       setOrgBranding({ logo: o.logo, primaryColor: o.primaryColor, accentColor: o.accentColor });
       const root = document.documentElement.style;
@@ -152,16 +158,24 @@ export const Layout: React.FC = () => {
 
   menuItems.push(
     { to: '/app/clients', icon: Users, label: t('clients') },
-    { to: '/app/projects', icon: Briefcase, label: t('projects') },
-    { to: '/app/reports', icon: FileText, label: t('reports') },
-    { to: '/app/findings', icon: AlertCircle, label: t('findings') },
-    ...(user && isInternalRole(user.role) ? [
-      { to: '/app/wiki', icon: BookOpen, label: t('wiki') || 'Wiki' },
-      { to: '/app/analytics', icon: BarChart3, label: t('analytics') || 'Analytics' },
-      { to: '/app/automations', icon: Workflow, label: t('automations') || 'Automations' },
-      { to: '/app/integrations', icon: Link2, label: t('integrations') || 'Integrations' },
-    ] : [])
+    { to: '/app/projects', icon: Briefcase, label: t('projects') }
   );
+
+  if (user?.role !== Role.QA) {
+    menuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
+  }
+
+  menuItems.push({ to: '/app/findings', icon: AlertCircle, label: t('findings') });
+
+  if (user && isInternalRole(user.role)) {
+    menuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') || 'Wiki' });
+    menuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') || 'Analytics' });
+
+    if ([Role.SUPER_ADMIN, Role.OPS, Role.PM].includes(user.role)) {
+      menuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') || 'Automations' });
+      menuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') || 'Integrations' });
+    }
+  }
 
   if (user?.role === Role.SUPER_ADMIN) {
     menuItems.push({ to: '/app/admin/users', icon: ShieldCheck, label: t('admin') });

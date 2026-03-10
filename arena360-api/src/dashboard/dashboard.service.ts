@@ -8,7 +8,7 @@ export class DashboardService {
 
     async getAdminStats(user: UserWithRoles) {
         // Admin dashboard: internal role only
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new Error('Admin dashboard is for internal staff only');
         }
@@ -272,7 +272,7 @@ export class DashboardService {
 
     /** Advanced analytics for Analytics page (internal roles) */
     async getAnalytics(user: UserWithRoles) {
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'FINANCE'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'FINANCE', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new Error('Analytics is for internal staff only');
         }
@@ -398,9 +398,9 @@ export class DashboardService {
         const assigneeIds = [...new Set(tasksByAssignee.map((t) => t.assigneeId).filter(Boolean))] as string[];
         const users = assigneeIds.length
             ? await this.prisma.user.findMany({
-                  where: { id: { in: assigneeIds } },
-                  select: { id: true, name: true },
-              })
+                where: { id: { in: assigneeIds } },
+                select: { id: true, name: true },
+            })
             : [];
         const userMap = new Map(users.map((u) => [u.id, u.name]));
 

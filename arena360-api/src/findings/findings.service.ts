@@ -150,7 +150,7 @@ export class FindingsService {
         }
 
         // Only internal roles can create findings
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can create findings');
         }
@@ -228,7 +228,7 @@ export class FindingsService {
             throw new NotFoundException('Finding not found');
         }
 
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can update findings');
         }

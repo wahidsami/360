@@ -45,7 +45,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 1000 }]),
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({

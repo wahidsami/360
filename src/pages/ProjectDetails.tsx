@@ -12,6 +12,7 @@ import { RecurringTasksTab } from '../components/project/RecurringTasksTab';
 import { useAuth } from '../contexts/AuthContext';
 import { useAI } from '../contexts/AIContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
+import { PermissionsService } from '../services/permissions.service';
 
 // --- TAB CONFIGURATION (PHASE 1) ---
 const TAB_GROUPS = [
@@ -66,11 +67,12 @@ export const ProjectDetails: React.FC = () => {
   const [readiness, setReadiness] = useState<ProjectReadiness | null>(null);
   const [metrics, setMetrics] = useState<any>(null);
 
-  // --- Role-Based Tab Selection (Fixed Hook Order) ---
-  const isInternal = user && isInternalRole(user.role);
-  const visibleTabs = TAB_DEFINITIONS
-    .filter(tab => !tab.internalOnly || isInternal)
-    .sort((a, b) => (a.order || 99) - (b.order || 99));
+  // --- Role-Based Tab Selection ---
+  const visibleTabs = user
+    ? TAB_DEFINITIONS
+      .filter(tab => PermissionsService.getVisibleTabs(user.role).includes(tab.id))
+      .sort((a, b) => (a.order || 99) - (b.order || 99))
+    : [];
 
   // --- Safe Role-Based Default Tab Selection ---
   useEffect(() => {
@@ -80,16 +82,7 @@ export const ProjectDetails: React.FC = () => {
     // and haven't explicitly navigated elsewhere.
     if (activeTab !== 'overview') return;
 
-    const roleDefaults: Record<string, string> = {
-      [Role.DEV]: 'tasks',
-      [Role.FINANCE]: 'financials',
-      [Role.CLIENT_OWNER]: 'overview',
-      [Role.CLIENT_MANAGER]: 'overview',
-      [Role.CLIENT_MEMBER]: 'overview',
-      [Role.SUPER_ADMIN]: 'overview'
-    };
-
-    const targetTab = roleDefaults[user.role] || 'overview';
+    const targetTab = PermissionsService.getDefaultLanding(user.role);
 
     // 2. Critical: Check if the user actually has visibility for this tab
     if (targetTab !== 'overview' && visibleTabs.some(t => t.id === targetTab)) {
@@ -493,7 +486,18 @@ export const ProjectDetails: React.FC = () => {
                 activity={activity}
               />
             )}
-            {activeTab === 'tasks' && <TasksTab projectId={projectId!} tasks={tasks} milestones={milestones} members={members} onUpsert={handleUpsertTask} onDelete={handleDeleteTask} onMove={handleMoveTask} onJoin={() => handleAddMember(user?.id || '', user?.role as any)} currentUserId={user?.id || ''} />}
+            {activeTab === 'tasks' && <TasksTab
+              projectId={projectId!}
+              tasks={tasks}
+              milestones={milestones}
+              members={members}
+              onUpsert={handleUpsertTask}
+              onDelete={handleDeleteTask}
+              onMove={handleMoveTask}
+              onJoin={() => handleAddMember(user?.id || '', user?.role as any)}
+              currentUserId={user?.id || ''}
+              defaultFilter={(user?.role === Role.QA || user?.role === Role.DEV) ? 'my-tasks' : 'all'}
+            />}
             {activeTab === 'time' && projectId && <TimeTab projectId={projectId} tasks={tasks} currentUserId={user?.id} />}
             {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} />}
             {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} onUpsertTask={handleUpsertTask} />}

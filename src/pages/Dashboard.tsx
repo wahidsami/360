@@ -13,6 +13,7 @@ const Dashboard: React.FC = () => {
 
   switch (user.role) {
     case Role.DEV:
+    case Role.QA:
       return <DevDashboard role={user.role} />;
     case Role.FINANCE:
       return <FinanceDashboard role={user.role} />;

@@ -16,6 +16,7 @@ interface TasksTabProps {
     onMove: (id: string, status: any) => void;
     onJoin: () => void;
     currentUserId: string;
+    defaultFilter?: 'all' | 'my-tasks';
 }
 
 const KANBAN_COLUMNS = [
@@ -27,9 +28,10 @@ const KANBAN_COLUMNS = [
     { id: 'done', label: 'Done', color: 'text-emerald-400', border: 'border-emerald-800' },
 ];
 
-export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones, members, onUpsert, onDelete, onMove, onJoin, currentUserId }) => {
+export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones, members, onUpsert, onDelete, onMove, onJoin, currentUserId, defaultFilter = 'all' }) => {
     const { t } = useTranslation();
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+    const [filter, setFilter] = useState<'all' | 'my-tasks'>(defaultFilter);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Partial<Task>>({});
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -80,6 +82,10 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
 
     const handleDragEnd = () => { setDraggedTaskId(null); setDragOverCol(null); };
 
+    const filteredTasks = filter === 'my-tasks'
+        ? tasks.filter(t => t.assigneeId === currentUserId)
+        : tasks;
+
     // ---------- Helpers ----------
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -109,6 +115,14 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                         <LayoutGrid className="w-4 h-4" />
                     </button>
                 </div>
+                <div className="flex bg-slate-800/50 p-1 rounded-lg">
+                    <button onClick={() => setFilter('all')} className={`px-3 py-1 text-xs rounded ${filter === 'all' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        All Tasks
+                    </button>
+                    <button onClick={() => setFilter('my-tasks')} className={`px-3 py-1 text-xs rounded ${filter === 'my-tasks' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        My Tasks
+                    </button>
+                </div>
                 <div className="flex gap-2">
                     {members.every(m => m.userId !== currentUserId) && (
                         <Button variant="secondary" size="sm" onClick={onJoin}>Join Team</Button>
@@ -136,7 +150,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
-                            {tasks.map(task => (
+                            {filteredTasks.map(task => (
                                 <tr key={task.id} className="hover:bg-slate-800/30 transition-colors">
                                     <td className="p-4 font-medium text-white">{task.title}</td>
                                     <td className="p-4"><Badge variant={getStatusColor(task.status)}>{task.status.replace('_', ' ')}</Badge></td>
@@ -161,7 +175,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                 /* KANBAN VIEW */
                 <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: 500 }}>
                     {KANBAN_COLUMNS.map(col => {
-                        const colTasks = tasks.filter(t => t.status === col.id);
+                        const colTasks = filteredTasks.filter(t => t.status === col.id);
                         const isOver = dragOverCol === col.id;
                         return (
                             <div
@@ -286,6 +300,6 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 };

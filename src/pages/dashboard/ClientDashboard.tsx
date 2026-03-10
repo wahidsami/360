@@ -52,21 +52,22 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <div className="lg:col-span-2">
                <GlassCard title={t('my_projects')}>
                   <div className="space-y-4">
-                     {(stats.projects as Project[]).map(p => (
+                     {(stats.projects || []).map((p: any) => (
                         <div key={p.id} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg cursor-pointer hover:border-cyan-500/30 transition-all" onClick={() => navigate(`/app/projects/${p.id}`)}>
                            <div className="flex justify-between items-start mb-2">
                               <div>
-                                 <h4 className="font-bold text-slate-200">{p.name}</h4>
-                                 <p className="text-xs text-slate-500">Deadline: {p.deadline}</p>
+                                 <h4 className="font-bold text-slate-200">{p.name || 'Untitled Project'}</h4>
+                                 <p className="text-xs text-slate-500">Deadline: {p.deadline || 'No deadline'}</p>
                               </div>
-                              <Badge variant={p.health === 'good' ? 'success' : 'warning'}>{p.health}</Badge>
+                              <Badge variant={p.health === 'good' ? 'success' : 'warning'}>{p.health || 'unknown'}</Badge>
                            </div>
                            <div className="w-full bg-slate-900 rounded-full h-1.5 mt-2">
-                              <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${p.progress}%` }}></div>
+                              <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${p.progress || 0}%` }}></div>
                            </div>
-                           <div className="flex justify-end mt-1 text-xs text-cyan-400">{p.progress}% Complete</div>
+                           <div className="flex justify-end mt-1 text-xs text-cyan-400">{p.progress || 0}% Complete</div>
                         </div>
                      ))}
+                     {(!stats.projects || stats.projects.length === 0) && <p className="text-slate-500 text-sm">No projects found.</p>}
                   </div>
                </GlassCard>
             </div>
@@ -74,7 +75,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <div className="space-y-6">
                <GlassCard title={t('shared_files')}>
                   <div className="space-y-3">
-                     {(stats.files as FileAsset[]).map(f => (
+                     {(stats.files || []).map((f: any) => (
                         <div key={f.id} className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30">
                            <FileText className="w-4 h-4 text-slate-500" />
                            <div className="flex-1 min-w-0">
@@ -83,7 +84,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            </div>
                         </div>
                      ))}
-                     {stats.files.length === 0 && <p className="text-slate-500 text-sm">No files shared yet.</p>}
+                     {(!stats.files || stats.files.length === 0) && <p className="text-slate-500 text-sm">No files shared yet.</p>}
                   </div>
                </GlassCard>
             </div>

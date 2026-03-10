@@ -8,7 +8,8 @@ import {
 import toast from 'react-hot-toast';
 import { GlassCard, Button, Badge, Input, Select, KpiCard, Modal, TextArea } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
-import { Finding, Project, Client } from '@/types';
+import { Finding, Project, Client, Role } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FindingsListProps {
   initialFindings?: Finding[];
@@ -19,6 +20,7 @@ interface FindingsListProps {
 export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, projectId, onRefresh }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [findings, setFindings] = useState<Finding[]>(initialFindings || []);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -255,7 +257,12 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                 onClick={() => navigate(`/app/findings/${f.id}`)}
               >
                 <td className="p-4">
-                  <div className="font-medium text-slate-200 group-hover:text-cyan-400 transition-colors">{f.title}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium text-slate-200 group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{f.title}</div>
+                    {(user?.role === Role.PM || user?.role === Role.QA || user?.role === Role.SUPER_ADMIN) && (
+                      <Badge variant="info" className="text-[10px] py-0.5 px-1 bg-cyan-500/10 text-cyan-400 border-cyan-500/20">MANAGE</Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-slate-500 md:hidden">{getClientName(f.projectId)}</div>
                 </td>
                 <td className="p-4">

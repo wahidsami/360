@@ -10,6 +10,7 @@ export class ScopeUtils {
             GlobalRole.PM,
             GlobalRole.DEV,
             GlobalRole.FINANCE,
+            GlobalRole.QA,
         ];
         return internalRoles.includes(user.role);
     }

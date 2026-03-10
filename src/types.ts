@@ -3,6 +3,7 @@ export enum Role {
   OPS = 'OPS',
   PM = 'PM',
   DEV = 'DEV',
+  QA = 'QA',
   FINANCE = 'FINANCE',
   CLIENT_OWNER = 'CLIENT_OWNER',
   CLIENT_MANAGER = 'CLIENT_MANAGER',
@@ -11,7 +12,7 @@ export enum Role {
 }
 
 export const isInternalRole = (role: Role): boolean => {
-  return [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.DEV, Role.FINANCE].includes(role);
+  return [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.DEV, Role.QA, Role.FINANCE].includes(role);
 };
 
 export enum Permission {
@@ -213,7 +214,7 @@ export interface Finding {
   severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   description?: string;
-  status: 'open' | 'in_progress' | 'in_review' | 'closed' | 'dismissed' | 'blocked';
+  status: 'open' | 'in_progress' | 'in_review' | 'ready_for_testing' | 'closed' | 'dismissed' | 'blocked';
   visibility: 'INTERNAL' | 'CLIENT';
   ownerName?: string;
   reportedById?: string;
@@ -361,6 +362,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.OPS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_CLIENTS, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
   [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
   [Role.DEV]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS],
+  [Role.QA]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_TASKS],
   [Role.FINANCE]: [Permission.VIEW_DASHBOARD, Permission.VIEW_FINANCIALS, Permission.VIEW_CLIENTS],
   [Role.CLIENT_OWNER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS],
   [Role.CLIENT_MANAGER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS],

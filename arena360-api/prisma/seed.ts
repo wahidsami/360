@@ -48,6 +48,7 @@ async function main() {
         { email: 'ops@arena.com', role: GlobalRole.OPS, name: 'Ops User' },
         { email: 'pm@arena.com', role: GlobalRole.PM, name: 'PM User' },
         { email: 'dev@arena.com', role: GlobalRole.DEV, name: 'Dev User' },
+        { email: 'qa@arena.com', role: GlobalRole.QA, name: 'QA Tester' },
         { email: 'finance@arena.com', role: GlobalRole.FINANCE, name: 'Finance User' },
         { email: 'client@acme.com', role: GlobalRole.CLIENT_OWNER, name: 'Client Owner' },
         { email: 'manager@acme.com', role: GlobalRole.CLIENT_MANAGER, name: 'Client Manager' },

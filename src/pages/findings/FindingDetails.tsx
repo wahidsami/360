@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { Badge, Button, GlassCard, Label, Select, TextArea } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
-import { Finding, User, isInternalRole } from '@/types';
+import { Finding, User, isInternalRole, Role, Permission } from '@/types';
+import { PermissionGate } from '@/components/PermissionGate';
 import { useAI } from '@/contexts/AIContext';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -282,17 +283,41 @@ export const FindingDetails: React.FC = () => {
             </>
           ) : (
             <>
-              <Button variant="secondary" size="sm" onClick={handleStartEdit}>
-                <FileText className="w-4 h-4 mr-2" /> Edit Details
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
-                onClick={() => handleStatusUpdate('closed')}
-              >
-                <CheckCircle className="w-4 h-4 mr-2" /> Mark Closed
-              </Button>
+              <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                <Button variant="secondary" size="sm" onClick={handleStartEdit}>
+                  <FileText className="w-4 h-4 mr-2" /> Edit Details
+                </Button>
+              </PermissionGate>
+              {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN) && finding.status === 'ready_for_testing' && (
+                <>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
+                    onClick={() => handleStatusUpdate('closed')}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" /> Verify Fixed
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-rose-500/50 text-rose-400 hover:bg-rose-500/10"
+                    onClick={() => handleStatusUpdate('open')}
+                  >
+                    Reopen
+                  </Button>
+                </>
+              )}
+              <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
+                  onClick={() => handleStatusUpdate('closed')}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" /> Mark Closed
+                </Button>
+              </PermissionGate>
             </>
           )}
         </div>
@@ -332,49 +357,58 @@ export const FindingDetails: React.FC = () => {
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-700 space-y-4">
-              <div>
-                <Label>Update Status</Label>
-                <Select
-                  className="mt-1 text-sm py-1.5"
-                  value={finding.status}
-                  onChange={(e) => handleStatusUpdate(e.target.value)}
-                >
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="in_review">In Review</option>
-                  <option value="blocked">Blocked</option>
-                  <option value="closed">Closed</option>
-                  <option value="dismissed">Dismissed</option>
-                </Select>
-              </div>
+              {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN || user?.role === Role.OPS) ? (
+                <>
+                  <div>
+                    <Label>Update Status</Label>
+                    <Select
+                      className="mt-1 text-sm py-1.5"
+                      value={finding.status}
+                      onChange={(e) => handleStatusUpdate(e.target.value)}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="in_review">In Review</option>
+                      <option value="ready_for_testing">Ready for Testing</option>
+                      <option value="blocked">Blocked</option>
+                      <option value="closed">Closed</option>
+                      <option value="dismissed">Dismissed</option>
+                    </Select>
+                  </div>
 
-              <div>
-                <Label>Update Severity</Label>
-                <Select
-                  className="mt-1 text-sm py-1.5"
-                  value={finding.severity}
-                  onChange={(e) => handleSeverityUpdate(e.target.value)}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </Select>
-              </div>
+                  <div>
+                    <Label>Update Severity</Label>
+                    <Select
+                      className="mt-1 text-sm py-1.5"
+                      value={finding.severity}
+                      onChange={(e) => handleSeverityUpdate(e.target.value)}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </Select>
+                  </div>
 
-              <div>
-                <Label>Update Assignee</Label>
-                <Select
-                  className="mt-1 text-sm py-1.5"
-                  value={finding.assignedToId || 'none'}
-                  onChange={(e) => handleAssigneeUpdate(e.target.value)}
-                >
-                  <option value="none">Unassigned</option>
-                  {assignableUsers.map(u => (
-                    <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                  ))}
-                </Select>
-              </div>
+                  <div>
+                    <Label>Update Assignee</Label>
+                    <Select
+                      className="mt-1 text-sm py-1.5"
+                      value={finding.assignedToId || 'none'}
+                      onChange={(e) => handleAssigneeUpdate(e.target.value)}
+                    >
+                      <option value="none">Unassigned</option>
+                      {assignableUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                      ))}
+                    </Select>
+                  </div>
+                </>
+              ) : (
+                <div className="pt-2">
+                  <p className="text-xs text-slate-500 italic">Only QA or Project Managers can modify these status & severity controls.</p>
+                </div>
+              )}
             </div>
           </GlassCard>
 
