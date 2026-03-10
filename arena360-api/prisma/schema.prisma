@@ -50,6 +50,7 @@ enum TaskStatus {
   IN_PROGRESS
   REVIEW
   DONE
+  BLOCKED
 }
 
 enum TaskPriority {
@@ -104,6 +105,7 @@ enum FindingStatus {
   IN_REVIEW
   CLOSED
   DISMISSED
+  BLOCKED
 }
 
 enum FindingVisibility {
