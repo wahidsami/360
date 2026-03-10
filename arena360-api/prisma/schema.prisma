@@ -12,6 +12,7 @@ enum GlobalRole {
   OPS
   PM
   DEV
+  QA
   FINANCE
   CLIENT_OWNER
   CLIENT_MANAGER
@@ -103,6 +104,7 @@ enum FindingStatus {
   OPEN
   IN_PROGRESS
   IN_REVIEW
+  READY_FOR_TESTING
   CLOSED
   DISMISSED
   BLOCKED
