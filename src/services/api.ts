@@ -22,7 +22,10 @@ const fetchApi = async (endpoint: string, options: RequestInit & { silent?: bool
   if (!res.ok) {
     const text = await res.text();
     const error = text ? JSON.parse(text) : {};
-    const message = error.message || 'API Error';
+    let message = error.message || 'API Error';
+    if (Array.isArray(message)) {
+      message = message.join(', ');
+    }
     if (!options.silent) {
       toast.error(message);
     }
@@ -246,7 +249,7 @@ export const api = {
   clients: {
     list: async (): Promise<Client[]> => {
       const clients = await fetchApi('/clients');
-      return clients.map(normalizeClient);
+      return (clients || []).map(normalizeClient);
     },
     get: async (id: string): Promise<Client | undefined> => {
       try {
@@ -284,7 +287,7 @@ export const api = {
     getMembers: async (clientId: string): Promise<ClientMember[]> => {
       try {
         const members = await fetchApi(`/clients/${clientId}/members`);
-        return members.map((m: any) => ({
+        return (members || []).map((m: any) => ({
           id: m.id,
           clientId: m.clientId,
           userId: m.userId,
@@ -371,11 +374,11 @@ export const api = {
   projects: {
     list: async (): Promise<Project[]> => {
       const projects = await fetchApi('/projects');
-      return projects.map(normalizeProject);
+      return (projects || []).map(normalizeProject);
     },
     getByClient: async (clientId: string): Promise<Project[]> => {
       const projects = await fetchApi(`/projects?clientId=${clientId}`);
-      return projects.map(normalizeProject);
+      return (projects || []).map(normalizeProject);
     },
     get: async (id: string): Promise<Project | undefined> => {
       try {
@@ -422,7 +425,7 @@ export const api = {
     getMilestones: async (projectId: string): Promise<Milestone[]> => {
       try {
         const milestones = await fetchApi(`/projects/${projectId}/milestones`);
-        return milestones.map(normalizeMilestone);
+        return (milestones || []).map(normalizeMilestone);
       } catch (e) {
         console.error('Failed to get milestones:', e);
         return [];
@@ -473,7 +476,7 @@ export const api = {
     getUpdates: async (projectId: string): Promise<ProjectUpdate[]> => {
       try {
         const updates = await fetchApi(`/projects/${projectId}/updates`);
-        return updates.map((u: any) => ({
+        return (updates || []).map((u: any) => ({
           ...u,
           timestamp: u.createdAt,
           authorName: u.author?.name || 'Unknown'
@@ -606,7 +609,7 @@ export const api = {
       try {
         const files = await fetchApi(`/projects/${projectId}/files`);
         // Map backend fields to frontend expected fields
-        return files.map((f: any) => ({
+        return (files || []).map((f: any) => ({
           id: f.id,
           name: f.filename ?? f.name,
           category: f.category,
@@ -724,7 +727,7 @@ export const api = {
     getMembers: async (projectId: string): Promise<ProjectMember[]> => {
       try {
         const members = await fetchApi(`/projects/${projectId}/members`);
-        return members.map((m: any) => ({
+        return (members || []).map((m: any) => ({
           id: m.id,
           projectId: m.projectId,
           userId: m.userId,
@@ -754,7 +757,7 @@ export const api = {
     getFindings: async (projectId: string): Promise<Finding[]> => {
       try {
         const findings = await fetchApi(`/projects/${projectId}/findings`);
-        return findings.map(normalizeFinding);
+        return (findings || []).map(normalizeFinding);
       } catch (e) {
         console.error('Failed to get findings:', e);
         return [];
@@ -875,7 +878,7 @@ export const api = {
     },
     getTasks: async (projectId: string): Promise<Task[]> => {
       const tasks = await fetchApi(`/projects/${projectId}/tasks`);
-      return tasks.map(normalizeTask);
+      return (tasks || []).map(normalizeTask);
     },
     createTask: async (projectId: string, payload: Partial<Task>): Promise<Task> => {
       // Normalize to uppercase for backend
@@ -937,7 +940,7 @@ export const api = {
   tasks: {
     getMyTasks: async (userId: string): Promise<Task[]> => {
       const tasks = await fetchApi('/tasks/my');
-      return tasks.map(normalizeTask);
+      return (tasks || []).map(normalizeTask);
     }
   },
 
@@ -945,7 +948,7 @@ export const api = {
     list: async (): Promise<Finding[]> => {
       try {
         const findings = await fetchApi('/findings');
-        return findings.map(normalizeFinding);
+        return (findings || []).map(normalizeFinding);
       } catch (e) {
         console.error('Failed to get findings:', e);
         return [];
