@@ -167,7 +167,9 @@ export const Layout: React.FC = () => {
     menuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
   }
 
-  menuItems.push({ to: '/app/findings', icon: AlertCircle, label: t('findings') });
+  if (user?.role !== Role.FINANCE) {
+    menuItems.push({ to: '/app/findings', icon: AlertCircle, label: t('findings') });
+  }
 
   if (user && isInternalRole(user.role)) {
     menuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') || 'Wiki' });

@@ -62,6 +62,12 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
     }
   }, [initialFindings]);
 
+  useEffect(() => {
+    if (user?.role === Role.FINANCE) {
+      navigate('/app/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
   const handleCreateFinding = async (e: React.FormEvent) => {
     e.preventDefault();
     // Use the prop projectId if available, otherwise fall back to the modal's selected project

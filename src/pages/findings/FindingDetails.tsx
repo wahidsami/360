@@ -50,6 +50,12 @@ export const FindingDetails: React.FC = () => {
   }, [findingId, setContext]);
 
   useEffect(() => {
+    if (user?.role === Role.FINANCE) {
+      navigate('/app/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     const load = async () => {
       if (!findingId) return;
       setLoading(true);
