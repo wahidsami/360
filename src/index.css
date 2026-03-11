@@ -23,14 +23,78 @@
   }
 }
 
-/* Light theme (when .theme-light on html) */
+/* ============================================================
+   LIGHT THEME — applied when html.theme-light is set
+   ============================================================ */
 html.theme-light {
-  --brand-bg: #f8fafc;
+  --brand-bg: #f1f5f9;
   --brand-surface: #ffffff;
+  color-scheme: light;
 }
+
+/* Base backgrounds */
 html.theme-light body {
+  background-color: #f1f5f9;
   color: #0f172a;
 }
+
+/* Slate background overrides */
+html.theme-light .bg-slate-950,
+html.theme-light .bg-\[#020617\] { background-color: #f1f5f9 !important; }
+
+html.theme-light .bg-slate-900,
+html.theme-light .bg-slate-900\/50,
+html.theme-light .bg-slate-900\/30,
+html.theme-light .bg-slate-900\/80 { background-color: #e2e8f0 !important; }
+
+html.theme-light .bg-slate-800,
+html.theme-light .bg-slate-800\/50,
+html.theme-light .bg-slate-800\/30,
+html.theme-light .bg-slate-800\/20 { background-color: #f8fafc !important; }
+
+html.theme-light .bg-slate-700,
+html.theme-light .bg-slate-700\/50 { background-color: #e2e8f0 !important; }
+
+/* Text overrides */
+html.theme-light .text-white { color: #0f172a !important; }
+html.theme-light .text-slate-100 { color: #1e293b !important; }
+html.theme-light .text-slate-200 { color: #334155 !important; }
+html.theme-light .text-slate-300 { color: #475569 !important; }
+html.theme-light .text-slate-400 { color: #64748b !important; }
+html.theme-light .text-slate-500 { color: #94a3b8 !important; }
+
+/* Border overrides */
+html.theme-light .border-slate-700,
+html.theme-light .border-slate-700\/50 { border-color: #cbd5e1 !important; }
+html.theme-light .border-slate-800,
+html.theme-light .border-slate-800\/50 { border-color: #e2e8f0 !important; }
+html.theme-light .border-slate-600 { border-color: #cbd5e1 !important; }
+
+/* Glassmorphism cards */
+html.theme-light [class*="GlassCard"],
+html.theme-light .glass-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Hover states */
+html.theme-light .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
+html.theme-light .hover\:bg-slate-700:hover { background-color: #cbd5e1 !important; }
+
+/* Input / select overrides */
+html.theme-light input,
+html.theme-light select,
+html.theme-light textarea {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+html.theme-light input::placeholder { color: #94a3b8 !important; }
+
+/* Sidebar / nav */
+html.theme-light nav,
+html.theme-light aside { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+
 
 @utility spin-slow {
   animation: spin 3s linear infinite;
