@@ -25,14 +25,14 @@ const SidebarItem = ({ to, icon: Icon, label, onClick, isCollapsed }: any) => (
     onClick={onClick}
     title={isCollapsed ? label : undefined}
     className={({ isActive }) => `
-      flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-lg transition-all duration-200 group
+      flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl transition-all duration-300 group
       ${isActive
-        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]'
-        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}
+        ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20 shadow-sm'
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-cyan-600 dark:hover:text-slate-200'}
     `}
   >
-    <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
-    {!isCollapsed && <span className="font-medium text-sm truncate">{label}</span>}
+    <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3" />
+    {!isCollapsed && <span className="font-semibold text-sm truncate">{label}</span>}
     {!isCollapsed && <ChevronRight className="w-4 h-4 shrink-0 -mr-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" />}
   </NavLink>
 );
@@ -201,7 +201,7 @@ export const Layout: React.FC = () => {
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} 
-        bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-[#E4E9F2] dark:border-slate-800
+        bg-white dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800
         transform transition-all duration-300 lg:transform-none flex flex-col shadow-soft-xl lg:shadow-none
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0'}
       `}>
@@ -213,7 +213,7 @@ export const Layout: React.FC = () => {
           <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`} />
         </button>
 
-        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-[#E4E9F2] dark:border-slate-800 relative h-20`}>
+        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-slate-200 dark:border-slate-800 relative h-20`}>
           {!isCollapsed && (
             <div className="h-[38px] flex items-center justify-center">
               {orgBranding?.logo ? (
@@ -236,18 +236,17 @@ export const Layout: React.FC = () => {
           </button>
         </div>
 
-        <nav className={`flex-1 ${isCollapsed ? 'p-2' : 'p-4'} space-y-1 overflow-y-auto`}>
+        <nav className={`flex-1 ${isCollapsed ? 'p-2' : 'p-4'} space-y-2 overflow-y-auto`}>
           {menuItems.map((item) => (
             <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           ))}
-
-          <div className="mt-8 pt-4 border-t border-slate-800">
+          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
             <SidebarItem to="/app/settings" icon={Settings} label={t('settings')} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           </div>
         </nav>
 
-        <div className={`p-4 border-t border-[#E4E9F2] dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 ${isCollapsed ? 'flex justify-center px-2' : ''}`}>
-          <div className={`flex items-center gap-3 ${isCollapsed ? 'p-2' : 'p-3'} rounded-2xl border border-[#E4E9F2] dark:border-slate-700/50 bg-white dark:bg-slate-800/30 w-full shadow-sm`}>
+        <div className={`p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 ${isCollapsed ? 'flex justify-center px-2' : ''}`}>
+          <div className={`flex items-center gap-3 ${isCollapsed ? 'p-2' : 'p-3'} rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-800/30 w-full shadow-sm`}>
             <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=0d9488&color=fff`} className={`${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'} shrink-0 rounded-full border-2 border-slate-200 dark:border-slate-600`} alt="Profile" />
             {!isCollapsed && (
               <>
@@ -271,7 +270,7 @@ export const Layout: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="h-16 border-b border-[#E4E9F2] dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shadow-sm">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 mr-4">
             <Menu />
           </button>

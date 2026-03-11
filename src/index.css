@@ -25,31 +25,144 @@
 }
 
 .theme-light {
-  --app-bg: #F7F9FA;
-  --app-surface: #FFFFFF;
-  --app-text-base: #1e293b;
-  --app-text-muted: #64748b;
-  --app-border: #E4E9F2;
-
-  /* Slate Scale Remapping for Light Mode (The Magic) */
-  /* We flip the scale so that dark-intended classes become light-intended */
-  --slate-950: #F7F9FA;
-  --slate-900: #FFFFFF;
-  --slate-850: #F7F9FA;
-  --slate-800: #FFFFFF;
-  --slate-700: #E4E9F2;
-  --slate-600: #DFE6EF;
-  --slate-500: #adb5bd;
-  --slate-400: #8392ab;
-  --slate-300: #67748e;
-  --slate-200: #475569; /* Darker text */
-  --slate-100: #1e293b; /* Even darker */
-  --slate-50: #0f172a;
-
-  --brand-primary: #00D4FF;
-  --brand-accent: #6366f1;
+  --app-bg: #F7F9FA;:root {
+  /* Enhanced Light Theme Tokens */
+  --app-bg: #f8fafc; /* bg-slate-50 */
+  --app-surface: #ffffff;
+  --app-surface-hover: #f1f5f9;
+  --app-border: rgba(226, 232, 240, 0.6); /* border-slate-200/60 */
+  --app-divider: #e2e8f0;
   
-  color-scheme: light;
+  --text-main: #334155; /* slate-700 */
+  --text-heading: #1e293b; /* slate-800 */
+  --text-muted: #64748b; /* slate-500 */
+  --text-inverse: #ffffff;
+
+  /* Sophisticated Shadow System */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.theme-light {
+  /* Deep Scale Remapping for contrast and readability */
+  --tw-slate-50: #ffffff;
+  --tw-slate-100: #f8fafc;
+  --tw-slate-200: #f1f5f9;
+  --tw-slate-300: #e2e8f0;
+  --tw-slate-400: #cbd5e1;
+  --tw-slate-500: #94a3b8;
+  --tw-slate-600: #475569; /* Strengthened */
+  --tw-slate-700: #334155; /* Strengthened */
+  --tw-slate-800: #1e293b; /* Strengthened */
+  --tw-slate-900: #0f172a; /* Strengthened */
+
+  /* Override harsh dark backgrounds with soft layered light surfaces */
+  --bg-slate-950: #f8fafc; /* Main application background */
+  --bg-slate-900: #ffffff; /* Default section card background */
+  --bg-slate-800: #f1f5f9; /* Secondary/hover background */
+}
+
+/* Animations & Micro-interactions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Glassmorphism Refinements */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-light .glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Progress Bar Refinement */
+.progress-gradient {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6, #06b6d4);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Button Micro-interactions */
+button:not(:disabled):hover, a:not(:disabled):hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-rotate:hover {
+  transform: rotate(3deg);
+}
+
+/* Sidebar & Layout Refinements */
+.sidebar-shadow {
+  box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Global Transition */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Forced Component Transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 @theme {

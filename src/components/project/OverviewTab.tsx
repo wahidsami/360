@@ -41,7 +41,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
     const [isExpanded, setIsExpanded] = React.useState(!isComplete);
 
     return (
-        <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-5 flex flex-col mb-4">
+        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-4 shadow-sm">
             <div
                 className="flex items-center justify-between cursor-pointer mb-2"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -86,8 +86,8 @@ function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigat
     };
 
     return (
-        <GlassCard className="p-5 border-slate-800">
-            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
+        <GlassCard className="p-6 border-slate-200 dark:border-slate-800">
+            <h4 className="text-[10px] font-black text-slate-900 dark:text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
             <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2">
                 {activities.map(activity => (
                     <div key={activity.id} className="flex gap-3 text-sm">
@@ -179,10 +179,10 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
     if (insights.length === 0) return null;
 
     return (
-        <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 flex flex-col gap-3 mb-4">
+        <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-6 flex flex-col gap-3 mb-4 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
                 <span className="text-base">🔮</span>
-                <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-400">Predictive Insights</h3>
+                <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-900 dark:text-slate-400">Predictive Insights</h3>
             </div>
             <div className="space-y-2">
                 {insights.map((insight, idx) => (
@@ -224,7 +224,7 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
     };
 
     return (
-        <div className={`${severityColors[action.type] || 'bg-slate-800/50 border-slate-700'} border rounded-2xl p-4 flex flex-col gap-4`}>
+        <div className={`${severityColors[action.type] || 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'} border rounded-2xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-xl transition-all duration-300`}>
             <div className="flex items-start gap-4">
                 <div className={`shrink-0 p-2 rounded-lg ${iconColors[action.type] || 'text-slate-400 bg-slate-800'}`}>
                     <Sparkles className="w-5 h-5" />
@@ -429,16 +429,16 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
     const canSee = (tabId: string) => allowedTabs.includes(tabId);
 
     return (
-        <div className="space-y-6 pb-12">
-            <div className="flex justify-between items-center w-full">
-                <h2 className="text-xl font-black text-white px-2">Project Dashboard</h2>
+        <div className="space-y-8 pb-12">
+            <div className="flex justify-between items-center w-full border-b border-slate-200 dark:border-slate-800 pb-4 mb-2">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white px-2">Project Dashboard</h2>
                 <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 
             {/* TOP ROW: Stage, Status & Next Best Action */}
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                 {/* Stage & Status Banner */}
-                <GlassCard className="xl:col-span-3 p-0 overflow-hidden border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-500/5 shadow-xl shadow-cyan-500/5">
+                <GlassCard className="xl:col-span-3 p-0 overflow-hidden border-cyan-200 dark:border-cyan-500/20 bg-gradient-to-br from-white via-white to-cyan-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-cyan-500/5 shadow-md border-l-4 border-l-cyan-400 dark:border-l-cyan-500">
                     <div className="flex flex-col md:flex-row h-full">
                         {/* Status Sidebar */}
                         <div className="w-full md:w-48 bg-cyan-500/10 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-cyan-500/20">
@@ -455,10 +455,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         <div className="flex-grow p-6 flex flex-col justify-center gap-6">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                                        STAGE: <span className="text-cyan-400">{readiness?.stage.replace(/_/g, ' ') || 'SETUP'}</span>
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                        STAGE: <span className="text-cyan-600 dark:text-cyan-400">{(readiness?.stage || 'SETUP').toUpperCase()}</span>
                                     </h2>
-                                    <p className="text-sm text-slate-400 font-medium">
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                                         {readiness?.stageExplanation || 'Initial project parameters and team setup required.'}
                                     </p>
                                 </div>
@@ -503,7 +503,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" strokeLinecap="round" />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-xl font-black text-white">{readiness?.completeness || 0}%</span>
+                            <span className="text-xl font-bold text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
                         </div>
                     </div>
                     <div className="text-center">
@@ -516,7 +516,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             {/* MIDDLE ROW: Operational Health Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {/* Task Health */}
-                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('tasks') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
+                <GlassCard className={`p-6 border-t-4 border-t-blue-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('tasks') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
@@ -565,22 +565,22 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Schedule / Milestone Health */}
-                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('milestones') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
+                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+                            <div className="p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
                                 <Calendar className="w-5 h-5" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Schedule</h3>
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Schedule</h3>
                         </div>
                         {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">At Risk</Badge>}
                     </div>
 
                     <div className="space-y-4 mb-4">
-                        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3">
+                        <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg p-3">
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Project Deadline</p>
                             <div className="flex items-end justify-between">
-                                <p className="text-lg font-black text-white">
+                                <p className="text-lg font-black text-slate-900 dark:text-white">
                                     {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'NOT SET'}
                                 </p>
                                 {daysUntilDeadline !== null && (
@@ -632,13 +632,13 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Findings Summary */}
-                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('findings') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
+                <GlassCard className={`p-6 border-t-4 border-t-rose-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('findings') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-rose-500/10 rounded-lg text-rose-400">
+                            <div className="p-2 bg-rose-50 dark:bg-rose-500/10 rounded-lg text-rose-600 dark:text-rose-400">
                                 <AlertCircle className="w-5 h-5" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Quality</h3>
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quality</h3>
                         </div>
                         <Badge variant={unresolvedFindings > 0 ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">
                             {unresolvedFindings} Open
@@ -707,7 +707,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Updates / Review Health */}
-                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors">
+                <GlassCard className="p-6 border-t-4 border-t-cyan-500 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors h-full flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
                             <Clock className="w-5 h-5" />
@@ -720,7 +720,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     <div className="space-y-4">
                         <div>
                             <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Last Weekly Update</p>
-                            <p className="text-lg font-black text-white truncate">{lastUpdateAge}</p>
+                            <p className="text-lg font-black text-slate-900 dark:text-white truncate">{lastUpdateAge}</p>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-slate-800">
                             <div className="flex flex-col">
@@ -741,7 +741,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
 
                     {metrics.capacity.members && (
-                        <GlassCard className={`p-5 border-slate-800 relative transition-colors ${canSee('team') ? 'hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
+                        <GlassCard className={`p-6 border-t-4 border-t-indigo-500 dark:border-slate-800 relative transition-colors h-full ${canSee('team') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-blue-500" /> TEAM CAPACITY
@@ -820,8 +820,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </GlassCard>
                     )}
 
-                    <GlassCard className="p-5 border-slate-800 text-center flex flex-col items-center justify-center">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest w-full text-left flex items-center gap-2 absolute top-5 left-5">
+                    <GlassCard className="p-6 border-t-4 border-t-rose-600 dark:border-slate-800 text-center flex flex-col items-center justify-center relative min-h-[200px]">
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest w-full text-left flex items-center gap-2 absolute top-6 left-6">
                             <Lock className="w-4 h-4 text-rose-500" /> BLOCKERS
                         </h3>
                         {metrics.blockers.active.length === 0 ? (
@@ -879,8 +879,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Project Context</h4>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[9px] text-slate-600 uppercase font-black">Client Account</label>
-                                <p className="text-sm font-bold text-white leading-tight mt-0.5">{clientName || 'Unassigned'}</p>
+                                <label className="text-[9px] text-slate-500 uppercase font-black">Client Account</label>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{clientName || 'Unassigned'}</p>
                             </div>
                             <div className="pt-3 border-t border-slate-800/50">
                                 <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('discussions')}>
@@ -900,12 +900,12 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             </div>
 
             {/* Project Overview / Description Section - Full Width */}
-            <GlassCard className="p-6 border-slate-800/50 bg-slate-900/30">
+            <GlassCard className="p-6 border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900/30">
                 <div className="flex items-center gap-3 mb-4">
                     <Info className="w-5 h-5 text-slate-400" />
-                    <h3 className="text-lg font-bold text-white">Project Brief & Scope</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Project Brief & Scope</h3>
                 </div>
-                <div className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
                     {project.description || "No project description provided. Add a scope summary to align the team."}
                 </div>
             </GlassCard>

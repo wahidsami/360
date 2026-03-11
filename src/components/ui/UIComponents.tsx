@@ -21,10 +21,10 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const GlassCard = ({ children, className = '', title, ...props }: GlassCardProps) => (
     <div
-        className={`glass-card bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-soft-lg ${className}`}
+        className={`glass-card bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${className}`}
         {...props}
     >
-        {title && <h3 className="glass-card-title text-lg font-bold text-white mb-6 border-b border-slate-700/50 pb-3 tracking-tight">{title}</h3>}
+        {title && <h3 className="glass-card-title text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 padding-bottom-3 tracking-tight">{title}</h3>}
         {children}
     </div>
 );
@@ -59,7 +59,7 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
     };
 
     return (
-        <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+        <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} hover:scale-105 hover:shadow-lg active:scale-95 ${className}`} {...props}>
             {children}
         </button>
     );
@@ -105,7 +105,7 @@ export const Badge = ({ children, variant = 'neutral', size = 'md', className = 
     };
 
     return (
-        <span className={`inline-flex items-center rounded-full font-bold border ${variants[variant]} ${sizes[size]} ${pulse ? 'animate-pulse-subtle' : ''} ${className}`} {...props}>
+        <span className={`inline-flex items-center rounded-full font-semibold border ${variants[variant]} ${sizes[size]} ${pulse ? 'animate-pulse-subtle' : ''} ${className}`} {...props}>
             {children}
         </span>
     );
@@ -113,7 +113,7 @@ export const Badge = ({ children, variant = 'neutral', size = 'md', className = 
 
 // --- Form Elements ---
 export const Label = (props: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-    <label className={`block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ${props.className || ''}`} {...props}>
+    <label className={`block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ${props.className || ''}`} {...props}>
         {props.children}
     </label>
 );
@@ -124,7 +124,7 @@ export const Input = ({ label, className = '', id, ...props }: React.InputHTMLAt
             {label && <Label htmlFor={id}>{label}</Label>}
             <input
                 id={id}
-                className={`flex h-11 w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all ${className}`}
+                className={`flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-2 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -137,7 +137,7 @@ export const TextArea = ({ label, className = '', id, ...props }: React.Textarea
             {label && <Label htmlFor={id}>{label}</Label>}
             <textarea
                 id={id}
-                className={`flex min-h-[100px] w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all ${className}`}
+                className={`flex min-h-[100px] w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-3 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -151,12 +151,12 @@ export const Select = ({ label, className = '', id, children, ...props }: React.
             <div className="relative">
                 <select
                     id={id}
-                    className={`flex h-11 w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 appearance-none transition-all ${className}`}
+                    className={`flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-2 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 appearance-none transition-all ${className}`}
                     {...props}
                 >
                     {children}
                 </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
@@ -179,11 +179,11 @@ export const KpiCard = ({ label, value, trend, trendUp, icon }: KpiCardProps) =>
     <GlassCard className="p-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-cyan-500/5 to-transparent rounded-bl-full pointer-events-none transition-all group-hover:bg-cyan-500/10" />
         <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</h3>
-            {icon && <div className="p-2 bg-slate-800/50 rounded-lg text-cyan-400 group-hover:scale-110 transition-transform">{icon}</div>}
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{label}</h3>
+            {icon && <div className="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-cyan-600 dark:text-cyan-400 group-hover:rotate-3 transition-transform">{icon}</div>}
         </div>
         <div className="flex items-end gap-3 relative z-10">
-            <div className="text-3xl font-bold text-white tracking-tight">{value}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</div>
             {trend !== undefined && (
                 <span className={`text-xs font-bold mb-1 px-2 py-0.5 rounded-full ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                     {trendUp ? '↑' : '↓'} {trend}
