@@ -9,6 +9,7 @@
     "db:seed": "cd arena360-api && npx prisma db seed",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "vite preview --host",
     "stack:up": "docker-compose up -d",
     "stack:down": "docker-compose down"
   },
