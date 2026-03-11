@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Sparkles } from 'lucide-react';
@@ -98,6 +98,31 @@ export const ProjectDetails: React.FC = () => {
     }
     return () => setContext({});
   }, [projectId, setContext]);
+
+  // --- Real-time milestone refresh ---
+  // Refreshes milestones in the background without disturbing the rest of the page.
+  const refreshMilestones = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const m = await api.projects.getMilestones(projectId);
+      setMilestones(m);
+    } catch (e) {
+      // Silent fail — no toast, user is not interrupted
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    // Poll every 30 seconds
+    const poll = setInterval(refreshMilestones, 30_000);
+    // Also listen for an instant refresh event fired by other components
+    const onMilestoneChange = () => refreshMilestones();
+    window.addEventListener('project:milestone_changed', onMilestoneChange);
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener('project:milestone_changed', onMilestoneChange);
+    };
+  }, [projectId, refreshMilestones]);
 
   const refreshReadiness = async () => {
     if (!projectId) return;
