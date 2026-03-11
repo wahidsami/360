@@ -35,3 +35,42 @@ html.theme-light body {
 @utility spin-slow {
   animation: spin 3s linear infinite;
 }
+
+/* Frappe Gantt Dark Theme Overrides */
+.gantt-container svg {
+  background-color: transparent !important;
+}
+.gantt .grid-background {
+  fill: transparent !important;
+}
+.gantt .grid-header {
+  fill: #0f172a !important; /* brand-surface */
+  stroke: #1e293b !important; /* slate-800 */
+}
+.gantt .grid-row {
+  fill: transparent !important;
+}
+.gantt .grid-row:nth-child(even) {
+  fill: #0f172a !important; /* slight alternating background */
+}
+.gantt .tick {
+  stroke: #1e293b !important; /* slate-800 */
+}
+.gantt .grid-row-line {
+  stroke: #1e293b !important; /* slate-800 */
+}
+.gantt text {
+  fill: #94a3b8 !important; /* slate-400 */
+}
+.gantt .bar-label {
+  fill: #f8fafc !important; /* slate-50 */
+  font-weight: bold;
+}
+.gantt .bar-progress {
+  fill: #06b6d4 !important; /* cyan-500 */
+}
+.gantt .bar {
+  fill: rgba(6, 182, 212, 0.2) !important; /* cyan-500/20 */
+  stroke: #06b6d4 !important;
+  stroke-width: 1px;
+}
