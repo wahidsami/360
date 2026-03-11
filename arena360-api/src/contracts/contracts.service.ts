@@ -17,11 +17,6 @@ export class ContractsService {
             throw new NotFoundException('Project not found');
         }
 
-        // DEV role has NO access to contracts
-        if (user.role === 'DEV') {
-            throw new ForbiddenException('DEV role does not have access to contracts');
-        }
-
         // Client users cannot view contracts
         const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
         if (clientRoles.includes(user.role)) {

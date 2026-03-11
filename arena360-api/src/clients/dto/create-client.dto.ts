@@ -27,7 +27,7 @@ export class CreateClientDto {
     phone?: string;
 
     @IsOptional()
-    @IsUrl({ require_tld: false })
+    @IsString()
     website?: string;
 
     @IsOptional()

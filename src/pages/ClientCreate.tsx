@@ -115,7 +115,7 @@ export const ClientCreate: React.FC = () => {
             </div>
             <div>
               <Label htmlFor="website">{t('website')}</Label>
-              <Input name="website" id="website" type="url" value={formData.website} onChange={handleChange} />
+              <Input name="website" id="website" type="text" value={formData.website} onChange={handleChange} />
             </div>
           </div>
         </GlassCard>
