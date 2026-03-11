@@ -357,7 +357,7 @@ export const FindingDetails: React.FC = () => {
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-700 space-y-4">
-              {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN || user?.role === Role.OPS) ? (
+              {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN || user?.role === Role.OPS || user?.role === Role.DEV) ? (
                 <>
                   <div>
                     <Label>Update Status</Label>
@@ -406,7 +406,7 @@ export const FindingDetails: React.FC = () => {
                 </>
               ) : (
                 <div className="pt-2">
-                  <p className="text-xs text-slate-500 italic">Only QA or Project Managers can modify these status & severity controls.</p>
+                  <p className="text-xs text-slate-500 italic">Only internal team members can modify these status & severity controls.</p>
                 </div>
               )}
             </div>

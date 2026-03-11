@@ -233,22 +233,23 @@ export class FindingsService {
             throw new ForbiddenException('Only internal staff can update findings');
         }
 
-        // DEV can update status but not visibility or severity (restricted update)
+        // DEV can update status but not visibility (restricted update)
         if (user.role === 'DEV') {
-            // DEV can only update status and assignedToId
+            // DEV can only update status, assignedToId, severity, remediation, impact
             const allowedUpdates: Partial<UpdateFindingDto> = {};
             if (dto.status !== undefined) allowedUpdates.status = dto.status;
+            if (dto.severity !== undefined) allowedUpdates.severity = dto.severity;
             if (dto.assignedToId !== undefined) allowedUpdates.assignedToId = dto.assignedToId;
             if (dto.remediation !== undefined) allowedUpdates.remediation = dto.remediation;
             if (dto.impact !== undefined) allowedUpdates.impact = dto.impact;
 
             // If trying to update other fields, deny
             const attemptedFields = Object.keys(dto);
-            const allowedFields = ['status', 'assignedToId', 'remediation', 'impact'];
+            const allowedFields = ['status', 'severity', 'assignedToId', 'remediation', 'impact'];
             const unauthorized = attemptedFields.filter(f => !allowedFields.includes(f));
 
             if (unauthorized.length > 0) {
-                throw new ForbiddenException('DEV role can only update status and assignedToId');
+                throw new ForbiddenException('DEV role can only update status, severity, and assignedToId');
             }
 
             const updated = await this.prisma.finding.update({
