@@ -25,7 +25,6 @@
 }
 
 .theme-light {
-  --app-bg: #F7F9FA;:root {
   /* Enhanced Light Theme Tokens */
   --app-bg: #f8fafc; /* bg-slate-50 */
   --app-surface: #ffffff;
