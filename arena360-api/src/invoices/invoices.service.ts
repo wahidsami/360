@@ -25,10 +25,7 @@ export class InvoicesService {
             throw new NotFoundException('Project not found');
         }
 
-        // DEV role has NO access to invoices
-        if (user.role === 'DEV') {
-            throw new ForbiddenException('DEV role does not have access to invoices');
-        }
+        // Clients cannot see all internal invoices, they're filtered below
 
         const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
         const isClientUser = clientRoles.includes(user.role);
@@ -155,7 +152,6 @@ export class InvoicesService {
         if (isClientUser && !['ISSUED', 'PAID'].includes(invoice.status)) {
             throw new ForbiddenException('Access denied');
         }
-        if (user.role === 'DEV') throw new ForbiddenException('DEV role does not have access to invoices');
         return invoice;
     }
 
