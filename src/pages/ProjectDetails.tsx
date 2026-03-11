@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAI } from '../contexts/AIContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PermissionsService } from '../services/permissions.service';
+import toast from 'react-hot-toast';
 
 // --- TAB CONFIGURATION (PHASE 1) ---
 const TAB_GROUPS = [
@@ -477,7 +478,13 @@ export const ProjectDetails: React.FC = () => {
                 findings={findings}
                 milestones={milestones}
                 recentUpdates={updates.slice(0, 5)}
-                onNavigate={(tab) => setActiveTab(tab)}
+                onNavigate={(tab) => {
+                  if (visibleTabs.some(t => t.id === tab)) {
+                    setActiveTab(tab);
+                  } else {
+                    toast.error('You do not have permission to view this tab.');
+                  }
+                }}
                 onAction={handleReadinessAction}
                 onRefresh={loadData}
                 allowedTabs={visibleTabs.map(t => t.id)}

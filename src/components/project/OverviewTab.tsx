@@ -198,7 +198,7 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
     );
 }
 
-function PrimaryActionCard({ action, onNavigate }: { action: any, onNavigate?: any }) {
+function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: any, onNavigate?: any, allowedTabs?: string[] }) {
     if (!action) return null;
 
     // Map severity to colors
@@ -254,25 +254,29 @@ function PrimaryActionCard({ action, onNavigate }: { action: any, onNavigate?: a
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 mt-auto">
-                {action.actions?.map((btn: any, idx: number) => (
-                    <React.Fragment key={idx}>
-                        <Button
-                            size="sm"
-                            variant={btn.primary ? 'primary' : 'ghost'}
-                            className={`w-full sm:w-auto font-bold uppercase tracking-widest text-[10px] px-4 ${btn.primary ? 'bg-white/10 hover:bg-white/20 text-white' : 'text-slate-300 hover:text-white bg-black/20 hover:bg-black/40'}`}
-                            onClick={() => onNavigate?.(btn.route)}
-                        >
-                            {btn.label} <ArrowRight className="ml-1.5 w-3 h-3" />
-                        </Button>
-                    </React.Fragment>
-                ))}
+                {action.actions?.map((btn: any, idx: number) => {
+                    if (btn.route && allowedTabs.length && !allowedTabs.includes(btn.route)) return null;
+                    return (
+                        <React.Fragment key={idx}>
+                            <Button
+                                size="sm"
+                                variant={btn.primary ? 'primary' : 'ghost'}
+                                className={`w-full sm:w-auto font-bold uppercase tracking-widest text-[10px] px-4 ${btn.primary ? 'bg-white/10 hover:bg-white/20 text-white' : 'text-slate-300 hover:text-white bg-black/20 hover:bg-black/40'}`}
+                                onClick={() => onNavigate?.(btn.route)}
+                            >
+                                {btn.label} <ArrowRight className="ml-1.5 w-3 h-3" />
+                            </Button>
+                        </React.Fragment>
+                    );
+                })}
             </div>
         </div>
     );
 }
 
-function QuickActionsPanel({ onNavigate, onRefresh, overdueCount }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number }) {
+function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = [] }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
     const [isOpen, setIsOpen] = React.useState(false);
+    const canSee = (id: string) => allowedTabs.includes(id);
 
     return (
         <div className="relative">
@@ -286,27 +290,37 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount }: { onNavigate
 
             {isOpen && (
                 <div className="absolute top-12 right-0 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                        <span className="text-emerald-400">➕</span> Add Task
-                    </button>
-                    <button onClick={() => { setIsOpen(false); onNavigate?.('updates'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                        <span className="text-cyan-400">📋</span> Post Update
-                    </button>
-                    <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                        <span className="text-rose-400">⚠️</span> Log Risk/Finding
-                    </button>
+                    {canSee('tasks') && (
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                            <span className="text-emerald-400">➕</span> Add Task
+                        </button>
+                    )}
+                    {canSee('updates') && (
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('updates'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                            <span className="text-cyan-400">📋</span> Post Update
+                        </button>
+                    )}
+                    {canSee('findings') && (
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                            <span className="text-rose-400">⚠️</span> Log Risk/Finding
+                        </button>
+                    )}
 
-                    {overdueCount > 0 && (
+                    {canSee('tasks') && overdueCount > 0 && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors mt-1 border border-orange-500/20 bg-orange-500/5">
                             <span>✅</span> Complete Overdue ({overdueCount})
                         </button>
                     )}
 
-                    <div className="h-px bg-slate-800 my-1 mx-2" />
-
-                    <button onClick={() => { setIsOpen(false); alert('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                        <span className="text-indigo-400">📊</span> Export Report
-                    </button>
+                    {canSee('reports') && (
+                        <>
+                            <div className="h-px bg-slate-800 my-1 mx-2" />
+                            <button onClick={() => { setIsOpen(false); alert('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+                                <span className="text-indigo-400">📊</span> Export Report
+                            </button>
+                        </>
+                    )}
+                    
                     <button onClick={() => {
                         setIsOpen(false);
                         if (onRefresh) onRefresh();
@@ -414,7 +428,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
         <div className="space-y-6 pb-12">
             <div className="flex justify-between items-center w-full">
                 <h2 className="text-xl font-black text-white px-2">Dashboard</h2>
-                <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} />
+                <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 
             {/* TOP ROW: Stage, Status & Next Best Action */}
@@ -472,7 +486,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
 
                             {/* Primary Alert / Action Card */}
-                            <PrimaryActionCard action={readiness?.nextAction} onNavigate={onNavigate} />
+                            <PrimaryActionCard action={readiness?.nextAction} onNavigate={onNavigate} allowedTabs={allowedTabs} />
                         </div>
                     </div>
                 </GlassCard>
@@ -498,7 +512,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             {/* MIDDLE ROW: Operational Health Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {/* Task Health */}
-                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('tasks')}>
+                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('tasks') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
@@ -539,7 +553,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         ))}
                     </div>
 
-                    {taskPreviews.length > 3 && (
+                    {taskPreviews.length > 3 && canSee('tasks') && (
                         <div className="mt-4 text-center">
                             <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all {taskPreviews.length} tasks &rarr;</span>
                         </div>
@@ -547,7 +561,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Schedule / Milestone Health */}
-                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('milestones')}>
+                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('milestones') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
@@ -614,7 +628,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Findings Summary */}
-                <GlassCard className="p-5 border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group flex flex-col" onClick={() => onNavigate?.('findings')}>
+                <GlassCard className={`p-5 border-slate-800 transition-colors flex flex-col ${canSee('findings') ? 'hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-rose-500/10 rounded-lg text-rose-400">
@@ -679,9 +693,11 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </div>
                             )}
 
-                            <div className="mt-4 text-center">
-                                <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all findings &rarr;</span>
-                            </div>
+                            {canSee('findings') && (
+                                <div className="mt-4 text-center">
+                                    <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all findings &rarr;</span>
+                                </div>
+                            )}
                         </>
                     )}
                 </GlassCard>
@@ -707,7 +723,9 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 <span className="text-xs text-white font-bold">{recentUpdates.length}</span>
                                 <span className="text-[9px] text-slate-500 uppercase font-black">Total Updates</span>
                             </div>
-                            <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase font-black text-cyan-400" onClick={() => onNavigate?.('updates')}>Post Update</Button>
+                            {canSee('updates') && (
+                                <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase font-black text-cyan-400" onClick={() => onNavigate?.('updates')}>Post Update</Button>
+                            )}
                         </div>
                     </div>
                 </GlassCard>
@@ -719,7 +737,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
 
                     {metrics.capacity.members && (
-                        <GlassCard className="p-5 border-slate-800 relative cursor-pointer hover:border-slate-700 transition-colors" onClick={() => onNavigate?.('team')}>
+                        <GlassCard className={`p-5 border-slate-800 relative transition-colors ${canSee('team') ? 'hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-blue-500" /> TEAM CAPACITY
@@ -790,9 +808,11 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </div>
                             )}
 
-                            <div className="mt-4 text-center pt-1 border-t border-slate-800/50">
-                                <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">View Team Details &rarr;</span>
-                            </div>
+                            {canSee('team') && (
+                                <div className="mt-4 text-center pt-1 border-t border-slate-800/50">
+                                    <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">View Team Details &rarr;</span>
+                                </div>
+                            )}
                         </GlassCard>
                     )}
 
