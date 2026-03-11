@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { CreateFindingDto, UpdateFindingDto } from './dto/finding.dto';
 import { AutomationService } from '../automation/automation.service';
 import { AutomationTriggerEntity, AutomationTriggerEvent } from '@prisma/client';
