@@ -364,7 +364,7 @@ export const api = {
     getMyClient: async (userId: string): Promise<Client | undefined> => {
       try {
         const res = await fetchApi('/clients');
-        return res[0]; // Client users only see their own client
+        return (res || [])[0]; // Client users only see their own client
       } catch (e) {
         return undefined;
       }

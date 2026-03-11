@@ -20,7 +20,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
          if (user) {
             const client = await api.clients.getMyClient(user.id);
             if (client) {
-               const data = await api.dashboard.getClientStats(client.id);
+               const data = await api.dashboard.getClientStats();
                setStats(data);
             }
          }
@@ -41,9 +41,9 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
-            <KpiCard label={t('next_milestones')} value={stats.nextMilestones} icon={<Flag />} />
+            <KpiCard label={t('next_milestones')} value={stats.nextMilestonesCount ?? 0} icon={<Flag />} />
             <KpiCard label="Pending Approvals" value="0" icon={<Clock />} />
-            <KpiCard label={t('last_activity')} value={stats.latestUpdate ? new Date(stats.latestUpdate).toLocaleDateString() : 'N/A'} />
+            <KpiCard label={t('last_activity')} value={stats.latestUpdatesCount ?? 0} />
          </div>
 
          <ToolsPanel role={role} />
@@ -52,7 +52,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <div className="lg:col-span-2">
                <GlassCard title={t('my_projects')}>
                   <div className="space-y-4">
-                     {(stats.projects || []).map((p: any) => (
+                     {(stats.myProjects || []).map((p: any) => (
                         <div key={p.id} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg cursor-pointer hover:border-cyan-500/30 transition-all" onClick={() => navigate(`/app/projects/${p.id}`)}>
                            <div className="flex justify-between items-start mb-2">
                               <div>
@@ -67,7 +67,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            <div className="flex justify-end mt-1 text-xs text-cyan-400">{p.progress || 0}% Complete</div>
                         </div>
                      ))}
-                     {(!stats.projects || stats.projects.length === 0) && <p className="text-slate-500 text-sm">No projects found.</p>}
+                     {(!stats.myProjects || stats.myProjects.length === 0) && <p className="text-slate-500 text-sm">No projects found.</p>}
                   </div>
                </GlassCard>
             </div>
