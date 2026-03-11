@@ -54,25 +54,23 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.02);
 
   /* Page Wrapper Gradient */
-  --page-gradient: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #eff6ff 100%);
+  --page-gradient: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
 
-  /* Tailwind Scale Fix - Explicitly mapping for light mode */
-  --tw-slate-50: #f8fafc;
-  --tw-slate-100: #f1f5f9;
-  --tw-slate-200: #e2e8f0;
-  --tw-slate-300: #cbd5e1;
-  --tw-slate-400: #94a3b8;
-  --tw-slate-500: #64748b;
-  --tw-slate-600: #475569;
-  --tw-slate-700: #334155;
-  --tw-slate-800: #1e293b;
-  --tw-slate-900: #0f172a;
+  /* Tailwind Scale Neutralization - Ensure dark container classes don't break light mode */
+  --color-slate-950: #f8fafc !important;
+  --color-slate-900: #ffffff !important;
+  --color-slate-800: #f1f5f9 !important;
+  --color-slate-700: #e2e8f0 !important;
 
-  /* Override dark containers with light ones */
-  --bg-slate-950: #f8fafc;
-  --bg-slate-900: #ffffff;
-  --bg-slate-800: #f1f5f9;
-  --bg-slate-700: #e2e8f0;
+  /* Map basic slate names for legacy/hardcoded components */
+  --bg-slate-950: #f8fafc !important;
+  --bg-slate-900: #ffffff !important;
+  --bg-slate-800: #f1f5f9 !important;
+  --bg-slate-700: #e2e8f0 !important;
+
+  /* Handle hardcoded "text-white" headings and similar */
+  --text-white: #0f172a !important; /* Force black on light mode for "text-white" elements */
+  --color-white: #0f172a !important; 
 }
 
 /* Animations & Transitions */

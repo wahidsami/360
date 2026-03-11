@@ -55,8 +55,9 @@ export const Layout: React.FC = () => {
   const [orgBranding, setOrgBranding] = useState<{ logo?: string | null; primaryColor?: string | null; accentColor?: string | null } | null>(null);
 
   useEffect(() => {
-    const theme = localStorage.getItem('arena360_theme') || 'dark';
+    const theme = localStorage.getItem('arena360_theme') || 'light';
     document.documentElement.classList.toggle('theme-light', theme === 'light');
+    localStorage.setItem('arena360_theme', theme);
   }, []);
 
   useEffect(() => {
