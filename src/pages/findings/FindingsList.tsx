@@ -181,9 +181,11 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           >
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-            <Plus className="w-4 h-4 mr-2" /> {t('create_finding')}
-          </Button>
+          {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
+            <Button onClick={() => setIsModalOpen(true)} className="shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+              <Plus className="w-4 h-4 mr-2" /> {t('create_finding')}
+            </Button>
+          )}
         </div>
       </div>
 

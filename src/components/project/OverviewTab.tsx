@@ -1,10 +1,11 @@
 import React from 'react';
-import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Permission } from '@/types';
+import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Permission, Role } from '@/types';
 import { GlassCard, KpiCard, ProgressBar, Badge, Button } from '../ui/UIComponents';
 import { Activity, Calendar, Clock, DollarSign, Flag, ArrowRight, CheckCircle, XCircle, AlertCircle, Info, Sparkles, Lock } from 'lucide-react';
 import { formatSAR } from '../../utils/currency';
 import { formatDistanceToNow } from 'date-fns';
 import { CustomFieldsSection } from '../CustomFieldsSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OverviewTabProps {
     project: Project;
@@ -277,6 +278,9 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
 function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = [] }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
     const [isOpen, setIsOpen] = React.useState(false);
     const canSee = (id: string) => allowedTabs.includes(id);
+    const { user } = useAuth();
+    const clientRoles = [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER];
+    const isClient = user && clientRoles.includes(user.role);
 
     return (
         <div className="relative">
@@ -300,7 +304,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                             <span className="text-cyan-400">📋</span> Post Update
                         </button>
                     )}
-                    {canSee('findings') && (
+                    {canSee('findings') && !isClient && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
                             <span className="text-rose-400">⚠️</span> Log Risk/Finding
                         </button>
