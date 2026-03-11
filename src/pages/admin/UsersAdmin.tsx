@@ -19,24 +19,29 @@ export const UsersAdmin: React.FC = () => {
 
   // State
   const [users, setUsers] = useState<User[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
 
   React.useEffect(() => {
-    const loadUsers = async () => {
+    const loadData = async () => {
       try {
-        const data = await api.users.list();
-        setUsers(data);
+        const [usersData, clientsData] = await Promise.all([
+          api.users.list(),
+          api.clients.list()
+        ]);
+        setUsers(usersData);
+        setClients(clientsData);
       } catch (e) {
-        console.error("Failed to load users", e);
+        console.error("Failed to load data", e);
       }
     };
-    loadUsers();
+    loadData();
   }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [isModalOpen, setModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: Role.VIEWER, permissions: [] as string[] });
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: Role.VIEWER, permissions: [] as string[], clientId: '' });
 
   // Filtering
   const filteredUsers = users.filter(u => {
@@ -55,11 +60,12 @@ export const UsersAdmin: React.FC = () => {
         email: newUser.email,
         role: newUser.role,
         permissions: newUser.permissions.length ? newUser.permissions : undefined,
+        clientId: newUser.role.startsWith('CLIENT_') ? newUser.clientId : undefined,
         avatar: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`
       });
       setUsers([...users, created as User]);
       setModalOpen(false);
-      setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [] });
+      setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
 
       // Show invite link if available (it should be returned by create)
       if ((created as any).inviteLink) {
@@ -261,6 +267,22 @@ export const UsersAdmin: React.FC = () => {
               ))}
             </Select>
           </div>
+          {newUser.role.startsWith('CLIENT_') && (
+            <div className="animate-in slide-in-from-top-2 duration-300">
+              <Label>Assigned Client Organization</Label>
+              <Select
+                value={newUser.clientId}
+                onChange={(e) => setNewUser({ ...newUser, clientId: e.target.value })}
+                required
+              >
+                <option value="">Select a Client...</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </Select>
+              <p className="text-[10px] text-slate-500 mt-1">This user will be automatically added as a member of the selected client.</p>
+            </div>
+          )}
           <div>
             <Label>Custom permissions (optional, in addition to role)</Label>
             <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">

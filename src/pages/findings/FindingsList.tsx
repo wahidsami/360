@@ -360,10 +360,16 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
               <option value="dismissed">Dismissed</option>
             </Select>
           </div>
-          <Select name="visibility" label="Visibility" defaultValue="INTERNAL">
-            <option value="INTERNAL">Internal Only</option>
-            <option value="CLIENT">Visible to Client</option>
-          </Select>
+          {user && [Role.DEV, Role.QA].includes(user.role as Role) ? (
+            <Select name="visibility" label="Visibility" defaultValue="INTERNAL" disabled>
+              <option value="INTERNAL">Internal Only (Restricted)</option>
+            </Select>
+          ) : (
+            <Select name="visibility" label="Visibility" defaultValue="INTERNAL">
+              <option value="INTERNAL">Internal Only</option>
+              <option value="CLIENT">Visible to Client</option>
+            </Select>
+          )}
           <div className="flex justify-end gap-3 mt-6">
             <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
             <Button type="submit">Create Finding</Button>

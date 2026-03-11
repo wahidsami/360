@@ -58,6 +58,14 @@ export class UsersService {
                                 createdById: currentUserId
                             }
                         }
+                    } : {}),
+                    ...(createUserDto.clientId && (userData.role.startsWith('CLIENT_')) ? {
+                        clientMemberships: {
+                            create: {
+                                clientId: createUserDto.clientId,
+                                role: userData.role
+                            }
+                        }
                     } : {})
                 },
                 select: {

@@ -19,7 +19,11 @@ export class FindingsService {
     async findAll(projectId: string, user: UserWithRoles) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { 
+                id: projectId, 
+                orgId: user.orgId,
+                ...ScopeUtils.clientScope(user, 'clientId') 
+            }
         });
 
         if (!project) {
@@ -61,7 +65,10 @@ export class FindingsService {
             where: {
                 id,
                 orgId: user.orgId,
-                deletedAt: null
+                deletedAt: null,
+                project: {
+                    ...ScopeUtils.clientScope(user, 'clientId')
+                }
             },
             include: {
                 project: {
@@ -99,6 +106,9 @@ export class FindingsService {
             where: {
                 orgId: user.orgId,
                 deletedAt: null,
+                project: {
+                    ...ScopeUtils.clientScope(user, 'clientId')
+                },
                 // Client users only see CLIENT visibility findings
                 ...(isClientUser && { visibility: 'CLIENT' })
             },
@@ -142,7 +152,11 @@ export class FindingsService {
     async create(projectId: string, user: UserWithRoles, dto: CreateFindingDto) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { 
+                id: projectId, 
+                orgId: user.orgId,
+                ...ScopeUtils.clientScope(user, 'clientId') 
+            }
         });
 
         if (!project) {
@@ -155,10 +169,10 @@ export class FindingsService {
             throw new ForbiddenException('Only internal staff can create findings');
         }
 
-        // DEV can only create INTERNAL findings
+        // QA and DEV can only create INTERNAL findings
         const visibility = dto.visibility || 'INTERNAL';
-        if (user.role === 'DEV' && visibility === 'CLIENT') {
-            throw new ForbiddenException('DEV role can only create INTERNAL findings');
+        if (['DEV', 'QA'].includes(user.role) && visibility === 'CLIENT') {
+            throw new ForbiddenException('DEV and QA roles can only create INTERNAL findings');
         }
 
         const finding = await this.prisma.finding.create({
@@ -231,6 +245,10 @@ export class FindingsService {
         const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can update findings');
+        }
+
+        if (['DEV', 'QA'].includes(user.role) && dto.visibility === 'CLIENT') {
+            throw new ForbiddenException('DEV and QA roles cannot make findings visible to clients');
         }
 
         // DEV can update status but not visibility (restricted update)
