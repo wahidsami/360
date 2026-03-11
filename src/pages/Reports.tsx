@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Download, Filter, BarChart3, Activity } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, CartesianGrid, Tooltip, PieChart as RePieChart, Pie, Cell, Legend } from 'recharts';
 import { GlassCard, Button, Badge, Input, Select, KpiCard, Modal } from "@/components/ui/UIComponents";
 import { api } from '@/services/api';
-import { Report, Project } from '@/types';
+import { Report, Project, Role } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const ANALYTICS_DATA = [
@@ -23,10 +25,18 @@ const TREND_DATA = [
 
 export const Reports: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [reports, setReports] = useState<Report[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    if (user && ![Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.FINANCE].includes(user.role)) {
+      navigate('/app/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Generate modal state
   const [generateModalOpen, setGenerateModalOpen] = useState(false);

@@ -163,7 +163,7 @@ export const Layout: React.FC = () => {
     { to: '/app/projects', icon: Briefcase, label: t('projects') }
   );
 
-  if (user?.role !== Role.QA) {
+  if (user && [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.FINANCE].includes(user.role)) {
     menuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
   }
 
