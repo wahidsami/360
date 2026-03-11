@@ -217,7 +217,8 @@ const resources = {
       "add_dependency": "Add Dependency",
       "dependencies": "Dependencies",
       "no_dependencies": "No task dependencies. Add one to enforce order.",
-      "no_tasks_with_dates": "No tasks with valid start/due dates to display."
+      "no_tasks_with_dates": "No tasks with valid start/due dates to display.",
+      "calendar_subtitle": "Your assigned tasks by due date."
     }
   },
   ar: {
@@ -435,7 +436,8 @@ const resources = {
       "add_dependency": "إضافة تبعية",
       "dependencies": "التبعيات",
       "no_dependencies": "لا توجد تبعيات للمهام. أضف واحدة لفرض الترتيب.",
-      "no_tasks_with_dates": "لا توجد مهام مع تواريخ بدء / استحقاق صالحة للعرض."
+      "no_tasks_with_dates": "لا توجد مهام مع تواريخ بدء / استحقاق صالحة للعرض.",
+      "calendar_subtitle": "المهام المعينة لك حسب تاريخ الاستحقاق."
     }
   }
 };

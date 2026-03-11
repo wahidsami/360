@@ -21,6 +21,7 @@ export class UsersController {
     }
 
     @Get()
+    @Roles(GlobalRole.SUPER_ADMIN, GlobalRole.OPS, GlobalRole.PM, GlobalRole.DEV, GlobalRole.QA, GlobalRole.FINANCE)
     findAll(@Request() req: any) {
         return this.usersService.findAll(req.user?.orgId);
     }
