@@ -17,10 +17,11 @@ export class ContractsService {
             throw new NotFoundException('Project not found');
         }
 
-        // Client users cannot view contracts
+        // Client users cannot view contracts — return empty list instead of throwing
+        // so the project overview page doesn't crash for them.
         const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
         if (clientRoles.includes(user.role)) {
-            throw new ForbiddenException('Client users do not have access to contracts');
+            return [];
         }
 
         return this.prisma.contract.findMany({

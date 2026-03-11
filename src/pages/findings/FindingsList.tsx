@@ -247,7 +247,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
             <tr>
               <th className="p-4 font-medium">{t('title')}</th>
-              <th className="p-4 font-medium">{t('project')}</th>
+              <th className="p-4 font-medium">Project</th>
               <th className="p-4 font-medium">{t('severity')}</th>
               <th className="p-4 font-medium">{t('status')}</th>
               <th className="p-4 font-medium">{t('owner')}</th>
