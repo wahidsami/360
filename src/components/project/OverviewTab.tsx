@@ -716,21 +716,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             {/* PM METRICS ROW */}
             {metrics && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {metrics.budget.total > 0 && (
-                        <GlassCard className="p-5 border-slate-800 relative overflow-hidden">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-emerald-500" /> BUDGET
-                                </h3>
-                                {metrics.budget.isOverBudget && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5">OVER BUDGET</Badge>}
-                            </div>
-                            <div className="text-xl font-black text-white mb-2">
-                                {formatSAR(metrics.budget.spent)} / <span className="text-slate-500">{formatSAR(metrics.budget.total)}</span>
-                            </div>
-                            <ProgressBar progress={metrics.budget.percentSpent} className={`h-1.5 mb-2 ${metrics.budget.percentSpent > 90 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{metrics.budget.percentSpent}% spent · {formatSAR(metrics.budget.remaining)} remaining</p>
-                        </GlassCard>
-                    )}
+
 
                     {metrics.capacity.members && (
                         <GlassCard className="p-5 border-slate-800 relative cursor-pointer hover:border-slate-700 transition-colors" onClick={() => onNavigate?.('team')}>

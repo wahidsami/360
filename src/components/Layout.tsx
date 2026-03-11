@@ -19,20 +19,21 @@ import { api } from '../services/api';
 
 const API_WS_URL = import.meta.env.VITE_API_URL || '';
 
-const SidebarItem = ({ to, icon: Icon, label, onClick }: any) => (
+const SidebarItem = ({ to, icon: Icon, label, onClick, isCollapsed }: any) => (
   <NavLink
     to={to}
     onClick={onClick}
+    title={isCollapsed ? label : undefined}
     className={({ isActive }) => `
-      flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group
+      flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-lg transition-all duration-200 group
       ${isActive
         ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]'
         : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}
     `}
   >
-    <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
-    <span className="font-medium text-sm">{label}</span>
-    <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" />
+    <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+    {!isCollapsed && <span className="font-medium text-sm truncate">{label}</span>}
+    {!isCollapsed && <ChevronRight className="w-4 h-4 shrink-0 -mr-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" />}
   </NavLink>
 );
 
@@ -40,6 +41,7 @@ export const Layout: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user, logout, impersonateUser } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { openAI } = useAI();
   const navigate = useNavigate();
@@ -196,49 +198,71 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-72 bg-slate-900/80 backdrop-blur-xl border-r border-slate-800
-        transform transition-transform duration-300 lg:transform-none flex flex-col
+        fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} bg-slate-900/80 backdrop-blur-xl border-r border-slate-800
+        transform transition-all duration-300 lg:transform-none flex flex-col
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0'}
       `}>
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-          <div className="h-[38px] flex items-center justify-center">
-            {orgBranding?.logo ? (
-              <img src={orgBranding.logo} alt="Logo" className="h-full object-contain max-w-[140px]" />
-            ) : (
-              <img
-                src="/arenalogo.png"
-                alt="Arena logo"
-                className="h-full object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
-            )}
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-slate-400">
+        {/* Desktop Collapse Toggle */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-6 bg-slate-800 border border-slate-700 rounded-full w-6 h-6 items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 z-50 transition-colors"
+        >
+          <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`} />
+        </button>
+
+        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-slate-800 relative h-20`}>
+          {!isCollapsed && (
+            <div className="h-[38px] flex items-center justify-center">
+              {orgBranding?.logo ? (
+                <img src={orgBranding.logo} alt="Logo" className="h-full object-contain max-w-[140px]" />
+              ) : (
+                <img
+                  src="/arenalogo.png"
+                  alt="Arena logo"
+                  className="h-full object-contain"
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
+              )}
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="h-8 w-8 bg-cyan-500/20 rounded-lg flex items-center justify-center text-cyan-500 font-black">360</div>
+          )}
+          <button onClick={() => setSidebarOpen(false)} className={`ml-auto lg:hidden text-slate-400 ${isCollapsed ? 'hidden' : ''}`}>
             <X />
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className={`flex-1 ${isCollapsed ? 'p-2' : 'p-4'} space-y-1 overflow-y-auto`}>
           {menuItems.map((item) => (
-            <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} />
+            <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           ))}
 
           <div className="mt-8 pt-4 border-t border-slate-800">
-            <SidebarItem to="/app/settings" icon={Settings} label={t('settings')} onClick={() => setSidebarOpen(false)} />
+            <SidebarItem to="/app/settings" icon={Settings} label={t('settings')} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
-            <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=0d9488&color=fff`} className="w-10 h-10 rounded-full border-2 border-slate-600" alt="Profile" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-slate-500 truncate capitalize">{user?.role.replace(/_/g, ' ')}</p>
-            </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 transition-colors">
-              <LogOut className="w-5 h-5" />
-            </button>
+        <div className={`p-4 border-t border-slate-800 bg-slate-900/50 ${isCollapsed ? 'flex justify-center px-2' : ''}`}>
+          <div className={`flex items-center gap-3 ${isCollapsed ? 'p-2' : 'p-3'} rounded-lg border border-slate-700/50 bg-slate-800/30 w-full`}>
+            <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=0d9488&color=fff`} className={`${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'} shrink-0 rounded-full border-2 border-slate-600`} alt="Profile" />
+            {!isCollapsed && (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <p className="text-xs text-slate-500 truncate capitalize">{user?.role.replace(/_/g, ' ')}</p>
+                </div>
+                <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 transition-colors" title="Log Out">
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </>
+            )}
           </div>
+          {isCollapsed && (
+            <button onClick={handleLogout} className="absolute bottom-6 right-1 bg-slate-800 border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors" title="Log Out">
+              <LogOut className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </aside>
 
