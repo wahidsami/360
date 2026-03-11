@@ -233,10 +233,15 @@ export class ProjectsService {
 
         if (!project) throw new NotFoundException('Project not found');
 
-        // Helper to count time entries
         const timeEntriesCount = await this.prisma.timeEntry.count({
             where: { taskId: { in: project.tasks.map(t => t.id) } }
         });
+
+        // Scrub Financial Data for DEV Role
+        if (user.role === 'DEV') {
+            project.contracts = [];
+            project.invoices = [];
+        }
 
         // 1. CORE SECTION
         const coreItems = [
@@ -488,8 +493,14 @@ export class ProjectsService {
         if (!project) throw new NotFoundException('Project not found');
 
         // 1. Budget
-        const totalBudget = project.budget || project.contracts.reduce((sum: number, c: any) => sum + (+c.amount || 0), 0);
-        const spent = project.invoices.filter((i: any) => i.status?.toLowerCase() === 'paid').reduce((sum: number, i: any) => sum + (+i.amount || 0), 0);
+        let totalBudget = 0;
+        let spent = 0;
+        
+        if (user.role !== 'DEV') {
+            totalBudget = project.budget || project.contracts.reduce((sum: number, c: any) => sum + (+c.amount || 0), 0);
+            spent = project.invoices.filter((i: any) => i.status?.toLowerCase() === 'paid').reduce((sum: number, i: any) => sum + (+i.amount || 0), 0);
+        }
+
         const remaining = Math.max(0, totalBudget - spent);
         const percentSpent = totalBudget > 0 ? (spent / totalBudget) * 100 : (spent > 0 ? 100 : 0);
 
