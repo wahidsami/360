@@ -24,76 +24,108 @@
 }
 
 /* ============================================================
-   LIGHT THEME — applied when html.theme-light is set
+   LIGHT THEME — UNIVERSAL PREMIUM OVERRIDES
    ============================================================ */
 html.theme-light {
-  --brand-bg: #f1f5f9;
+  --brand-bg: #f8fafc;
   --brand-surface: #ffffff;
   color-scheme: light;
+
+  /* Override core tailwind slate variables to force light values */
+  --color-slate-950: #f8fafc;
+  --color-slate-900: #f1f5f9;
+  --color-slate-850: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-700: #e2e8f0;
+  --color-slate-600: #cbd5e1;
+  --color-slate-500: #94a3b8;
+  --color-slate-400: #64748b;
+  --color-slate-300: #475569;
+  --color-slate-200: #334155;
+  --color-slate-100: #1e293b;
+  --color-slate-50: #0f172a;
 }
 
-/* Base backgrounds */
-html.theme-light body {
-  background-color: #f1f5f9;
-  color: #0f172a;
+/* Base Body & Main Wrapper Overrides */
+html.theme-light body,
+html.theme-light #root,
+html.theme-light .bg-slate-950 {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
 }
 
-/* Slate background overrides */
-html.theme-light .bg-slate-950,
-html.theme-light .bg-\[#020617\] { background-color: #f1f5f9 !important; }
+/* Force ALL elements with slate backgrounds to be light */
+html.theme-light [class*="bg-slate-"] {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
 
-html.theme-light .bg-slate-900,
-html.theme-light .bg-slate-900\/50,
-html.theme-light .bg-slate-900\/30,
-html.theme-light .bg-slate-900\/80 { background-color: #e2e8f0 !important; }
-
-html.theme-light .bg-slate-800,
-html.theme-light .bg-slate-800\/50,
-html.theme-light .bg-slate-800\/30,
-html.theme-light .bg-slate-800\/20 { background-color: #f8fafc !important; }
-
-html.theme-light .bg-slate-700,
-html.theme-light .bg-slate-700\/50 { background-color: #e2e8f0 !important; }
-
-/* Text overrides */
-html.theme-light .text-white { color: #0f172a !important; }
-html.theme-light .text-slate-100 { color: #1e293b !important; }
-html.theme-light .text-slate-200 { color: #334155 !important; }
-html.theme-light .text-slate-300 { color: #475569 !important; }
-html.theme-light .text-slate-400 { color: #64748b !important; }
-html.theme-light .text-slate-500 { color: #94a3b8 !important; }
-
-/* Border overrides */
-html.theme-light .border-slate-700,
-html.theme-light .border-slate-700\/50 { border-color: #cbd5e1 !important; }
-html.theme-light .border-slate-800,
-html.theme-light .border-slate-800\/50 { border-color: #e2e8f0 !important; }
-html.theme-light .border-slate-600 { border-color: #cbd5e1 !important; }
-
-/* Glassmorphism cards */
-html.theme-light [class*="GlassCard"],
-html.theme-light .glass-card {
+/* Cards (GlassCard) */
+html.theme-light .glass-card,
+html.theme-light [class*="GlassCard"] {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+}
+html.theme-light .glass-card-title {
+  color: #0f172a !important;
+  border-bottom-color: #e2e8f0 !important;
 }
 
-/* Hover states */
-html.theme-light .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
-html.theme-light .hover\:bg-slate-700:hover { background-color: #cbd5e1 !important; }
+/* Text Overrides: Universal high-contrast for light mode */
+html.theme-light .text-white,
+html.theme-light [class*="text-slate-100"],
+html.theme-light [class*="text-slate-200"],
+html.theme-light [class*="text-slate-300"] {
+  color: #1e293b !important;
+}
+html.theme-light .text-slate-400,
+html.theme-light .text-slate-500 {
+  color: #475569 !important;
+}
 
-/* Input / select overrides */
+/* Header & Sidebar Specific Overrides */
+html.theme-light header,
+html.theme-light aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+html.theme-light aside [class*="bg-slate-900"],
+html.theme-light aside [class*="bg-slate-800"] {
+  background-color: transparent !important;
+}
+
+/* Inputs & Form Controls */
 html.theme-light input,
 html.theme-light select,
 html.theme-light textarea {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
   border-color: #cbd5e1 !important;
 }
-html.theme-light input::placeholder { color: #94a3b8 !important; }
+html.theme-light input::placeholder {
+  color: #94a3b8 !important;
+}
 
-/* Sidebar / nav */
-html.theme-light nav,
-html.theme-light aside { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+/* Hide ambient blobs that look out of place */
+html.theme-light .blur-\[120px\] {
+  display: none !important;
+}
+
+/* Fix Scrollbars */
+html.theme-light ::-webkit-scrollbar-track { background: #f8fafc; }
+html.theme-light ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+html.theme-light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Dashboard & Analytics Fixes */
+html.theme-light .bg-emerald-500\/10,
+html.theme-light .bg-cyan-500\/10,
+html.theme-light .bg-rose-500\/10,
+html.theme-light .bg-amber-500\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
 
 
 @utility spin-slow {

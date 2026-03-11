@@ -12,10 +12,10 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const GlassCard = ({ children, className = '', title, ...props }: GlassCardProps) => (
     <div
-        className={`bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 ${className}`}
+        className={`glass-card bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 ${className}`}
         {...props}
     >
-        {title && <h3 className="text-lg font-semibold text-white mb-4 border-b border-slate-700/50 pb-2">{title}</h3>}
+        {title && <h3 className="glass-card-title text-lg font-semibold text-white mb-4 border-b border-slate-700/50 pb-2">{title}</h3>}
         {children}
     </div>
 );
