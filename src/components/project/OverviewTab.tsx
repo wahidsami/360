@@ -41,7 +41,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
     const [isExpanded, setIsExpanded] = React.useState(!isComplete);
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-4 shadow-sm">
+        <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-4 shadow-sm hover:shadow-md transition-all">
             <div
                 className="flex items-center justify-between cursor-pointer mb-2"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -57,16 +57,16 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
             </div>
 
             {isExpanded && (
-                <div className="space-y-1.5 max-h-[160px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2 mt-2">
+                <div className="space-y-1.5 max-h-[160px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pr-2 mt-2 font-sans">
                     {items.filter(i => i.status !== 'not_applicable').map((item) => (
-                        <div key={item.id} className={`flex items-center gap-3 p-1.5 rounded transition-colors ${item.status === 'complete' ? 'opacity-40' : item.status === 'missing' && item.type === 'required' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-slate-800/20'}`}>
+                        <div key={item.id} className={`flex items-center gap-3 p-1.5 rounded transition-colors ${item.status === 'complete' ? 'opacity-40' : item.status === 'missing' && item.type === 'required' ? 'bg-rose-50 border border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20' : 'bg-slate-50 dark:bg-slate-800/20'}`}>
                             <div className="shrink-0">
-                                {item.status === 'complete' ? <CheckCircle className="w-3 h-3 text-slate-400" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-400" />}
+                                {item.status === 'complete' ? <CheckCircle className="w-3 h-3 text-slate-400" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />}
                             </div>
                             <div className="flex-grow flex justify-between items-center break-all text-left">
-                                <span className={`text-[10px] font-bold tracking-wider ${item.status === 'complete' ? 'text-slate-400' : item.status === 'missing' && item.type === 'required' ? 'text-white' : 'text-slate-300'}`}>{item.label}</span>
+                                <span className={`text-[10px] font-bold tracking-wider ${item.status === 'complete' ? 'text-slate-400' : item.status === 'missing' && item.type === 'required' ? 'text-rose-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{item.label}</span>
                                 {item.action && item.status !== 'complete' && (
-                                    <Button variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-black text-rose-400 hover:text-rose-300 px-2" onClick={(e) => { e.stopPropagation(); if (item.action.type === 'navigate_tab') { onNavigate?.(item.action.target); } else { onAction?.(item.action); } }}>
+                                    <Button variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-black text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 px-2" onClick={(e) => { e.stopPropagation(); if (item.action.type === 'navigate_tab') { onNavigate?.(item.action.target); } else { onAction?.(item.action); } }}>
                                         Fix &rarr;
                                     </Button>
                                 )}
@@ -86,17 +86,17 @@ function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigat
     };
 
     return (
-        <GlassCard className="p-6 border-slate-200 dark:border-slate-800">
-            <h4 className="text-[10px] font-black text-slate-900 dark:text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2">
+        <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white">
+            <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pr-2">
                 {activities.map(activity => (
                     <div key={activity.id} className="flex gap-3 text-sm">
-                        <div className="shrink-0 w-6 h-6 flex justify-center items-center bg-slate-800/50 rounded-full text-[10px] border border-slate-700">
+                        <div className="shrink-0 w-6 h-6 flex justify-center items-center bg-slate-50 dark:bg-slate-800/50 rounded-full text-[10px] border border-slate-200 dark:border-slate-700">
                             {getActivityIcon(activity.action || activity.type)}
                         </div>
                         <div className="flex-grow">
-                            <p className="text-[10px] text-slate-500 mb-0.5">{formatDistanceToNow(new Date(activity.createdAt || activity.timestamp || Date.now()), { addSuffix: true })}</p>
-                            <p className="text-xs text-slate-300">{activity.description || 'Action performed'}</p>
+                            <p className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase tracking-tighter">{formatDistanceToNow(new Date(activity.createdAt || activity.timestamp || Date.now()), { addSuffix: true })}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-normal">{activity.description || 'Action performed'}</p>
                         </div>
                     </div>
                 ))}
@@ -179,18 +179,18 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
     if (insights.length === 0) return null;
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-6 flex flex-col gap-3 mb-4 shadow-sm">
+        <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-6 flex flex-col gap-3 mb-4 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
                 <span className="text-base">🔮</span>
                 <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-900 dark:text-slate-400">Predictive Insights</h3>
             </div>
             <div className="space-y-2">
                 {insights.map((insight, idx) => (
-                    <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border ${insight.severity === 'high' ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' : 'bg-amber-500/10 border-amber-500/20 text-amber-300'}`}>
-                        <span className="text-lg opacity-80 mt-0.5">{insight.icon}</span>
+                    <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border ${insight.severity === 'high' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-700 dark:text-amber-300'}`}>
+                        <span className="text-lg mt-0.5">{insight.icon}</span>
                         <div>
                             <p className="text-sm font-bold leading-tight mb-0.5">{insight.message}</p>
-                            <p className="text-[10px] uppercase font-black tracking-wider opacity-70">{insight.impact}</p>
+                            <p className="text-[10px] uppercase font-black tracking-wider opacity-60">{insight.impact}</p>
                         </div>
                     </div>
                 ))}
@@ -204,23 +204,23 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
 
     // Map severity to colors
     const severityColors: Record<string, string> = {
-        critical_findings: 'bg-rose-500/10 border-rose-500/20',
-        overdue_tasks: 'bg-orange-500/10 border-orange-500/20',
-        at_risk_milestones: 'bg-amber-500/10 border-amber-500/20',
-        stale_communication: 'bg-indigo-500/10 border-indigo-500/20',
-        setup_required: 'bg-cyan-500/10 border-cyan-500/20',
-        planning_required: 'bg-blue-500/10 border-blue-500/20',
-        on_track: 'bg-emerald-500/10 border-emerald-500/20'
+        critical_findings: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
+        overdue_tasks: 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20',
+        at_risk_milestones: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
+        stale_communication: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20',
+        setup_required: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20',
+        planning_required: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
+        on_track: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20'
     };
 
     const iconColors: Record<string, string> = {
-        critical_findings: 'text-rose-400 bg-rose-500/20',
-        overdue_tasks: 'text-orange-400 bg-orange-500/20',
-        at_risk_milestones: 'text-amber-400 bg-amber-500/20',
-        stale_communication: 'text-indigo-400 bg-indigo-500/20',
-        setup_required: 'text-cyan-400 bg-cyan-500/20',
-        planning_required: 'text-blue-400 bg-blue-500/20',
-        on_track: 'text-emerald-400 bg-emerald-500/20'
+        critical_findings: 'text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/20',
+        overdue_tasks: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-500/20',
+        at_risk_milestones: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/20',
+        stale_communication: 'text-indigo-600 bg-indigo-100 dark:text-indigo-400 dark:bg-indigo-500/20',
+        setup_required: 'text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-500/20',
+        planning_required: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-500/20',
+        on_track: 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/20'
     };
 
     return (
@@ -230,19 +230,19 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
                     <Sparkles className="w-5 h-5" />
                 </div>
                 <div className="flex-grow">
-                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">PRIMARY ACTION</p>
-                    <h3 className="text-sm font-bold text-white leading-tight">{action.title}</h3>
-                    <p className="text-xs text-slate-300 mt-1">{action.description}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60 text-slate-500 dark:text-slate-400">PRIMARY ACTION</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{action.title}</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{action.description}</p>
 
                     {action.details && (
                         <div className="mt-3 space-y-2">
                             {action.details.recommendation && (
-                                <p className="text-[11px] font-medium italic opacity-90 border-l-2 pl-2 border-current">{action.details.recommendation}</p>
+                                <p className="text-[11px] font-bold italic text-slate-700 dark:text-white/90 border-l-2 pl-2 border-current">{action.details.recommendation}</p>
                             )}
                             {action.details.findings && (
-                                <div className="text-[10px] bg-black/20 rounded p-2 mt-2">
-                                    <strong className="text-white/90">Critical findings:</strong>
-                                    <ul className="list-disc list-inside mt-1 text-slate-300 space-y-0.5">
+                                <div className="text-[10px] bg-white/40 dark:bg-black/20 rounded p-2 mt-2 border border-black/5 dark:border-white/5">
+                                    <strong className="text-slate-900 dark:text-white/90">Critical findings:</strong>
+                                    <ul className="list-disc list-inside mt-1 text-slate-700 dark:text-slate-300 space-y-0.5">
                                         {action.details.findings.slice(0, 2).map((f: any, i: number) => (
                                             <li key={i} className="truncate">{f}</li>
                                         ))}
@@ -261,8 +261,8 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
                         <React.Fragment key={idx}>
                             <Button
                                 size="sm"
-                                variant={btn.primary ? 'primary' : 'ghost'}
-                                className={`w-full sm:w-auto font-bold uppercase tracking-widest text-[10px] px-4 ${btn.primary ? 'bg-white/10 hover:bg-white/20 text-white' : 'text-slate-300 hover:text-white bg-black/20 hover:bg-black/40'}`}
+                                variant={btn.primary ? 'primary' : 'outline'}
+                                className={`w-full sm:w-auto font-black uppercase tracking-widest text-[10px] px-4 ${btn.primary ? '' : 'text-slate-600 dark:text-slate-300 border-slate-300/50 hover:bg-white'}`}
                                 onClick={() => onNavigate?.(btn.route)}
                             >
                                 {btn.label} <ArrowRight className="ml-1.5 w-3 h-3" />
@@ -293,34 +293,34 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
             </Button>
 
             {isOpen && (
-                <div className="absolute top-12 right-0 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
                     {canSee('tasks') && (
-                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                            <span className="text-emerald-400">➕</span> Add Task
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+                            <span className="text-emerald-500">➕</span> Add Task
                         </button>
                     )}
                     {canSee('updates') && (
-                        <button onClick={() => { setIsOpen(false); onNavigate?.('updates'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                            <span className="text-cyan-400">📋</span> Post Update
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('updates'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+                            <span className="text-cyan-600">📋</span> Post Update
                         </button>
                     )}
                     {canSee('findings') && !isClient && (
-                        <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                            <span className="text-rose-400">⚠️</span> Log Risk/Finding
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('findings'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+                            <span className="text-rose-500">⚠️</span> Log Risk/Finding
                         </button>
                     )}
 
                     {canSee('tasks') && overdueCount > 0 && (
-                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors mt-1 border border-orange-500/20 bg-orange-500/5">
+                        <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-lg transition-colors mt-1 border border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/5">
                             <span>✅</span> Complete Overdue ({overdueCount})
                         </button>
                     )}
 
                     {canSee('reports') && (
                         <>
-                            <div className="h-px bg-slate-800 my-1 mx-2" />
-                            <button onClick={() => { setIsOpen(false); alert('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-                                <span className="text-indigo-400">📊</span> Export Report
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
+                            <button onClick={() => { setIsOpen(false); alert('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+                                <span className="text-indigo-600">📊</span> Export Report
                             </button>
                         </>
                     )}
@@ -329,9 +329,9 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                         setIsOpen(false);
                         if (onRefresh) onRefresh();
                     }}
-                        className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
+                        className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors"
                     >
-                        <span className="text-blue-400">🔄</span> Refresh Data
+                        <span className="text-blue-600">🔄</span> Refresh Data
                     </button>
                 </div>
             )}
@@ -496,19 +496,19 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Readiness Score (Compressed) */}
-                <GlassCard className="p-6 flex flex-col items-center justify-center gap-3 border-slate-800 bg-slate-900/50">
+                <GlassCard className="p-6 flex flex-col items-center justify-center gap-3 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
                     <div className="relative w-24 h-24">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
-                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" strokeLinecap="round" />
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-xl font-bold text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
+                            <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
                         </div>
                     </div>
                     <div className="text-center">
                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Workflow Readiness</h4>
-                        <p className="text-[10px] text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} setup checks complete</p>
+                        <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} setup checks complete</p>
                     </div>
                 </GlassCard>
             </div>
@@ -516,40 +516,40 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             {/* MIDDLE ROW: Operational Health Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {/* Task Health */}
-                <GlassCard className={`p-6 border-t-4 border-t-blue-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('tasks') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
+                <GlassCard className={`p-6 border-t-4 border-t-blue-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('tasks') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                            <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400 shadow-sm transition-transform group-hover:scale-110">
                                 <CheckCircle className="w-5 h-5" />
                             </div>
                             <div>
-                                <span className="text-2xl font-black text-white leading-none">{taskCount - completedTasks}</span>
-                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Tasks</h3>
+                                <span className="text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{taskCount - completedTasks}</span>
+                                <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Active Tasks</h3>
                             </div>
                         </div>
                         {overdueTasks > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{overdueTasks} Overdue</Badge>}
                     </div>
 
                     <div className="space-y-3 mb-5">
-                        <div className="flex h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                            <div className="bg-emerald-500" style={{ width: `${(completedTasks / (taskCount || 1)) * 100}%` }} title="Done" />
-                            <div className="bg-blue-500" style={{ width: `${(activeTasks / (taskCount || 1)) * 100}%` }} title="Active" />
-                            <div className="bg-rose-500" style={{ width: `${(overdueTasks / (taskCount || 1)) * 100}%` }} title="Overdue" />
+                        <div className="flex h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                            <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${(completedTasks / (taskCount || 1)) * 100}%` }} title="Done" />
+                            <div className="bg-blue-500 transition-all duration-500" style={{ width: `${(activeTasks / (taskCount || 1)) * 100}%` }} title="Active" />
+                            <div className="bg-rose-500 transition-all duration-500" style={{ width: `${(overdueTasks / (taskCount || 1)) * 100}%` }} title="Overdue" />
                         </div>
-                        <div className="flex justify-between text-[9px] font-bold uppercase tracking-tight text-slate-500 px-1">
-                            <span className="text-emerald-500/80">{completedTasks} Done</span>
-                            <span className="text-blue-400/80">{activeTasks} Active</span>
-                            <span className={overdueTasks > 0 ? 'text-rose-400/80' : ''}>{overdueTasks} Overdue</span>
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">
+                            <span className="text-emerald-600 dark:text-emerald-500/80">{completedTasks} D</span>
+                            <span className="text-blue-600 dark:text-blue-400/80">{activeTasks} A</span>
+                            <span className={overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400/80' : ''}>{overdueTasks} O</span>
                         </div>
                     </div>
 
                     <div className="flex-grow space-y-2 mt-auto">
                         {taskPreviews.slice(0, 3).map((task) => (
-                            <div key={task.id} className={`flex flex-col gap-1 text-xs p-2 rounded-lg border ${task.isOverdue ? 'bg-rose-500/5 border-rose-500/10' : 'bg-slate-800/30 border-slate-700/50'}`}>
-                                <span className={`font-semibold truncate ${task.isOverdue ? 'text-rose-300' : 'text-slate-300'}`}>{task.title}</span>
+                            <div key={task.id} className={`flex flex-col gap-1 text-xs p-2.5 rounded-xl border transition-all ${task.isOverdue ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/10' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-700/50 hover:border-slate-200'}`}>
+                                <span className={`font-bold truncate ${task.isOverdue ? 'text-rose-700 dark:text-rose-300' : 'text-slate-700 dark:text-slate-300'}`}>{task.title}</span>
                                 <div className="flex items-center justify-between mt-1">
-                                    <span className="text-[10px] text-slate-500 truncate max-w-[100px]">{task.assigneeName || task.assignee?.name || 'Unassigned'}</span>
-                                    <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${task.isOverdue ? 'bg-rose-500/10 text-rose-400' : 'text-slate-400'}`}>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-500 font-medium truncate max-w-[100px] opacity-80">{task.assigneeName || task.assignee?.name || 'Unassigned'}</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${task.isOverdue ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'}`}>
                                         {task.dueText}
                                     </span>
                                 </div>
@@ -559,44 +559,44 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     {taskPreviews.length > 3 && canSee('tasks') && (
                         <div className="mt-4 text-center">
-                            <span className="text-[10px] text-cyan-500/80 hover:text-cyan-400 font-bold uppercase tracking-wider group-hover:underline">View all {taskPreviews.length} tasks &rarr;</span>
+                            <span className="text-[10px] text-cyan-600 dark:text-cyan-500/80 hover:text-cyan-700 font-black uppercase tracking-widest group-hover:underline">View all {taskPreviews.length} tasks &rarr;</span>
                         </div>
                     )}
                 </GlassCard>
 
                 {/* Schedule / Milestone Health */}
-                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
+                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
+                            <div className="p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400 shadow-sm transition-transform group-hover:scale-110">
                                 <Calendar className="w-5 h-5" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Schedule</h3>
+                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Schedule</h3>
                         </div>
                         {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">At Risk</Badge>}
                     </div>
 
                     <div className="space-y-4 mb-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg p-3">
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Project Deadline</p>
+                        <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-3.5 transition-all hover:bg-slate-100">
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">Project Deadline</p>
                             <div className="flex items-end justify-between">
-                                <p className="text-lg font-black text-slate-900 dark:text-white">
+                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
                                     {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'NOT SET'}
                                 </p>
                                 {daysUntilDeadline !== null && (
-                                    <span className={`text-xs font-bold ${daysUntilDeadline < 14 ? 'text-amber-400' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-tighter mb-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/10 ${daysUntilDeadline < 14 ? 'text-amber-700 dark:text-amber-400 animate-pulse' : 'text-slate-500'}`}>
                                         {daysUntilDeadline}d remain
                                     </span>
                                 )}
                             </div>
                         </div>
 
-                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
-                            <p className="text-[10px] text-amber-500/70 font-bold uppercase tracking-wider mb-1">Next Milestone</p>
+                        <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-xl p-3.5">
+                            <p className="text-[10px] text-amber-700 dark:text-amber-500/70 font-black uppercase tracking-widest mb-1.5 opacity-60">Next Milestone</p>
                             {nextMilestone ? (
                                 <>
-                                    <p className="text-sm font-bold text-amber-400 truncate mb-1">{nextMilestone.title}</p>
-                                    <p className="text-[10px] text-amber-400/80 font-medium">Due {formatRelativeDate(nextMilestone.dueDate)}</p>
+                                    <p className="text-sm font-bold text-amber-900 dark:text-amber-400 truncate mb-1">{nextMilestone.title}</p>
+                                    <p className="text-[10px] text-amber-700 dark:text-amber-400/80 font-bold uppercase tracking-widest">Due {formatRelativeDate(nextMilestone.dueDate)}</p>
                                 </>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium italic">No upcoming milestones</p>
@@ -606,25 +606,25 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     <div className="flex-grow mt-auto space-y-3">
                         {missedMilestonesList.length > 0 && (
-                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3">
+                            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-3.5">
                                 <div className="flex items-center gap-1.5 mb-2">
-                                    <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-                                    <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">{missedMilestonesList.length} Missed</span>
+                                    <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                                    <span className="text-[10px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest">{missedMilestonesList.length} Missed</span>
                                 </div>
-                                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                                <ul className="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 list-disc list-inside font-medium">
                                     {missedMilestonesList.slice(0, 2).map((m: any) => (
                                         <li key={m.id} className="truncate">{m.title}</li>
                                     ))}
-                                    {missedMilestonesList.length > 2 && <li className="text-[10px] text-slate-500 italic list-none ml-2">+{missedMilestonesList.length - 2} more...</li>}
+                                    {missedMilestonesList.length > 2 && <li className="text-[10px] text-slate-400 italic list-none ml-2">+{missedMilestonesList.length - 2} more...</li>}
                                 </ul>
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between py-2 border-t border-slate-800 mx-1">
+                        <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 mx-1">
                             <div className="flex items-center gap-2">
-                                <Flag className="w-3.5 h-3.5 text-slate-500" />
-                                <span className="text-[11px] font-bold text-slate-400">
-                                    <span className="text-white">{completedMilestones}</span> / {milestoneCount} Milestones Met
+                                <Flag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                                    <span className="text-slate-900 dark:text-white">{completedMilestones}</span> / {milestoneCount} OK
                                 </span>
                             </div>
                         </div>
@@ -632,13 +632,13 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Findings Summary */}
-                <GlassCard className={`p-6 border-t-4 border-t-rose-500 dark:border-slate-800 transition-colors flex flex-col h-full ${canSee('findings') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
+                <GlassCard className={`p-6 border-t-4 border-t-rose-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('findings') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-rose-50 dark:bg-rose-500/10 rounded-lg text-rose-600 dark:text-rose-400">
+                            <div className="p-3 bg-rose-50 dark:bg-rose-500/10 rounded-xl text-rose-600 dark:text-rose-400 shadow-sm transition-transform group-hover:scale-110">
                                 <AlertCircle className="w-5 h-5" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quality</h3>
+                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Quality</h3>
                         </div>
                         <Badge variant={unresolvedFindings > 0 ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">
                             {unresolvedFindings} Open
@@ -647,41 +647,41 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     {unresolvedFindings === 0 ? (
                         <div className="flex-grow flex flex-col items-center justify-center py-6 text-center">
-                            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
-                                <CheckCircle className="w-6 h-6 text-emerald-400" />
+                            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center mb-4 transition-all group-hover:scale-110">
+                                <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <p className="text-sm font-bold text-emerald-400 mb-1">No Open Findings</p>
-                            <p className="text-xs text-slate-500">{resolvedFindings} resolved historically</p>
+                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400 mb-1">Clean State</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{resolvedFindings} resolved historically</p>
                         </div>
                     ) : (
                         <>
                             <div className="space-y-2 mb-5">
                                 {findingsBySeverity.CRITICAL && findingsBySeverity.CRITICAL > 0 && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
-                                        <span className="text-sm font-black text-rose-400 w-6">{findingsBySeverity.CRITICAL}</span>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Critical</span>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+                                        <span className="text-sm font-black text-rose-700 dark:text-rose-400 w-6">{findingsBySeverity.CRITICAL}</span>
+                                        <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest">Critical</span>
                                     </div>
                                 )}
                                 {findingsBySeverity.HIGH && findingsBySeverity.HIGH > 0 && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                                        <span className="text-sm font-black text-orange-400 w-6">{findingsBySeverity.HIGH}</span>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">High</span>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]" />
+                                        <span className="text-sm font-black text-orange-700 dark:text-orange-400 w-6">{findingsBySeverity.HIGH}</span>
+                                        <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest">High</span>
                                     </div>
                                 )}
                                 {findingsBySeverity.MEDIUM && findingsBySeverity.MEDIUM > 0 && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                                        <span className="text-sm font-black text-amber-400 w-6">{findingsBySeverity.MEDIUM}</span>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Medium</span>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                        <span className="text-sm font-black text-amber-700 dark:text-amber-400 w-6">{findingsBySeverity.MEDIUM}</span>
+                                        <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest">Medium</span>
                                     </div>
                                 )}
                                 {findingsBySeverity.LOW && findingsBySeverity.LOW > 0 && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                        <span className="text-sm font-black text-blue-400 w-6">{findingsBySeverity.LOW}</span>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Low</span>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                        <span className="text-sm font-black text-blue-700 dark:text-blue-400 w-6">{findingsBySeverity.LOW}</span>
+                                        <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest">Low</span>
                                     </div>
                                 )}
                             </div>
@@ -707,28 +707,28 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 </GlassCard>
 
                 {/* Updates / Review Health */}
-                <GlassCard className="p-6 border-t-4 border-t-cyan-500 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors h-full flex flex-col">
+                <GlassCard className="p-6 border-t-4 border-t-cyan-500 dark:border-slate-800 bg-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors h-full flex flex-col group">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
+                        <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 rounded-xl text-cyan-600 dark:text-cyan-400 shadow-sm transition-transform group-hover:scale-110">
                             <Clock className="w-5 h-5" />
                         </div>
-                        <Badge variant={isStale ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold">
-                            {isStale ? 'Update Overdue' : 'Up to Date'}
+                        <Badge variant={isStale ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-black uppercase tracking-widest shadow-sm">
+                            {isStale ? 'STALE' : 'UP TO DATE'}
                         </Badge>
                     </div>
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Review & Communication</h3>
+                    <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 mb-4">Communication</h3>
                     <div className="space-y-4">
-                        <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Last Weekly Update</p>
-                            <p className="text-lg font-black text-slate-900 dark:text-white truncate">{lastUpdateAge}</p>
+                        <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">Last Weekly Update</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white truncate tracking-tighter">{lastUpdateAge}</p>
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
                             <div className="flex flex-col">
-                                <span className="text-xs text-white font-bold">{recentUpdates.length}</span>
-                                <span className="text-[9px] text-slate-500 uppercase font-black">Total Updates</span>
+                                <span className="text-sm font-black text-slate-900 dark:text-white leading-none">{recentUpdates.length}</span>
+                                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest mt-1">Total Posts</span>
                             </div>
                             {canSee('updates') && (
-                                <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase font-black text-cyan-400" onClick={() => onNavigate?.('updates')}>Post Update</Button>
+                                <Button variant="ghost" size="sm" className="h-8 text-[9px] uppercase font-black text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800" onClick={() => onNavigate?.('updates')}>Post Update &rarr;</Button>
                             )}
                         </div>
                     </div>

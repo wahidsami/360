@@ -10,21 +10,12 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
     key?: React.Key;
 }
 
-// --- GlassCard ---
-interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
-    children: React.ReactNode;
-    title?: string;
-    className?: string;
-    onClick?: React.MouseEventHandler<HTMLDivElement>;
-    key?: React.Key;
-}
-
 export const GlassCard = ({ children, className = '', title, ...props }: GlassCardProps) => (
     <div
-        className={`glass-card bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${className}`}
+        className={`glass-card bg-white dark:bg-slate-900 shadow-sm dark:shadow-none border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-cyan-500/5 hover:-translate-y-1 ${className}`}
         {...props}
     >
-        {title && <h3 className="glass-card-title text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 padding-bottom-3 tracking-tight">{title}</h3>}
+        {title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 tracking-tight">{title}</h3>}
         {children}
     </div>
 );
@@ -42,14 +33,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
-    const baseStyles = "inline-flex items-center justify-center font-semibold transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
+    const baseStyles = "inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-50 disabled:pointer-events-none";
 
     const variants = {
-        primary: "bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-600 hover:to-indigo-600 text-white shadow-lg shadow-cyan-500/25",
-        secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
-        ghost: "bg-transparent hover:bg-slate-800/50 text-slate-400 hover:text-white",
-        danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20",
-        outline: "bg-transparent hover:bg-slate-800/50 text-slate-200 border border-slate-600"
+        primary: "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg shadow-cyan-500/20 dark:shadow-none",
+        secondary: "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
+        ghost: "bg-transparent hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white",
+        danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 dark:shadow-none",
+        outline: "bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600"
     };
 
     const sizes = {
@@ -59,7 +50,7 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
     };
 
     return (
-        <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} hover:scale-105 hover:shadow-lg active:scale-95 ${className}`} {...props}>
+        <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} hover:scale-105 hover:shadow-xl active:scale-95 ${className}`} {...props}>
             {children}
         </button>
     );
@@ -92,11 +83,11 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export const Badge = ({ children, variant = 'neutral', size = 'md', className = '', pulse = false, ...props }: BadgeProps) => {
     const variants = {
-        success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-        danger: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-        info: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-        neutral: "bg-slate-500/10 text-slate-400 border-slate-500/20"
+        success: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+        warning: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
+        danger: "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20",
+        info: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/20",
+        neutral: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/20"
     };
 
     const sizes = {
@@ -176,21 +167,29 @@ interface KpiCardProps {
 }
 
 export const KpiCard = ({ label, value, trend, trendUp, icon }: KpiCardProps) => (
-    <GlassCard className="p-6 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-cyan-500/5 to-transparent rounded-bl-full pointer-events-none transition-all group-hover:bg-cyan-500/10" />
-        <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{label}</h3>
-            {icon && <div className="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-cyan-600 dark:text-cyan-400 group-hover:rotate-3 transition-transform">{icon}</div>}
+    <div className="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-xl dark:hover:shadow-cyan-500/5 transition-all duration-300 hover:-translate-y-1">
+        {/* Subtle gradient overlay for light theme */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/40 via-transparent to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+        
+        <div className="relative p-6 z-10">
+            <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{label}</h3>
+                {icon && (
+                    <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 dark:from-cyan-500/20 dark:to-blue-600/20 rounded-xl text-white dark:text-cyan-400 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        {icon}
+                    </div>
+                )}
+            </div>
+            <div className="flex items-end gap-3">
+                <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{value}</div>
+                {trend !== undefined && (
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        {trendUp ? '↑' : '↓'} {trend}
+                    </span>
+                )}
+            </div>
         </div>
-        <div className="flex items-end gap-3 relative z-10">
-            <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</div>
-            {trend !== undefined && (
-                <span className={`text-xs font-bold mb-1 px-2 py-0.5 rounded-full ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                    {trendUp ? '↑' : '↓'} {trend}
-                </span>
-            )}
-        </div>
-    </GlassCard>
+    </div>
 );
 
 // --- Modal ---
@@ -198,11 +197,11 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', maxWid
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className={`bg-slate-900/90 border border-slate-700/50 rounded-2xl w-full ${maxWidth} ${className} shadow-2xl relative max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300`}>
-                <div className="flex items-center justify-between p-6 border-b border-slate-700/50 sticky top-0 bg-slate-900/90 backdrop-blur-md z-10">
-                    <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-slate-800/50 text-slate-400 hover:text-white rounded-full transition-all">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 dark:bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className={`bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl w-full ${maxWidth} ${className} shadow-2xl relative max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300`}>
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800/50 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-10">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{title}</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full transition-all">
                         ✕
                     </button>
                 </div>
@@ -216,10 +215,10 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', maxWid
 
 // --- ProgressBar ---
 export const ProgressBar = ({ progress, className = '' }: { progress: number; className?: string }) => (
-    <div className={`h-2.5 bg-slate-800 rounded-full overflow-hidden ${className}`}>
+    <div className={`h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden ${className}`}>
         <div
-            className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500 animate-shimmer"
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%`, backgroundSize: '200% 100%' }}
+            className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-500 ease-out"
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
     </div>
 );
@@ -242,7 +241,7 @@ export const CopyButton = ({ value, className = '' }: { value: string; className
     return (
         <button
             onClick={handleCopy}
-            className={`p-1 hover:bg-slate-700 rounded transition-colors inline-flex items-center justify-center ${className}`}
+            className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded transition-colors inline-flex items-center justify-center ${className}`}
             title="Copy ID"
         >
             {copied ? (

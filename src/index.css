@@ -24,55 +24,61 @@
   --brand-accent: #6366f1;
 }
 
+/* --- Light Theme Overrides (.theme-light) --- */
 .theme-light {
-  /* Enhanced Light Theme Tokens */
-  --app-bg: #f8fafc; /* bg-slate-50 */
-  --app-surface: #ffffff;
-  --app-surface-hover: #f1f5f9;
-  --app-border: rgba(226, 232, 240, 0.6); /* border-slate-200/60 */
-  --app-divider: #e2e8f0;
+  color-scheme: light;
+
+  /* Backgrounds & Surfaces */
+  --app-bg: #f8fafc; /* slate-50 */
+  --app-surface: #ffffff; /* pure white */
+  --app-surface-hover: #f1f5f9; /* slate-100 */
+  --app-border: #e2e8f0; /* slate-200 */
+  --app-divider: #f1f5f9;
   
-  --text-main: #334155; /* slate-700 */
-  --text-heading: #1e293b; /* slate-800 */
+  /* Text Contrast - High Readability */
+  --text-main: #475569; /* slate-600 */
+  --text-heading: #0f172a; /* slate-900 */
   --text-muted: #64748b; /* slate-500 */
   --text-inverse: #ffffff;
 
-  /* Sophisticated Shadow System */
+  /* Accent & Active States */
+  --active-bg: #ecfeff; /* cyan-50 */
+  --active-text: #0891b2; /* cyan-600 */
+  --brand-primary: #06b6d4;
+  --brand-accent: #3b82f6;
+
+  /* Explicit Shadows for Light Surfaces */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.01);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.02);
+
+  /* Page Wrapper Gradient */
+  --page-gradient: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #eff6ff 100%);
+
+  /* Tailwind Scale Fix - Explicitly mapping for light mode */
+  --tw-slate-50: #f8fafc;
+  --tw-slate-100: #f1f5f9;
+  --tw-slate-200: #e2e8f0;
+  --tw-slate-300: #cbd5e1;
+  --tw-slate-400: #94a3b8;
+  --tw-slate-500: #64748b;
+  --tw-slate-600: #475569;
+  --tw-slate-700: #334155;
+  --tw-slate-800: #1e293b;
+  --tw-slate-900: #0f172a;
+
+  /* Override dark containers with light ones */
+  --bg-slate-950: #f8fafc;
+  --bg-slate-900: #ffffff;
+  --bg-slate-800: #f1f5f9;
+  --bg-slate-700: #e2e8f0;
 }
 
-.theme-light {
-  /* Deep Scale Remapping for contrast and readability */
-  --tw-slate-50: #ffffff;
-  --tw-slate-100: #f8fafc;
-  --tw-slate-200: #f1f5f9;
-  --tw-slate-300: #e2e8f0;
-  --tw-slate-400: #cbd5e1;
-  --tw-slate-500: #94a3b8;
-  --tw-slate-600: #475569; /* Strengthened */
-  --tw-slate-700: #334155; /* Strengthened */
-  --tw-slate-800: #1e293b; /* Strengthened */
-  --tw-slate-900: #0f172a; /* Strengthened */
-
-  /* Override harsh dark backgrounds with soft layered light surfaces */
-  --bg-slate-950: #f8fafc; /* Main application background */
-  --bg-slate-900: #ffffff; /* Default section card background */
-  --bg-slate-800: #f1f5f9; /* Secondary/hover background */
-}
-
-/* Animations & Micro-interactions */
+/* Animations & Transitions */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {
@@ -80,88 +86,42 @@
   100% { background-position: 200% 0; }
 }
 
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes ripple {
-  0% { transform: scale(0); opacity: 0.5; }
-  100% { transform: scale(4); opacity: 0; }
-}
-
 .animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Glassmorphism Refinements */
-.glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--app-border);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.theme-light .glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
-}
-
-/* Progress Bar Refinement */
-.progress-gradient {
-  background: linear-gradient(90deg, #06b6d4, #3b82f6, #06b6d4);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite linear;
-}
-
-/* Button Micro-interactions */
-button:not(:disabled):hover, a:not(:disabled):hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.hover-scale:hover {
-  transform: scale(1.05);
-}
-
-.hover-rotate:hover {
-  transform: rotate(3deg);
-}
-
-/* Sidebar & Layout Refinements */
-.sidebar-shadow {
-  box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.05);
-}
-
-/* Scrollbar Customization */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
-
-/* Global Transition */
+/* Global Transition Systems */
 * {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
 }
 
-/* Forced Component Transitions */
-* {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+/* Component Overrides */
+.theme-light body {
+  background: var(--page-gradient);
+  color: var(--text-main);
+}
+
+.theme-light .glass-card {
+  background-color: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-light .glass-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+.theme-light .sidebar-shadow {
+  box-shadow: 1px 0 10px rgba(0,0,0,0.05);
+}
+
+.theme-light .progress-gradient {
+  background: linear-gradient(90deg, #06b6d4, #2563eb, #06b6d4);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite linear;
 }
 
 @theme {

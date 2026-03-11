@@ -27,13 +27,17 @@ const SidebarItem = ({ to, icon: Icon, label, onClick, isCollapsed }: any) => (
     className={({ isActive }) => `
       flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl transition-all duration-300 group
       ${isActive
-        ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20 shadow-sm'
-        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-cyan-600 dark:hover:text-slate-200'}
+        ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 text-cyan-600 shadow-sm'
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'}
     `}
   >
-    <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3" />
-    {!isCollapsed && <span className="font-semibold text-sm truncate">{label}</span>}
-    {!isCollapsed && <ChevronRight className="w-4 h-4 shrink-0 -mr-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" />}
+    {({ isActive }) => (
+      <>
+        <Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3 ${isActive ? 'text-cyan-500' : ''}`} />
+        {!isCollapsed && <span className="font-bold text-sm truncate">{label}</span>}
+        {!isCollapsed && <ChevronRight className="w-4 h-4 shrink-0 -mr-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" />}
+      </>
+    )}
   </NavLink>
 );
 
@@ -202,13 +206,13 @@ export const Layout: React.FC = () => {
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} 
         bg-white dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800
-        transform transition-all duration-300 lg:transform-none flex flex-col shadow-soft-xl lg:shadow-none
+        transform transition-all duration-300 lg:transform-none flex flex-col shadow-xl lg:shadow-none
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0'}
       `}>
         {/* Desktop Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex absolute -right-3 top-6 bg-slate-800 border border-slate-700 rounded-full w-6 h-6 items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 z-50 transition-colors"
+          className="hidden lg:flex absolute -right-3 top-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full w-6 h-6 items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white z-50 transition-all shadow-sm"
         >
           <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`} />
         </button>
@@ -270,7 +274,7 @@ export const Layout: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shadow-sm">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 mr-4">
             <Menu />
           </button>
