@@ -431,7 +431,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
     return (
         <div className="space-y-6 pb-12">
             <div className="flex justify-between items-center w-full">
-                <h2 className="text-xl font-black text-white px-2">Dashboard</h2>
+                <h2 className="text-xl font-black text-white px-2">Project Dashboard</h2>
                 <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 

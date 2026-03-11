@@ -1,132 +1,151 @@
 @import "tailwindcss";
 
+:root {
+  --app-bg: #020617;
+  --app-surface: #0f172a;
+  --app-text-base: #f8fafc;
+  --app-text-muted: #94a3b8;
+  --app-border: #1e293b;
+
+  /* Slate Scale Mapping for Dark Mode (Default) */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+
+  --brand-primary: #06b6d4;
+  --brand-accent: #6366f1;
+}
+
+.theme-light {
+  --app-bg: #F7F9FA;
+  --app-surface: #FFFFFF;
+  --app-text-base: #1e293b;
+  --app-text-muted: #64748b;
+  --app-border: #E4E9F2;
+
+  /* Slate Scale Remapping for Light Mode (The Magic) */
+  /* We flip the scale so that dark-intended classes become light-intended */
+  --slate-950: #F7F9FA;
+  --slate-900: #FFFFFF;
+  --slate-850: #F7F9FA;
+  --slate-800: #FFFFFF;
+  --slate-700: #E4E9F2;
+  --slate-600: #DFE6EF;
+  --slate-500: #adb5bd;
+  --slate-400: #8392ab;
+  --slate-300: #67748e;
+  --slate-200: #475569; /* Darker text */
+  --slate-100: #1e293b; /* Even darker */
+  --slate-50: #0f172a;
+
+  --brand-primary: #00D4FF;
+  --brand-accent: #6366f1;
+  
+  color-scheme: light;
+}
+
 @theme {
   --font-sans: "Inter", "Cairo", sans-serif;
   --font-display: "Orbitron", sans-serif;
 
-  --color-slate-850: #151e2e;
-  --color-slate-950: #020617;
-}
-
-/* White-label: theme from Org branding (injected by Layout) */
-:root {
-  --brand-primary: #06b6d4;
-  --brand-accent: #6366f1;
-  --brand-bg: #020617;
-  --brand-surface: #0f172a;
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
+  
+  --shadow-soft-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-soft-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  --shadow-soft-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.03);
+  --shadow-soft-xl: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02);
 }
 
 @layer base {
   body {
-    background-color: var(--brand-bg);
-    color: white;
+    background-color: var(--app-bg);
+    color: var(--app-text-base);
+    transition: background-color 0.5s ease, color 0.5s ease;
   }
 }
 
+/* Base Body & Layout Overrides */
+.theme-light body,
+.theme-light #root {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text-base) !important;
+}
+
+/* Forced Component Transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* ============================================================
-   LIGHT THEME — UNIVERSAL PREMIUM OVERRIDES
+   SOPHISTICATED COMPONENT STYLING
    ============================================================ */
-html.theme-light {
-  --brand-bg: #f8fafc;
-  --brand-surface: #ffffff;
-  color-scheme: light;
 
-  /* Override core tailwind slate variables to force light values */
-  --color-slate-950: #f8fafc;
-  --color-slate-900: #f1f5f9;
-  --color-slate-850: #e2e8f0;
-  --color-slate-800: #f1f5f9;
-  --color-slate-700: #e2e8f0;
-  --color-slate-600: #cbd5e1;
-  --color-slate-500: #94a3b8;
-  --color-slate-400: #64748b;
-  --color-slate-300: #475569;
-  --color-slate-200: #334155;
-  --color-slate-100: #1e293b;
-  --color-slate-50: #0f172a;
+/* Modern Card Foundation */
+.glass-card, [class*="GlassCard"] {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-soft-md);
 }
 
-/* Base Body & Main Wrapper Overrides */
-html.theme-light body,
-html.theme-light #root,
-html.theme-light .bg-slate-950 {
-  background-color: #f8fafc !important;
-  color: #1e293b !important;
+.theme-light .glass-card, .theme-light [class*="GlassCard"] {
+  background: linear-gradient(135deg, #FFFFFF 0%, rgba(247, 249, 250, 0.4) 100%);
+  box-shadow: var(--shadow-soft-sm);
 }
 
-/* Force ALL elements with slate backgrounds to be light */
-html.theme-light [class*="bg-slate-"] {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+.glass-card:hover, [class*="GlassCard"]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft-lg);
 }
 
-/* Cards (GlassCard) */
-html.theme-light .glass-card,
-html.theme-light [class*="GlassCard"] {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  backdrop-filter: none !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
-}
-html.theme-light .glass-card-title {
-  color: #0f172a !important;
-  border-bottom-color: #e2e8f0 !important;
+/* Animation Keyframes */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Text Overrides: Universal high-contrast for light mode */
-html.theme-light .text-white,
-html.theme-light [class*="text-slate-100"],
-html.theme-light [class*="text-slate-200"],
-html.theme-light [class*="text-slate-300"] {
-  color: #1e293b !important;
-}
-html.theme-light .text-slate-400,
-html.theme-light .text-slate-500 {
-  color: #475569 !important;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Header & Sidebar Specific Overrides */
-html.theme-light header,
-html.theme-light aside {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
 }
 
-html.theme-light aside [class*="bg-slate-900"],
-html.theme-light aside [class*="bg-slate-800"] {
-  background-color: transparent !important;
+.animate-fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+.animate-pulse-subtle { animation: pulse-subtle 3s infinite ease-in-out; }
+
+/* Dashboard Gradients */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
 }
 
-/* Inputs & Form Controls */
-html.theme-light input,
-html.theme-light select,
-html.theme-light textarea {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  border-color: #cbd5e1 !important;
-}
-html.theme-light input::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Hide ambient blobs that look out of place */
-html.theme-light .blur-\[120px\] {
+/* Hide redundant dark blobs in light mode */
+.theme-light .blur-\[120px\],
+.theme-light .absolute.bg-cyan-900\/10,
+.theme-light .absolute.bg-indigo-900\/10 {
   display: none !important;
 }
-
-/* Fix Scrollbars */
-html.theme-light ::-webkit-scrollbar-track { background: #f8fafc; }
-html.theme-light ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-html.theme-light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Dashboard & Analytics Fixes */
-html.theme-light .bg-emerald-500\/10,
-html.theme-light .bg-cyan-500\/10,
-html.theme-light .bg-rose-500\/10,
-html.theme-light .bg-amber-500\/10 {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
 
 @utility spin-slow {
   animation: spin 3s linear infinite;

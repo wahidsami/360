@@ -318,9 +318,11 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                     <ShieldAlert className="w-12 h-12 mb-4 text-slate-600 opacity-20" />
                     <h4 className="text-slate-300 font-medium italic">No findings to display.</h4>
                     <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">This project currently has no recorded vulnerabilities or quality issues.</p>
-                    <Button variant="secondary" size="sm" className="mt-6" onClick={() => setIsModalOpen(true)}>
-                      <Plus className="w-4 h-4 mr-2" /> Report First Finding
-                    </Button>
+                    {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
+                      <Button variant="secondary" size="sm" className="mt-6" onClick={() => setIsModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" /> {t('create_finding')}
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -186,11 +186,11 @@ export const Layout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans selection:bg-cyan-500/30">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-900/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px]" />
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-sans selection:bg-cyan-500/30 transition-colors duration-500">
+      {/* Background Ambience - Modified for light theme */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/5 dark:bg-cyan-900/10 rounded-full blur-[100px] animate-pulse-subtle" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/5 dark:bg-indigo-900/10 rounded-full blur-[100px] animate-pulse-subtle delay-1000" />
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -200,8 +200,9 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} bg-slate-900/80 backdrop-blur-xl border-r border-slate-800
-        transform transition-all duration-300 lg:transform-none flex flex-col
+        fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} 
+        bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-[#E4E9F2] dark:border-slate-800
+        transform transition-all duration-300 lg:transform-none flex flex-col shadow-soft-xl lg:shadow-none
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0'}
       `}>
         {/* Desktop Collapse Toggle */}
@@ -212,25 +213,25 @@ export const Layout: React.FC = () => {
           <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`} />
         </button>
 
-        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-slate-800 relative h-20`}>
+        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-[#E4E9F2] dark:border-slate-800 relative h-20`}>
           {!isCollapsed && (
             <div className="h-[38px] flex items-center justify-center">
               {orgBranding?.logo ? (
-                <img src={orgBranding.logo} alt="Logo" className="h-full object-contain max-w-[140px]" />
+                <img src={orgBranding.logo} alt="Logo" className="h-full object-contain max-w-[140px] dark:invert-0" />
               ) : (
                 <img
                   src="/arenalogo.png"
                   alt="Arena logo"
-                  className="h-full object-contain"
-                  style={{ filter: 'brightness(0) invert(1)' }}
+                  className="h-full object-contain dark:brightness-0 dark:invert-1"
+                  style={{ filter: document.documentElement.classList.contains('theme-light') ? 'none' : 'brightness(0) invert(1)' }}
                 />
               )}
             </div>
           )}
           {isCollapsed && (
-            <div className="h-8 w-8 bg-cyan-500/20 rounded-lg flex items-center justify-center text-cyan-500 font-black">360</div>
+            <div className="h-10 w-10 bg-gradient-to-br from-cyan-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-cyan-500/20">360</div>
           )}
-          <button onClick={() => setSidebarOpen(false)} className={`ml-auto lg:hidden text-slate-400 ${isCollapsed ? 'hidden' : ''}`}>
+          <button onClick={() => setSidebarOpen(false)} className={`ml-auto lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors ${isCollapsed ? 'hidden' : ''}`}>
             <X />
           </button>
         </div>
@@ -245,23 +246,23 @@ export const Layout: React.FC = () => {
           </div>
         </nav>
 
-        <div className={`p-4 border-t border-slate-800 bg-slate-900/50 ${isCollapsed ? 'flex justify-center px-2' : ''}`}>
-          <div className={`flex items-center gap-3 ${isCollapsed ? 'p-2' : 'p-3'} rounded-lg border border-slate-700/50 bg-slate-800/30 w-full`}>
-            <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=0d9488&color=fff`} className={`${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'} shrink-0 rounded-full border-2 border-slate-600`} alt="Profile" />
+        <div className={`p-4 border-t border-[#E4E9F2] dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 ${isCollapsed ? 'flex justify-center px-2' : ''}`}>
+          <div className={`flex items-center gap-3 ${isCollapsed ? 'p-2' : 'p-3'} rounded-2xl border border-[#E4E9F2] dark:border-slate-700/50 bg-white dark:bg-slate-800/30 w-full shadow-sm`}>
+            <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=0d9488&color=fff`} className={`${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'} shrink-0 rounded-full border-2 border-slate-200 dark:border-slate-600`} alt="Profile" />
             {!isCollapsed && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
-                  <p className="text-xs text-slate-500 truncate capitalize">{user?.role.replace(/_/g, ' ')}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate uppercase tracking-wider">{user?.role.replace(/_/g, ' ')}</p>
                 </div>
-                <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 transition-colors" title="Log Out">
+                <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Log Out">
                   <LogOut className="w-5 h-5" />
                 </button>
               </>
             )}
           </div>
           {isCollapsed && (
-            <button onClick={handleLogout} className="absolute bottom-6 right-1 bg-slate-800 border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors" title="Log Out">
+            <button onClick={handleLogout} className="absolute bottom-6 right-1 bg-white dark:bg-slate-800 border border-[#E4E9F2] dark:border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shadow-sm" title="Log Out">
               <LogOut className="w-3 h-3" />
             </button>
           )}
@@ -270,7 +271,7 @@ export const Layout: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6">
+        <header className="h-16 border-b border-[#E4E9F2] dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 mr-4">
             <Menu />
           </button>
@@ -279,11 +280,11 @@ export const Layout: React.FC = () => {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="relative w-full max-w-md hidden md:flex items-center gap-2 bg-slate-950/50 border border-slate-700 rounded-full py-2 pl-4 pr-4 text-sm text-slate-400 hover:border-slate-600"
+              className="relative w-full max-w-md hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-950/50 border border-[#E4E9F2] dark:border-slate-700 rounded-full py-2 pl-4 pr-4 text-sm text-slate-500 dark:text-slate-400 hover:border-cyan-500/50 transition-all group"
             >
-              <Search className="w-4 h-4 shrink-0 rtl:order-2" />
-              <span>{t('search')}</span>
-              <kbd className="ml-auto hidden sm:inline px-2 py-0.5 text-xs bg-slate-800 rounded">Ctrl+K</kbd>
+              <Search className="w-4 h-4 shrink-0 rtl:order-2 group-hover:text-cyan-500 transition-colors" />
+              <span className="font-medium">{t('search')}</span>
+              <kbd className="ml-auto hidden sm:inline px-2 py-0.5 text-[10px] font-bold bg-white dark:bg-slate-800 border border-[#E4E9F2] dark:border-slate-700 rounded shadow-sm">Ctrl+K</kbd>
             </button>
           </div>
           <SearchResults open={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -295,10 +296,10 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-4">
 
 
-            <button type="button" onClick={() => openAI()} className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-full transition-all" title="AI Assistant">
-              <Sparkles className="w-5 h-5" />
+            <button type="button" onClick={() => openAI()} className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all group" title="AI Assistant">
+              <Sparkles className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </button>
-            <button onClick={toggleLang} className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-full transition-all">
+            <button onClick={toggleLang} className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all">
               <span className="font-bold text-xs flex items-center gap-2">
                 <Globe className="w-4 h-4" />
                 {i18n.language.toUpperCase()}
@@ -307,12 +308,12 @@ export const Layout: React.FC = () => {
             <button
               type="button"
               onClick={() => setNotificationDrawerOpen(true)}
-              className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-full transition-all relative"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all relative"
               title={t('notifications')}
             >
               <Bell className="w-5 h-5" />
               {notificationUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-medium bg-rose-500 text-white rounded-full">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-black bg-rose-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse-subtle">
                   {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
                 </span>
               )}
@@ -320,7 +321,7 @@ export const Layout: React.FC = () => {
             <button
               type="button"
               onClick={() => setChangelogOpen(true)}
-              className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-full transition-all"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all"
               title="Changelog"
             >
               <History className="w-5 h-5" />

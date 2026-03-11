@@ -22,13 +22,10 @@ export class PermissionsService {
 
         [Role.FINANCE]: ['overview', 'financials', 'reports', 'files', 'activity'],
 
-        [Role.CLIENT_OWNER]: ['overview', 'milestones', 'findings', 'files', 'activity', 'financials'],
-
-        [Role.CLIENT_MANAGER]: ['overview', 'milestones', 'findings', 'files', 'activity'],
-
-        [Role.CLIENT_MEMBER]: ['overview', 'milestones', 'findings', 'files', 'activity'],
-
-        [Role.VIEWER]: ['overview', 'milestones', 'findings', 'files', 'activity']
+        [Role.CLIENT_OWNER]: ['overview', 'tasks', 'milestones', 'findings', 'files', 'activity', 'financials'],
+        [Role.CLIENT_MANAGER]: ['overview', 'tasks', 'milestones', 'findings', 'files', 'activity'],
+        [Role.CLIENT_MEMBER]: ['overview', 'tasks', 'milestones', 'findings', 'files', 'activity'],
+        [Role.VIEWER]: ['overview', 'tasks', 'milestones', 'findings', 'files', 'activity']
     };
 
     private static readonly DEFAULT_LANDING: Record<string, string> = {

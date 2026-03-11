@@ -10,12 +10,21 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
     key?: React.Key;
 }
 
+// --- GlassCard ---
+interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+    children: React.ReactNode;
+    title?: string;
+    className?: string;
+    onClick?: React.MouseEventHandler<HTMLDivElement>;
+    key?: React.Key;
+}
+
 export const GlassCard = ({ children, className = '', title, ...props }: GlassCardProps) => (
     <div
-        className={`glass-card bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 ${className}`}
+        className={`glass-card bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-soft-lg ${className}`}
         {...props}
     >
-        {title && <h3 className="glass-card-title text-lg font-semibold text-white mb-4 border-b border-slate-700/50 pb-2">{title}</h3>}
+        {title && <h3 className="glass-card-title text-lg font-bold text-white mb-6 border-b border-slate-700/50 pb-3 tracking-tight">{title}</h3>}
         {children}
     </div>
 );
@@ -33,20 +42,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
-    const baseStyles = "inline-flex items-center justify-center font-medium transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none";
+    const baseStyles = "inline-flex items-center justify-center font-semibold transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
 
     const variants = {
-        primary: "bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/20",
+        primary: "bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-600 hover:to-indigo-600 text-white shadow-lg shadow-cyan-500/25",
         secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
-        ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white",
-        danger: "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20",
-        outline: "bg-transparent hover:bg-slate-800 text-slate-200 border border-slate-600"
+        ghost: "bg-transparent hover:bg-slate-800/50 text-slate-400 hover:text-white",
+        danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20",
+        outline: "bg-transparent hover:bg-slate-800/50 text-slate-200 border border-slate-600"
     };
 
     const sizes = {
-        sm: "h-8 px-3 text-xs",
-        md: "h-10 px-4 py-2 text-sm",
-        lg: "h-12 px-6 text-base"
+        sm: "h-9 px-4 text-xs",
+        md: "h-11 px-6 py-2 text-sm",
+        lg: "h-14 px-8 text-base"
     };
 
     return (
@@ -64,7 +73,7 @@ interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Avatar = ({ children, className = '', ...props }: AvatarProps) => (
     <div
-        className={`w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-cyan-400 font-bold ${className}`}
+        className={`w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-cyan-400 font-bold shadow-inner ${className}`}
         {...props}
     >
         {children}
@@ -78,9 +87,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
     variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
     size?: 'sm' | 'md';
     key?: React.Key;
+    pulse?: boolean;
 }
 
-export const Badge = ({ children, variant = 'neutral', size = 'md', className = '', ...props }: BadgeProps) => {
+export const Badge = ({ children, variant = 'neutral', size = 'md', className = '', pulse = false, ...props }: BadgeProps) => {
     const variants = {
         success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
         warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -90,12 +100,12 @@ export const Badge = ({ children, variant = 'neutral', size = 'md', className = 
     };
 
     const sizes = {
-        sm: "px-1.5 py-0.5 text-[10px]",
-        md: "px-2 py-0.5 text-xs"
+        sm: "px-2 py-0.5 text-[10px]",
+        md: "px-2.5 py-1 text-xs"
     };
 
     return (
-        <span className={`inline-flex items-center rounded font-medium border ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+        <span className={`inline-flex items-center rounded-full font-bold border ${variants[variant]} ${sizes[size]} ${pulse ? 'animate-pulse-subtle' : ''} ${className}`} {...props}>
             {children}
         </span>
     );
@@ -103,17 +113,10 @@ export const Badge = ({ children, variant = 'neutral', size = 'md', className = 
 
 // --- Form Elements ---
 export const Label = (props: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-    <label className={`block text-xs font-medium text-slate-400 mb-1.5 ${props.className || ''}`} {...props}>
+    <label className={`block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ${props.className || ''}`} {...props}>
         {props.children}
     </label>
 );
-
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
-    id?: string;
-    name?: string;
-    className?: string;
-}
 
 export const Input = ({ label, className = '', id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => {
     return (
@@ -121,7 +124,7 @@ export const Input = ({ label, className = '', id, ...props }: React.InputHTMLAt
             {label && <Label htmlFor={id}>{label}</Label>}
             <input
                 id={id}
-                className={`flex h-10 w-full rounded-md border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+                className={`flex h-11 w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -134,7 +137,7 @@ export const TextArea = ({ label, className = '', id, ...props }: React.Textarea
             {label && <Label htmlFor={id}>{label}</Label>}
             <textarea
                 id={id}
-                className={`flex min-h-[80px] w-full rounded-md border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+                className={`flex min-h-[100px] w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -148,13 +151,13 @@ export const Select = ({ label, className = '', id, children, ...props }: React.
             <div className="relative">
                 <select
                     id={id}
-                    className={`flex h-10 w-full rounded-md border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none ${className}`}
+                    className={`flex h-11 w-full rounded-xl border border-slate-700 bg-slate-950/30 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 appearance-none transition-all ${className}`}
                     {...props}
                 >
                     {children}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </div>
@@ -173,15 +176,16 @@ interface KpiCardProps {
 }
 
 export const KpiCard = ({ label, value, trend, trendUp, icon }: KpiCardProps) => (
-    <GlassCard className="p-5">
-        <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-medium text-slate-400">{label}</h3>
-            {icon && <div className="text-cyan-400">{icon}</div>}
+    <GlassCard className="p-6 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-cyan-500/5 to-transparent rounded-bl-full pointer-events-none transition-all group-hover:bg-cyan-500/10" />
+        <div className="flex justify-between items-start mb-4 relative z-10">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</h3>
+            {icon && <div className="p-2 bg-slate-800/50 rounded-lg text-cyan-400 group-hover:scale-110 transition-transform">{icon}</div>}
         </div>
-        <div className="flex items-end gap-2">
-            <div className="text-2xl font-bold text-white">{value}</div>
+        <div className="flex items-end gap-3 relative z-10">
+            <div className="text-3xl font-bold text-white tracking-tight">{value}</div>
             {trend !== undefined && (
-                <span className={`text-xs font-medium mb-1 ${trendUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className={`text-xs font-bold mb-1 px-2 py-0.5 rounded-full ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                     {trendUp ? '↑' : '↓'} {trend}
                 </span>
             )}
@@ -194,15 +198,15 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', maxWid
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className={`bg-slate-900 border border-slate-700 rounded-xl w-full ${maxWidth} ${className} shadow-2xl relative max-h-[90vh] overflow-y-auto`}>
-                <div className="flex items-center justify-between p-4 border-b border-slate-700 sticky top-0 bg-slate-900 z-10">
-                    <h2 className="text-lg font-semibold text-white">{title}</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className={`bg-slate-900/90 border border-slate-700/50 rounded-2xl w-full ${maxWidth} ${className} shadow-2xl relative max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300`}>
+                <div className="flex items-center justify-between p-6 border-b border-slate-700/50 sticky top-0 bg-slate-900/90 backdrop-blur-md z-10">
+                    <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-slate-800/50 text-slate-400 hover:text-white rounded-full transition-all">
                         ✕
                     </button>
                 </div>
-                <div className="p-4">
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                     {children}
                 </div>
             </div>
@@ -212,10 +216,10 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', maxWid
 
 // --- ProgressBar ---
 export const ProgressBar = ({ progress, className = '' }: { progress: number; className?: string }) => (
-    <div className={`h-2 bg-slate-700 rounded-full overflow-hidden ${className}`}>
+    <div className={`h-2.5 bg-slate-800 rounded-full overflow-hidden ${className}`}>
         <div
-            className="h-full bg-cyan-500 transition-all duration-300"
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500 animate-shimmer"
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%`, backgroundSize: '200% 100%' }}
         />
     </div>
 );

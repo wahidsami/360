@@ -25,7 +25,7 @@ const TAB_GROUPS = [
 const TAB_DEFINITIONS = [
   { id: 'overview', label: 'Overview', group: 'core', order: 1 },
   { id: 'discussions', label: 'Discussions', group: 'core', order: 2 },
-  { id: 'tasks', label: 'Tasks', group: 'core', internalOnly: true, order: 3 },
+  { id: 'tasks', label: 'Tasks', group: 'core', order: 3 },
   { id: 'milestones', label: 'Milestones', group: 'core', order: 4 },
   { id: 'updates', label: 'Updates', group: 'core', order: 5 },
 
@@ -405,6 +405,7 @@ export const ProjectDetails: React.FC = () => {
         <div className="flex gap-4">
           <Button variant="ghost" onClick={() => navigate('/app/projects')}><ArrowLeft className="w-5 h-5" /></Button>
           <div>
+
             <h1 className="text-3xl font-bold font-display text-white">{project.name}</h1>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-slate-400 cursor-pointer hover:text-cyan-400 transition-colors" onClick={() => navigate(`/app/clients/${client?.id}`)}>
@@ -428,9 +429,11 @@ export const ProjectDetails: React.FC = () => {
             {project.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
           </Badge>
           <PermissionGate permission={Permission.MANAGE_PROJECTS}>
-            <Button variant="secondary" size="sm" onClick={() => navigate(`/app/projects/${project.id}/edit`)}>
-              <Edit className="w-4 h-4 mr-2" /> Edit
-            </Button>
+            {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
+              <Button variant="secondary" size="sm" onClick={() => navigate(`/app/projects/${project.id}/edit`)}>
+                <Edit className="w-4 h-4 mr-2" /> Edit
+              </Button>
+            )}
           </PermissionGate>
         </div>
       </div>
