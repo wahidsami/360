@@ -22,7 +22,7 @@ export class TasksService {
         return this.prisma.task.findMany({
             where: {
                 projectId,
-                project: ScopeUtils.clientScope(user, 'clientId'),
+                project: ScopeUtils.projectScope(user),
                 deletedAt: null,
             },
             include: { assignee: true },
@@ -32,7 +32,7 @@ export class TasksService {
     // Create Task
     async create(projectId: string, user: UserWithRoles, dto: any) {
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, ...ScopeUtils.clientScope(user, 'clientId'), deletedAt: null }
+            where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null }
         });
         if (!project) throw new NotFoundException('Project not found');
 
@@ -130,7 +130,7 @@ export class TasksService {
             where: {
                 id: taskId,
                 projectId,
-                project: ScopeUtils.clientScope(user, 'clientId'),
+                project: ScopeUtils.projectScope(user),
                 deletedAt: null
             }
         });
@@ -264,7 +264,7 @@ export class TasksService {
         return this.prisma.task.findMany({
             where: {
                 assigneeId: user.id,
-                project: ScopeUtils.clientScope(user, 'clientId'),
+                project: ScopeUtils.projectScope(user),
                 deletedAt: null,
             },
             include: { project: true },

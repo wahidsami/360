@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { CreateReportDto, UpdateReportDto } from './dto/report.dto';
 import { ReportGeneratorService } from './report-generator.service';
 import { join } from 'path';
@@ -16,7 +16,7 @@ export class ReportsService {
     async findAll(projectId: string, user: UserWithRoles) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
 
         if (!project) {
@@ -49,7 +49,7 @@ export class ReportsService {
     async create(projectId: string, user: UserWithRoles, dto: CreateReportDto) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
 
         if (!project) {
@@ -98,7 +98,7 @@ export class ReportsService {
             where: {
                 id: reportId,
                 projectId,
-                orgId: user.orgId
+                project: ScopeUtils.projectScope(user)
             }
         });
 
@@ -167,14 +167,14 @@ export class ReportsService {
 
     async generate(projectId: string, reportId: string | null, format: 'pptx' | 'pdf', user: UserWithRoles) {
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
         if (!project) throw new NotFoundException('Project not found');
         const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
         if (!internalRoles.includes(user.role)) throw new ForbiddenException('Only internal staff can generate reports');
 
         let report = reportId
-            ? await this.prisma.report.findFirst({ where: { id: reportId, projectId, orgId: user.orgId } })
+            ? await this.prisma.report.findFirst({ where: { id: reportId, projectId, project: ScopeUtils.projectScope(user) } })
             : null;
         if (reportId && !report) throw new NotFoundException('Report not found');
         if (!report) {

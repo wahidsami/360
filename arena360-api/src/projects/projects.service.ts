@@ -12,7 +12,7 @@ export class ProjectsService {
 
     async findAll(user: UserWithRoles, query: any) {
         const where: any = {
-            ...ScopeUtils.clientScope(user, 'clientId'), // Apply RBAC Scope
+            ...ScopeUtils.projectScope(user), // Apply RBAC Project Scope
             deletedAt: null,
         };
 
@@ -33,7 +33,7 @@ export class ProjectsService {
         const project = await this.prisma.project.findFirst({
             where: {
                 id,
-                ...ScopeUtils.clientScope(user, 'clientId'),
+                ...ScopeUtils.projectScope(user),
                 deletedAt: null,
             },
             include: { client: true, members: true },

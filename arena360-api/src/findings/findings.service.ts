@@ -21,8 +21,7 @@ export class FindingsService {
         const project = await this.prisma.project.findFirst({
             where: { 
                 id: projectId, 
-                orgId: user.orgId,
-                ...ScopeUtils.clientScope(user, 'clientId') 
+                ...ScopeUtils.projectScope(user) 
             }
         });
 
@@ -67,7 +66,7 @@ export class FindingsService {
                 orgId: user.orgId,
                 deletedAt: null,
                 project: {
-                    ...ScopeUtils.clientScope(user, 'clientId')
+                    ...ScopeUtils.projectScope(user)
                 }
             },
             include: {
@@ -107,7 +106,7 @@ export class FindingsService {
                 orgId: user.orgId,
                 deletedAt: null,
                 project: {
-                    ...ScopeUtils.clientScope(user, 'clientId')
+                    ...ScopeUtils.projectScope(user)
                 },
                 // Client users only see CLIENT visibility findings
                 ...(isClientUser && { visibility: 'CLIENT' })
@@ -154,8 +153,7 @@ export class FindingsService {
         const project = await this.prisma.project.findFirst({
             where: { 
                 id: projectId, 
-                orgId: user.orgId,
-                ...ScopeUtils.clientScope(user, 'clientId') 
+                ...ScopeUtils.projectScope(user) 
             }
         });
 
