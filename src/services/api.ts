@@ -1266,9 +1266,9 @@ export const api = {
 
   me: {
     getDashboardPreferences: async (): Promise<{ widgets: { id: string; order: number; config?: Record<string, unknown> }[] }> =>
-      fetchApi('/users/me/dashboard-preferences'),
+      fetchApi('/users/me/dashboard-preferences', { silent: true }),
     updateDashboardPreferences: async (data: { widgets: { id: string; order: number; config?: Record<string, unknown> }[] }) =>
-      fetchApi('/users/me/dashboard-preferences', { method: 'PATCH', body: JSON.stringify(data) }),
+      fetchApi('/users/me/dashboard-preferences', { method: 'PATCH', body: JSON.stringify(data), silent: true }),
   },
 
   dashboard: {

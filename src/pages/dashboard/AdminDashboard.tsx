@@ -104,7 +104,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                {has('revenue-chart') && (
                <GlassCard title="Revenue Velocity">
                   <div className="h-72 w-full min-h-[250px] mt-4">
-                     <ResponsiveContainer width="100%" height="100%">
+                     {stats && (
+                     <ResponsiveContainer width="100%" height="100%" minHeight={250}>
                         <AreaChart data={data}>
                            <defs>
                               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -129,6 +130,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            <Area type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                         </AreaChart>
                      </ResponsiveContainer>
+                     )}
                   </div>
                </GlassCard>
                )}

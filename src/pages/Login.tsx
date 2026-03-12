@@ -95,8 +95,8 @@ const Login: React.FC = () => {
         </div>
 
         <div className="relative z-10 px-16 text-center text-white space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-           <div className="w-28 h-28 bg-white/10 dark:bg-slate-800/30 backdrop-blur-2xl border border-white/20 dark:border-slate-700/50 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl transform hover:rotate-6 transition-transform duration-500">
-              <Lock className="w-12 h-12 text-white drop-shadow-lg" />
+           <div className="w-28 h-28 bg-white/10 dark:bg-slate-800/30 backdrop-blur-2xl border border-white/20 dark:border-slate-700/50 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl transform hover:rotate-6 transition-transform duration-500 overflow-hidden">
+              <img src="/arenalogo.png" className="w-20 h-20 object-contain drop-shadow-2xl" alt="Arena Logo" />
            </div>
            
            <div className="space-y-6">
@@ -128,8 +128,8 @@ const Login: React.FC = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 dark:from-cyan-900 dark:to-indigo-950 rounded-xl flex items-center justify-center shadow-lg">
-                <Lock className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 dark:from-cyan-900 dark:to-indigo-950 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="/arenalogo.png" className="w-7 h-7 object-contain" alt="Arena Logo" />
               </div>
               <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Arena 360</span>
             </div>
@@ -233,13 +233,19 @@ const Login: React.FC = () => {
           </div>
 
           {/* Footer Info */}
-          <div className="flex items-center justify-center gap-6 text-slate-400 dark:text-slate-600">
-             <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
-             <div className="flex flex-col items-center">
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Core v2.4</span>
-               <span className="text-[8px] font-bold text-cyan-600/50 dark:text-cyan-400/30 uppercase tracking-widest mt-1">End-to-End Encrypted</span>
+          <div className="flex flex-col items-center gap-6">
+             <div className="flex items-center justify-center gap-6 w-full text-slate-400 dark:text-slate-600">
+                <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Core v2.4</span>
+                  <span className="text-[8px] font-bold text-cyan-600/50 dark:text-cyan-400/30 uppercase tracking-widest mt-1">End-to-End Encrypted</span>
+                </div>
+                <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
              </div>
-             <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
+             
+             <div className="animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-500">
+                <img src="/poweredby.png" className="h-4 opacity-50 dark:opacity-30 hover:opacity-100 transition-opacity grayscale hover:grayscale-0" alt="Powered By" />
+             </div>
           </div>
         </div>
       </div>
