@@ -34,19 +34,19 @@
   --app-surface-hover: #f1f5f9; /* slate-100 */
   --app-border: #e2e8f0; /* slate-200 */
   --app-divider: #f1f5f9;
-  /* Text Contrast - High Readability (Aggressive Darkening) */
-  --text-main: #000000; /* pure black */
-  --text-heading: #000000; /* pure black */
-  --text-muted: #1e293b; /* slate-800 */
+  /* Text Contrast - Balanced Readability */
+  --text-main: #334155; /* slate-700 */
+  --text-heading: #0f172a; /* slate-900 */
+  --text-muted: #64748b; /* slate-500 */
   --text-inverse: #ffffff;
-  --app-text-base: #000000; /* pure black */
-  --app-text-muted: #1e293b; /* slate-800 */
+  --app-text-base: #334155; /* slate-700 */
+  --app-text-muted: #64748b; /* slate-500 */
 
   /* Accent & Active States */
   --active-bg: #ecfeff; /* cyan-50 */
-  --active-text: #0e7490; /* cyan-700 - DARKER FOR CONTRAST */
+  --active-text: #0891b2; /* cyan-600 */
   --brand-primary: #06b6d4;
-  --brand-accent: #1e3a8a; /* navy blue - much darker than indigo */
+  --brand-accent: #3b82f6;
 
   /* Explicit Shadows for Light Surfaces */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -58,11 +58,13 @@
   --page-gradient: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
 
   /* Map basic white/slate names for legacy/hardcoded components */
-  --text-white: #000000 !important; /* Force black on light mode for "text-white" elements */
-  --color-white: #000000 !important;
-  --color-slate-50: #1e293b !important; /* flip low slates to dark if used as text? No, safer to just handle semantic text */
+  --text-white: #1e293b !important; /* Balanced dark on light */
+  --color-white: #1e293b !important;
+  --color-slate-50: #f8fafc !important; 
+  --color-slate-100: #f1f5f9 !important;
+  --color-slate-200: #e2e8f0 !important;
 
-  /* Ensure text-slate-900/950 are NOT white */
+  /* Ensure text-slate-900/950 are NOT white but also not pure black */
   --color-slate-900: #0f172a !important; 
   --color-slate-950: #020617 !important;
 }
@@ -215,14 +217,13 @@
   animation: spin 3s linear infinite;
 }
 
-/* --- Theme-Aware Logo Filter (Absolute Black in Light Mode) --- */
+/* --- Theme-Aware Logo Filter (Softer in Light Mode) --- */
 .theme-poweredby-logo {
   filter: none !important;
   opacity: 1 !important;
 }
 .theme-light .theme-poweredby-logo {
-  filter: brightness(0) grayscale(1) contrast(1000%) !important;
-  opacity: 1 !important;
+  filter: brightness(0) opacity(0.7) !important;
   display: block !important;
 }
 

@@ -101,7 +101,7 @@ const Login: React.FC = () => {
           {/* Top Logo — h-12 (48px) */}
           <div className="flex items-center gap-3 animate-fade-in-up mb-8">
             <img src="/arenalogo.png" className="h-12" alt="Arena 360" />
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{publicOrg?.name ?? 'Arena 360'}</span>
+            <span className="text-xl font-bold text-white">{publicOrg?.name ?? 'Arena 360'}</span>
           </div>
 
           {/* Login Form — centered */}
@@ -109,10 +109,10 @@ const Login: React.FC = () => {
 
             {/* Heading */}
             <div className="animate-fade-in-up">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+              <h1 className="text-3xl font-bold text-white mb-2">
                 {step2fa ? 'Two-Factor Verification' : 'Initialize Session'}
               </h1>
-              <p className="text-base text-slate-600 dark:text-[var(--text-muted)] mb-8 font-medium">
+              <p className="text-base text-[var(--text-muted)] mb-8 font-medium">
                 {step2fa ? 'Enter the 6-digit code from your authenticator app.' : 'Enter your credentials to access the platform.'}
               </p>
             </div>
@@ -127,12 +127,12 @@ const Login: React.FC = () => {
             {step2fa ? (
               <form onSubmit={handle2faSubmit} className="space-y-6 animate-fade-in-up-delay">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide mb-2 opacity-80">Verification Code</label>
+                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">Verification Code</label>
                   <input
                     type="text" inputMode="numeric" autoComplete="one-time-code"
                     value={code2fa}
                     onChange={(e) => setCode2fa(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-center text-2xl font-bold tracking-[0.3em] focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-white text-center text-2xl font-bold tracking-[0.3em] focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                     placeholder="000000" maxLength={6}
                   />
                 </div>
@@ -149,10 +149,10 @@ const Login: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 {/* Email */}
                 <div className="mb-6 animate-fade-in-up-delay">
-                  <label className="block text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide mb-2 opacity-80">Email Address</label>
+                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">Email Address</label>
                   <input
                     type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                     placeholder="you@company.com"
                   />
                 </div>
@@ -160,13 +160,13 @@ const Login: React.FC = () => {
                 {/* Password */}
                 <div className="mb-6 animate-fade-in-up-delay2">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide opacity-80">Password</label>
+                    <label className="text-sm font-semibold text-white uppercase tracking-wide opacity-80">Password</label>
                     <a href="/forgot-password" className="text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors">Forgot Password?</a>
                   </div>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required
-                      className="w-full h-12 px-4 pr-12 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                      className="w-full h-12 px-4 pr-12 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                       placeholder="••••••"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
