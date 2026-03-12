@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 
@@ -11,7 +11,7 @@ export class DiscussionsService {
     async listForProject(projectId: string, user: UserWithRoles) {
         // Verify project belongs to org
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
         if (!project) throw new NotFoundException('Project not found');
 
@@ -46,7 +46,7 @@ export class DiscussionsService {
 
     async createThread(projectId: string, user: UserWithRoles, dto: CreateDiscussionDto) {
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
         if (!project) throw new NotFoundException('Project not found');
 

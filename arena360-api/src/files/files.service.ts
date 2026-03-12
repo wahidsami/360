@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { StorageService } from '../common/storage.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { FileCategory, FileVisibility, FileScopeType } from '@prisma/client';
 
 @Injectable()
@@ -165,7 +165,7 @@ export class FilesService {
     async listProjectFiles(projectId: string, user: UserWithRoles) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
 
         if (!project) {
@@ -202,7 +202,7 @@ export class FilesService {
     ) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
 
         if (!project) {
@@ -258,7 +258,7 @@ export class FilesService {
     async downloadProjectFile(projectId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, orgId: user.orgId }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
 
         if (!project) {
@@ -308,7 +308,10 @@ export class FilesService {
     async listFindingFiles(findingId: string, user: UserWithRoles) {
         // Verify finding exists and user has access
         const finding = await this.prisma.finding.findFirst({
-            where: { id: findingId, orgId: user.orgId }
+            where: { 
+                id: findingId, 
+                project: { ...ScopeUtils.projectScope(user) }
+            }
         });
 
         if (!finding) {
@@ -343,7 +346,10 @@ export class FilesService {
     ) {
         // Verify finding exists and user has access
         const finding = await this.prisma.finding.findFirst({
-            where: { id: findingId, orgId: user.orgId }
+            where: { 
+                id: findingId, 
+                project: { ...ScopeUtils.projectScope(user) }
+            }
         });
 
         if (!finding) {
@@ -400,7 +406,10 @@ export class FilesService {
     async downloadFindingFile(findingId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify finding exists and user has access
         const finding = await this.prisma.finding.findFirst({
-            where: { id: findingId, orgId: user.orgId }
+            where: { 
+                id: findingId, 
+                project: { ...ScopeUtils.projectScope(user) }
+            }
         });
 
         if (!finding) {

@@ -34,7 +34,7 @@ export class ActivityService {
     const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
-        ...ScopeUtils.clientScope(user, 'clientId'),
+        ...ScopeUtils.projectScope(user),
         deletedAt: null,
       },
     });

@@ -19,13 +19,28 @@ export class TasksService {
 
     // List tasks for a project (Scoped by Project access)
     async findAll(projectId: string, user: UserWithRoles) {
+        // Verify project exists and user has access
+        const project = await this.prisma.project.findFirst({
+            where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null }
+        });
+        if (!project) throw new NotFoundException('Project not found');
+
         return this.prisma.task.findMany({
-            where: {
-                projectId,
-                project: ScopeUtils.projectScope(user),
-                deletedAt: null,
+            where: { 
+                projectId, 
+                deletedAt: null 
             },
-            include: { assignee: true },
+            include: {
+                assignee: {
+                    select: { id: true, name: true, email: true, avatar: true }
+                },
+                milestone: true,
+                sprint: true,
+                _count: {
+                    select: { timeEntries: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
         });
     }
 
@@ -247,7 +262,7 @@ export class TasksService {
             where: {
                 id: taskId,
                 projectId,
-                project: ScopeUtils.clientScope(user, 'clientId'),
+                project: ScopeUtils.projectScope(user),
                 deletedAt: null
             }
         });
@@ -274,7 +289,7 @@ export class TasksService {
     // Task dependencies (for Gantt/timeline)
     async getDependencies(projectId: string, user: UserWithRoles) {
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, ...ScopeUtils.clientScope(user, 'clientId'), deletedAt: null },
+            where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null },
         });
         if (!project) throw new NotFoundException('Project not found');
         return this.prisma.taskDependency.findMany({
@@ -288,7 +303,7 @@ export class TasksService {
 
     async addDependency(projectId: string, user: UserWithRoles, predecessorTaskId: string, successorTaskId: string) {
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, ...ScopeUtils.clientScope(user, 'clientId'), deletedAt: null },
+            where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null },
         });
         if (!project) throw new NotFoundException('Project not found');
         if (predecessorTaskId === successorTaskId) {
@@ -321,7 +336,7 @@ export class TasksService {
         });
         if (!dep) throw new NotFoundException('Dependency not found');
         await this.prisma.project.findFirstOrThrow({
-            where: { id: projectId, ...ScopeUtils.clientScope(user, 'clientId'), deletedAt: null },
+            where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null },
         });
         return this.prisma.taskDependency.delete({ where: { id: dependencyId } });
     }

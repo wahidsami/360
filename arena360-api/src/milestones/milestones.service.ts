@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { ScopeUtils, UserWithRoles } from '../common/utils/scope.utils';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 import { CreateProjectUpdateDto } from './dto/project-update.dto';
 
@@ -204,7 +204,7 @@ export class MilestonesService {
         const project = await this.prisma.project.findFirst({
             where: {
                 id: projectId,
-                orgId: user.orgId
+                ...ScopeUtils.projectScope(user)
             }
         });
 
