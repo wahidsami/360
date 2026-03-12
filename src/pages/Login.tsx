@@ -96,16 +96,16 @@ const Login: React.FC = () => {
       <div className="flex h-screen overflow-hidden">
 
         {/* ═══ LEFT PANEL — Login Form (40%) ═══ */}
-        <div className="w-full md:w-2/5 bg-white relative flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full md:w-2/5 bg-white flex flex-col justify-between p-8 lg:p-12 min-h-screen overflow-auto">
 
-          {/* Top Logo — h-12 (48px), absolute top-8 left-8 */}
-          <div className="absolute top-8 left-8 flex items-center gap-3 animate-fade-in-up">
+          {/* Top Logo — h-12 (48px) */}
+          <div className="flex items-center gap-3 animate-fade-in-up mb-8">
             <img src="/arenalogo.png" className="h-12" alt="Arena 360" />
             <span className="text-xl font-bold text-slate-900">{publicOrg?.name ?? 'Arena 360'}</span>
           </div>
 
-          {/* Login Form */}
-          <div className="w-full max-w-md">
+          {/* Login Form — centered */}
+          <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center">
 
             {/* Heading */}
             <div className="animate-fade-in-up">
@@ -192,9 +192,9 @@ const Login: React.FC = () => {
             )}
           </div>
 
-          {/* Powered By — h-8 (32px), absolute bottom-8 left-8, VISIBLE */}
-          <div className="absolute bottom-8 left-8 flex items-center gap-2.5">
-            <img src="/poweredby.png" className="h-24" alt="Powered by" />
+          {/* Powered By — large, visible, in normal flow */}
+          <div className="flex items-center justify-start mt-8">
+            <img src="/poweredby.png" className="h-40 object-contain" alt="Powered by" />
           </div>
         </div>
 
