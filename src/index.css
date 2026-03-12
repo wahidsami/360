@@ -36,9 +36,9 @@
   --app-divider: #f1f5f9;
   
   /* Text Contrast - High Readability */
-  --text-main: #475569; /* slate-600 */
+  --text-main: #1e293b; /* slate-800 */
   --text-heading: #0f172a; /* slate-900 */
-  --text-muted: #64748b; /* slate-500 */
+  --text-muted: #475569; /* slate-600 */
   --text-inverse: #ffffff;
 
   /* Accent & Active States */
@@ -61,6 +61,9 @@
   --color-slate-900: #ffffff !important;
   --color-slate-800: #f1f5f9 !important;
   --color-slate-700: #e2e8f0 !important;
+  --color-slate-600: #1e293b !important; /* Darken for readability */
+  --color-slate-500: #334155 !important;
+  --color-slate-400: #475569 !important;
 
   /* Map basic slate names for legacy/hardcoded components */
   --bg-slate-950: #f8fafc !important;
