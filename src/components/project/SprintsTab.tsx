@@ -18,7 +18,7 @@ interface SprintsTabProps {
 export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefreshTasks, onUpsertTask }) => {
   const { t } = useTranslation();
   const [sprints, setSprints] = useState<(Sprint & { _count?: { tasks: number } })[]>([]);
-  const [selectedSprintId, setSelectedSprintId] = useState<string | 'backlog' | null>(null);
+  const [selectedSprintId, setSelectedSprintId] = useState<string | 'backlog' | undefined>(undefined);
   const [sprintTasks, setSprintTasks] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,7 +29,11 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
     try {
       const list = await api.projects.getSprints(projectId);
       setSprints(list as any);
-      if (list.length > 0 && !selectedSprintId) setSelectedSprintId((list[0] as any).id);
+      if (list.length > 0 && selectedSprintId === undefined) {
+        setSelectedSprintId((list[0] as any).id);
+      } else if (list.length === 0) {
+        setSelectedSprintId('backlog');
+      }
     } catch (e) {
       console.error('Failed to load sprints', e);
     } finally {
@@ -39,8 +43,9 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
 
   const loadSprintTasks = async () => {
     if (!projectId) return;
+    if (selectedSprintId === undefined) return;
     try {
-      if (selectedSprintId === 'backlog' || selectedSprintId === null) {
+      if (selectedSprintId === 'backlog') {
         const list = await api.projects.getBacklogTasks(projectId);
         setSprintTasks((list as any).map((t: any) => ({ ...t, status: (t.status || '').toLowerCase().replace('_', '-') })));
       } else {

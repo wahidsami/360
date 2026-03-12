@@ -71,10 +71,38 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
     load();
   }, [projectId]);
 
-  const handleCreate = async () => {
+  const openCreate = () => {
+    setEditingId(null);
+    setForm({
+      title: '',
+      description: '',
+      priority: 'MEDIUM',
+      frequency: 'WEEKLY',
+      interval: 1,
+      weekday: 1,
+      nextRunAt: new Date().toISOString().slice(0, 16),
+    });
+    setShowForm(true);
+  };
+
+  const openEdit = (t: RecurringTaskTemplate) => {
+    setEditingId(t.id);
+    setForm({
+      title: t.title,
+      description: t.description || '',
+      priority: t.priority,
+      frequency: t.recurrenceRule.frequency,
+      interval: t.recurrenceRule.interval || 1,
+      weekday: t.recurrenceRule.weekday || 1,
+      nextRunAt: t.nextRunAt.slice(0, 16),
+    });
+    setShowForm(true);
+  };
+
+  const handleSubmit = async () => {
     if (!form.title.trim()) return;
     try {
-      await api.projects.createRecurringTask(projectId, {
+      const payload = {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         priority: form.priority,
@@ -84,24 +112,28 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
           weekday: form.frequency === 'WEEKLY' ? form.weekday : undefined,
         },
         nextRunAt: form.nextRunAt || new Date().toISOString().slice(0, 16),
-      });
-      setForm({ title: '', description: '', priority: 'MEDIUM', frequency: 'WEEKLY', interval: 1, weekday: 1, nextRunAt: '' });
+      };
+
+      if (editingId) {
+        await api.projects.updateRecurringTask(projectId, editingId, payload);
+      } else {
+        await api.projects.createRecurringTask(projectId, payload);
+      }
+      
       setShowForm(false);
       load();
       onRefreshTasks?.();
     } catch (e) {
-      console.error('Create recurring task failed', e);
+      console.error('Save recurring task failed', e);
     }
   };
 
-  const handleUpdate = async (templateId: string, patch: { isActive?: boolean; title?: string; nextRunAt?: string }) => {
+  const handleToggleActive = async (templateId: string, currentStatus: boolean) => {
     try {
-      await api.projects.updateRecurringTask(projectId, templateId, patch);
-      setEditingId(null);
+      await api.projects.updateRecurringTask(projectId, templateId, { isActive: !currentStatus });
       load();
-      onRefreshTasks?.();
     } catch (e) {
-      console.error('Update recurring task failed', e);
+      console.error('Toggle status failed', e);
     }
   };
 
@@ -130,76 +162,108 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
         <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
           <Repeat className="w-5 h-5" /> Recurring tasks
         </h3>
-        {!showForm && (
-          <Button variant="primary" size="sm" onClick={() => setShowForm(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Add template
-          </Button>
-        )}
+        <Button variant="primary" size="sm" onClick={openCreate}>
+          <Plus className="w-4 h-4 mr-1" /> Add template
+        </Button>
       </div>
 
-      {showForm && (
-        <GlassCard className="p-4 space-y-3">
-          <input
-            type="text"
-            placeholder="Task title"
-            value={form.title}
-            onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            className="w-full rounded border border-slate-600 bg-slate-800/50 px-3 py-2 text-slate-200 placeholder-slate-500"
-          />
-          <textarea
-            placeholder="Description (optional)"
-            value={form.description}
-            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            className="w-full rounded border border-slate-600 bg-slate-800/50 px-3 py-2 text-slate-200 placeholder-slate-500"
-            rows={2}
-          />
-          <div className="flex flex-wrap gap-4 items-center">
-            <label className="text-slate-400 text-sm">Priority</label>
-            <select
-              value={form.priority}
-              onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-              className="rounded border border-slate-600 bg-slate-800/50 px-2 py-1 text-slate-200"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="URGENT">Urgent</option>
-            </select>
-            <label className="text-slate-400 text-sm">Recurrence</label>
-            <select
-              value={form.frequency}
-              onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}
-              className="rounded border border-slate-600 bg-slate-800/50 px-2 py-1 text-slate-200"
-            >
-              <option value="DAILY">Daily</option>
-              <option value="WEEKLY">Weekly</option>
-              <option value="MONTHLY">Monthly</option>
-            </select>
-            {form.frequency === 'WEEKLY' && (
-              <select
-                value={form.weekday}
-                onChange={e => setForm(f => ({ ...f, weekday: Number(e.target.value) }))}
-                className="rounded border border-slate-600 bg-slate-800/50 px-2 py-1 text-slate-200"
-              >
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-                  <option key={d} value={i === 0 ? 7 : i}>{d}</option>
-                ))}
-              </select>
-            )}
-            <label className="text-slate-400 text-sm">Next run</label>
+      <Modal 
+        isOpen={showForm} 
+        onClose={() => setShowForm(false)} 
+        title={editingId ? 'Edit task template' : 'Add recurring task template'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Task title</label>
             <input
-              type="datetime-local"
-              value={form.nextRunAt}
-              onChange={e => setForm(f => ({ ...f, nextRunAt: e.target.value }))}
-              className="rounded border border-slate-600 bg-slate-800/50 px-2 py-1 text-slate-200"
+              type="text"
+              placeholder="e.g. Weekly Security Audit"
+              value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
             />
           </div>
-          <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleCreate}>Create</Button>
-            <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Description (optional)</label>
+            <textarea
+              placeholder="Details about this recurring task..."
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
+              rows={3}
+            />
           </div>
-        </GlassCard>
-      )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
+              <select
+                value={form.priority}
+                onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Frequency</label>
+              <select
+                value={form.frequency}
+                onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+              >
+                <option value="DAILY">Daily</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="MONTHLY">Monthly</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {form.frequency === 'WEEKLY' ? (
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Day of Week</label>
+                <select
+                  value={form.weekday}
+                  onChange={e => setForm(f => ({ ...f, weekday: Number(e.target.value) }))}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                >
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+                    <option key={d} value={i === 0 ? 7 : i}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Interval</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.interval}
+                  onChange={e => setForm(f => ({ ...f, interval: Number(e.target.value) }))}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Next Run Time</label>
+              <input
+                type="datetime-local"
+                value={form.nextRunAt}
+                onChange={e => setForm(f => ({ ...f, nextRunAt: e.target.value }))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button variant="primary" className="flex-1" onClick={handleSubmit}>
+              {editingId ? 'Save changes' : 'Create template'}
+            </Button>
+            <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+          </div>
+        </div>
+      </Modal>
 
       {templates.length === 0 && !showForm && (
         <GlassCard className="p-8 text-center text-slate-500">
@@ -230,14 +294,27 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleUpdate(t.id, { isActive: !t.isActive })}
+                  onClick={() => handleToggleActive(t.id, t.isActive)}
                   title={t.isActive ? 'Pause' : 'Resume'}
+                  className="text-xs h-8 px-3"
                 >
                   {t.isActive ? 'Pause' : 'Resume'}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)} title="Delete">
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                </Button>
+                <div className="w-px h-6 bg-slate-800 mx-1" />
+                <button 
+                  onClick={() => openEdit(t)}
+                  className="p-2 text-slate-400 hover:text-cyan-400 transition-colors"
+                  title="Edit Template"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(t.id)}
+                  className="p-2 text-slate-400 hover:text-rose-400 transition-colors"
+                  title="Delete Template"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </GlassCard>
           </li>
