@@ -64,4 +64,13 @@ export class CreateTaskDto {
 
     @IsOptional()
     assignee?: any;
+
+    @IsOptional()
+    milestone?: any;
+
+    @IsOptional()
+    sprint?: any;
+
+    @IsOptional()
+    _count?: any;
 }
