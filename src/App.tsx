@@ -52,6 +52,12 @@ const Placeholder = ({ title }: { title: string }) => (
 import { Toaster } from 'react-hot-toast';
 
 const App: React.FC = () => {
+  React.useEffect(() => {
+    const theme = localStorage.getItem('arena360_theme') || 'dark';
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    localStorage.setItem('arena360_theme', theme);
+  }, []);
+
   return (
     <HashRouter>
       <ErrorBoundary>
