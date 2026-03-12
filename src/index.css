@@ -34,18 +34,19 @@
   --app-surface-hover: #f1f5f9; /* slate-100 */
   --app-border: #e2e8f0; /* slate-200 */
   --app-divider: #f1f5f9;
-  
-  /* Text Contrast - High Readability */
-  --text-main: #1e293b; /* slate-800 */
-  --text-heading: #0f172a; /* slate-900 */
-  --text-muted: #475569; /* slate-600 */
+  /* Text Contrast - High Readability (Aggressive Darkening) */
+  --text-main: #000000; /* pure black */
+  --text-heading: #000000; /* pure black */
+  --text-muted: #1e293b; /* slate-800 */
   --text-inverse: #ffffff;
+  --app-text-base: #000000; /* pure black */
+  --app-text-muted: #1e293b; /* slate-800 */
 
   /* Accent & Active States */
   --active-bg: #ecfeff; /* cyan-50 */
-  --active-text: #0891b2; /* cyan-600 */
+  --active-text: #0e7490; /* cyan-700 - DARKER FOR CONTRAST */
   --brand-primary: #06b6d4;
-  --brand-accent: #3b82f6;
+  --brand-accent: #1e3a8a; /* navy blue - much darker than indigo */
 
   /* Explicit Shadows for Light Surfaces */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -61,15 +62,15 @@
   --color-slate-900: #ffffff !important;
   --color-slate-800: #f1f5f9 !important;
   --color-slate-700: #e2e8f0 !important;
-  --color-slate-600: #1e293b !important; /* Darken for readability */
-  --color-slate-500: #334155 !important;
-  --color-slate-400: #475569 !important;
+  --color-slate-600: #0f172a !important; /* Force near-black */
+  --color-slate-500: #1e293b !important;
+  --color-slate-400: #334155 !important;
 
   /* Map basic slate names for legacy/hardcoded components */
-  --bg-slate-950: #f8fafc !important;
+  --bg-slate-950: #ffffff !important;
   --bg-slate-900: #ffffff !important;
-  --bg-slate-800: #f1f5f9 !important;
-  --bg-slate-700: #e2e8f0 !important;
+  --bg-slate-800: #f8fafc !important;
+  --bg-slate-700: #f1f5f9 !important;
 
   /* Handle hardcoded "text-white" headings and similar */
   --text-white: #0f172a !important; /* Force black on light mode for "text-white" elements */
@@ -222,6 +223,17 @@
 
 @utility spin-slow {
   animation: spin 3s linear infinite;
+}
+
+/* --- Theme-Aware Logo Filter (Absolute Black in Light Mode) --- */
+.theme-poweredby-logo {
+  filter: none !important;
+  opacity: 1 !important;
+}
+.theme-light .theme-poweredby-logo {
+  filter: brightness(0) contrast(100%) !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 /* Frappe Gantt Dark Theme Overrides */
