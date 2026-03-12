@@ -194,7 +194,7 @@ const Login: React.FC = () => {
 
           {/* Powered By — large, visible, in normal flow */}
           <div className="flex items-center justify-start mt-8">
-            <img src="/poweredby.png" className="h-40 object-contain" alt="Powered by" />
+            <img src="/poweredby.png" className="h-40 object-contain brightness-0 opacity-60" alt="Powered by" />
           </div>
         </div>
 
