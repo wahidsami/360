@@ -78,12 +78,17 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
     }
 
     const formData = new FormData(e.target as HTMLFormElement);
+    const getVal = (key: string, fallback: string = '') => {
+      const val = formData.get(key);
+      return (val ? String(val) : fallback).toUpperCase();
+    };
+    
     const payload = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
-      severity: (formData.get('severity') as string).toUpperCase() as any,
-      status: (formData.get('status') as string).toUpperCase() as any,
-      visibility: (formData.get('visibility') as string).toUpperCase() as any
+      severity: getVal('severity', 'medium') as any,
+      status: getVal('status', 'open') as any,
+      visibility: getVal('visibility', 'INTERNAL') as any
     };
 
     const newFinding = await api.projects.createFinding(targetProjectId, payload);
