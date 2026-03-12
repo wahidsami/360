@@ -894,11 +894,28 @@ export const api = {
       return normalizeTask(task);
     },
     updateTask: async (projectId: string, taskId: string, payload: Partial<Task>): Promise<Task | null> => {
+      // Stripping relational objects that cause 400 errors in backend ValidationPipe
+      const {
+        milestone,
+        sprint,
+        assignee,
+        assignedTo,
+        project,
+        reportedBy,
+        _count,
+        dependencies,
+        assigneeName,
+        createdAt,
+        updatedAt,
+        deletedAt,
+        ...validPayload
+      } = payload as any;
+
       // Normalize to uppercase for backend
       const body = {
-        ...payload,
-        status: payload.status?.toUpperCase(),
-        priority: payload.priority?.toUpperCase()
+        ...validPayload,
+        status: validPayload.status?.toUpperCase(),
+        priority: validPayload.priority?.toUpperCase()
       };
       const task = await fetchApi(`/projects/${projectId}/tasks/${taskId}`, {
         method: 'PATCH',

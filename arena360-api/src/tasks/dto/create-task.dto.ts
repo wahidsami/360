@@ -73,4 +73,13 @@ export class CreateTaskDto {
 
     @IsOptional()
     _count?: any;
+
+    @IsOptional()
+    project?: any;
+
+    @IsOptional()
+    reportedBy?: any;
+
+    @IsOptional()
+    assignedTo?: any;
 }
