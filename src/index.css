@@ -57,24 +57,14 @@
   /* Page Wrapper Gradient */
   --page-gradient: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
 
-  /* Tailwind Scale Neutralization - Ensure dark container classes don't break light mode */
-  --color-slate-950: #f8fafc !important;
-  --color-slate-900: #ffffff !important;
-  --color-slate-800: #f1f5f9 !important;
-  --color-slate-700: #e2e8f0 !important;
-  --color-slate-600: #0f172a !important; /* Force near-black */
-  --color-slate-500: #1e293b !important;
-  --color-slate-400: #334155 !important;
+  /* Map basic white/slate names for legacy/hardcoded components */
+  --text-white: #000000 !important; /* Force black on light mode for "text-white" elements */
+  --color-white: #000000 !important;
+  --color-slate-50: #1e293b !important; /* flip low slates to dark if used as text? No, safer to just handle semantic text */
 
-  /* Map basic slate names for legacy/hardcoded components */
-  --bg-slate-950: #ffffff !important;
-  --bg-slate-900: #ffffff !important;
-  --bg-slate-800: #f8fafc !important;
-  --bg-slate-700: #f1f5f9 !important;
-
-  /* Handle hardcoded "text-white" headings and similar */
-  --text-white: #0f172a !important; /* Force black on light mode for "text-white" elements */
-  --color-white: #0f172a !important; 
+  /* Ensure text-slate-900/950 are NOT white */
+  --color-slate-900: #0f172a !important; 
+  --color-slate-950: #020617 !important;
 }
 
 /* Animations & Transitions */
@@ -231,7 +221,7 @@
   opacity: 1 !important;
 }
 .theme-light .theme-poweredby-logo {
-  filter: brightness(0) contrast(100%) !important;
+  filter: brightness(0) grayscale(1) contrast(1000%) !important;
   opacity: 1 !important;
   display: block !important;
 }
