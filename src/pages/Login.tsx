@@ -106,13 +106,9 @@ const Login: React.FC = () => {
               </p>
            </div>
 
-           <div className="flex flex-col items-center gap-6 pt-12">
-              <div className="flex -space-x-4">
-                 {[1,2,3,4,5].map(i => (
-                   <div key={i} className="w-12 h-12 rounded-full border-4 border-blue-600 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-300 dark:from-slate-700 dark:to-slate-900 flex items-center justify-center text-xs font-black text-slate-800 dark:text-slate-200 shadow-xl">
-                     {String.fromCharCode(64 + i)}
-                   </div>
-                 ))}
+           <div className="flex flex-col items-center gap-10 pt-10">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+                <img src="/poweredby.png" className="h-10 opacity-70 brightness-0 invert" alt="Powered By" />
               </div>
               <div className="px-4 py-2 bg-white/10 dark:bg-slate-800/40 backdrop-blur-md rounded-full border border-white/10 dark:border-slate-700/50 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
