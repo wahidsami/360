@@ -194,7 +194,7 @@ const Login: React.FC = () => {
 
           {/* Powered By — h-8 (32px), absolute bottom-8 left-8, VISIBLE */}
           <div className="absolute bottom-8 left-8 flex items-center gap-2.5">
-            <img src="/poweredby.png" className="h-8" alt="Powered by" />
+            <img src="/poweredby.png" className="h-24" alt="Powered by" />
           </div>
         </div>
 
