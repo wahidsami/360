@@ -65,4 +65,16 @@ export class UpdateFindingDto {
     @IsOptional()
     @IsString()
     impact?: string;
+
+    @IsOptional()
+    project?: any;
+
+    @IsOptional()
+    reportedBy?: any;
+
+    @IsOptional()
+    assignedTo?: any;
+
+    @IsOptional()
+    evidence?: any;
 }

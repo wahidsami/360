@@ -139,7 +139,7 @@ export class RecurringTasksService {
 
   private async ensureProjectAccess(projectId: string, user: UserWithRoles) {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, ...ScopeUtils.clientScope(user, 'clientId'), deletedAt: null },
+      where: { id: projectId, ...ScopeUtils.projectScope(user), deletedAt: null },
     });
     if (!project) throw new NotFoundException('Project not found');
     return project;

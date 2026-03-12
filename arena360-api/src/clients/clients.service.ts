@@ -62,7 +62,7 @@ export class ClientsService {
     async findAll(user: UserWithRoles) {
         const clients = await this.prisma.client.findMany({
             where: {
-                ...ScopeUtils.clientScope(user, 'id'),
+                ...ScopeUtils.projectScope(user),
                 status: { not: 'ARCHIVED' },
                 deletedAt: null
             },
@@ -87,7 +87,7 @@ export class ClientsService {
         const client = await this.prisma.client.findFirst({
             where: {
                 id,
-                ...ScopeUtils.clientScope(user, 'id'),
+                ...ScopeUtils.projectScope(user),
                 deletedAt: null
             },
             include: {
