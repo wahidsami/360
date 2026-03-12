@@ -360,7 +360,7 @@ export interface KpiStat {
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.SUPER_ADMIN]: Object.values(Permission),
   [Role.OPS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_CLIENTS, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
-  [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
+  [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
   [Role.DEV]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS],
   [Role.QA]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_TASKS],
   [Role.FINANCE]: [Permission.VIEW_DASHBOARD, Permission.VIEW_FINANCIALS, Permission.VIEW_CLIENTS],

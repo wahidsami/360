@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock, Eye, Download } from 'lucide-react';
+import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock, Eye, Download, DollarSign } from 'lucide-react';
 import { Client, Project, ClientMember, FileAsset, ActivityLog, Role, Permission } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, KpiCard, Input, Label, Select } from '../components/ui/UIComponents';
@@ -9,6 +9,7 @@ import { PermissionGate } from '../components/PermissionGate';
 import { Modal } from '../components/ui/Modal';
 import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ClientDetails: React.FC = () => {
     const { t } = useTranslation();
@@ -142,11 +143,12 @@ export const ClientDetails: React.FC = () => {
 
     if (!client) return <div className="p-10 text-center text-slate-500">Loading client data...</div>;
 
+    const { can } = useAuth();
     const tabs = [
         { id: 'overview', label: t('overview') },
         { id: 'projects', label: t('projects') },
         { id: 'members', label: t('members') },
-        { id: 'financials', label: t('financials') },
+        ...(can(Permission.VIEW_FINANCIALS) ? [{ id: 'financials', label: t('financials') }] : []),
         { id: 'files', label: t('files') },
         { id: 'activity', label: t('activity') },
     ];
@@ -224,29 +226,31 @@ export const ClientDetails: React.FC = () => {
                                         <Globe className="w-4 h-4 text-cyan-500" /> {client.website || 'N/A'}
                                     </div>
                                 </dl>
-                                <div className="mt-6 pt-6 border-t border-slate-700/50">
-                                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Financial Health</h4>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-slate-400">Revenue YTD</span>
-                                                <span className="text-emerald-400">
-                                                    {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
-                                                </span>
+                                <PermissionGate permission={Permission.VIEW_FINANCIALS}>
+                                    <div className="mt-6 pt-6 border-t border-slate-700/50">
+                                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Financial Health</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <div className="flex justify-between text-xs mb-1">
+                                                    <span className="text-slate-400">Revenue YTD</span>
+                                                    <span className="text-emerald-400">
+                                                        {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
                                             </div>
-                                            <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-slate-400">Outstanding</span>
-                                                <span className="text-rose-400">
-                                                    {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
-                                                </span>
+                                            <div>
+                                                <div className="flex justify-between text-xs mb-1">
+                                                    <span className="text-slate-400">Outstanding</span>
+                                                    <span className="text-rose-400">
+                                                        {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '30%' }}></div></div>
                                             </div>
-                                            <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '30%' }}></div></div>
                                         </div>
                                     </div>
-                                </div>
+                                </PermissionGate>
                             </GlassCard>
 
                             <GlassCard className="h-fit">
@@ -257,7 +261,9 @@ export const ClientDetails: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <KpiCard label="Active Projects" value={projects.filter(p => p.status === 'in-progress').length} trend={0} />
-                                <KpiCard label="Total Spent" value={`${client.billing?.currency || 'SAR'} ${(client.revenueYTD / 1000).toFixed(1)}k`} trend={12} />
+                                <PermissionGate permission={Permission.VIEW_FINANCIALS}>
+                                    <KpiCard label="Total Spent" value={`${client.billing?.currency || 'SAR'} ${(client.revenueYTD / 1000).toFixed(1)}k`} trend={12} />
+                                </PermissionGate>
                             </div>
 
                             <GlassCard title="Recent Activity">

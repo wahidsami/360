@@ -130,7 +130,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">Project Files</h3>
-                <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                <PermissionGate permission={Permission.MANAGE_TASKS}>
                     <Button onClick={() => setIsModalOpen(true)}>
                         <Upload className="w-4 h-4 mr-2" /> Upload File
                     </Button>
