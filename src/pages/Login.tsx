@@ -233,19 +233,13 @@ const Login: React.FC = () => {
           </div>
 
           {/* Footer Info */}
-          <div className="flex flex-col items-center gap-6">
-             <div className="flex items-center justify-center gap-6 w-full text-slate-400 dark:text-slate-600">
-                <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Core v2.4</span>
-                  <span className="text-[8px] font-bold text-cyan-600/50 dark:text-cyan-400/30 uppercase tracking-widest mt-1">End-to-End Encrypted</span>
-                </div>
-                <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
+          <div className="flex items-center justify-center gap-6 w-full text-slate-400 dark:text-slate-600">
+             <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
+             <div className="flex flex-col items-center">
+               <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Core v2.4</span>
+               <span className="text-[8px] font-bold text-cyan-600/50 dark:text-cyan-400/30 uppercase tracking-widest mt-1">End-to-End Encrypted</span>
              </div>
-             
-             <div className="animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-500">
-                <img src="/poweredby.png" className="h-4 opacity-50 dark:opacity-30 hover:opacity-100 transition-opacity grayscale hover:grayscale-0" alt="Powered By" />
-             </div>
+             <div className="h-px flex-grow bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
           </div>
         </div>
       </div>
