@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GlassCard, Button } from '../ui/UIComponents';
+import { GlassCard, Button, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { Repeat, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
 
