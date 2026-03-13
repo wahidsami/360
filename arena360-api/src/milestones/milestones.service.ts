@@ -33,7 +33,7 @@ export class MilestonesService {
         await this.verifyProjectAccess(projectId, user);
 
         // Only internal roles can create milestones
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can create milestones');
         }
@@ -85,7 +85,7 @@ export class MilestonesService {
         }
 
         // Only internal roles can update milestones
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can update milestones');
         }
@@ -171,7 +171,7 @@ export class MilestonesService {
         await this.verifyProjectAccess(projectId, user);
 
         // Only internal roles can create updates
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can create project updates');
         }

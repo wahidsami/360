@@ -87,7 +87,7 @@ export class ProjectsService {
         if (data.clientId === '') data.clientId = undefined; // Don't update if empty
 
         // Client roles cannot update projects
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new Error('Only internal staff can update projects');
         }

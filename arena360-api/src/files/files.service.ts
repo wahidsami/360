@@ -81,7 +81,7 @@ export class FilesService {
         }
 
         // Only internal roles can upload files
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can upload files');
         }
@@ -210,7 +210,7 @@ export class FilesService {
         }
 
         // Only internal roles can upload files
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can upload files');
         }
@@ -290,7 +290,7 @@ export class FilesService {
     }
 
     async deleteProjectFile(projectId: string, fileId: string, user: UserWithRoles): Promise<void> {
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can delete files');
         }
@@ -357,7 +357,7 @@ export class FilesService {
         }
 
         // Only internal roles can upload files
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can upload files');
         }
@@ -442,7 +442,7 @@ export class FilesService {
 
     async deleteFindingFile(findingId: string, fileId: string, user: UserWithRoles): Promise<void> {
         // Only internal staff can delete finding files
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can delete finding evidence');
         }

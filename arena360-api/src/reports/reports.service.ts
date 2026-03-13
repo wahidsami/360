@@ -57,7 +57,7 @@ export class ReportsService {
         }
 
         // Only internal roles can create reports
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can create reports');
         }
@@ -106,7 +106,7 @@ export class ReportsService {
             throw new NotFoundException('Report not found');
         }
 
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can update reports');
         }
@@ -170,7 +170,7 @@ export class ReportsService {
             where: { id: projectId, ...ScopeUtils.projectScope(user) }
         });
         if (!project) throw new NotFoundException('Project not found');
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) throw new ForbiddenException('Only internal staff can generate reports');
 
         let report = reportId
@@ -222,7 +222,7 @@ export class ReportsService {
         });
         if (!report) throw new NotFoundException('Report not found');
 
-        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             throw new ForbiddenException('Only internal staff can upload reports');
         }

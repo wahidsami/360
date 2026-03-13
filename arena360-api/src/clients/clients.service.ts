@@ -31,7 +31,7 @@ export class ClientsService {
 
     async create(user: UserWithRoles, createClientDto: any) {
         // Enforce: Only internal roles can create clients
-        const internalRoles: GlobalRole[] = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV'];
+        const internalRoles: GlobalRole[] = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
         if (!internalRoles.includes(user.role)) {
             // For now, allow it but ideally throw ForbiddenException
             // throw new ForbiddenException('Only internal staff can create clients');
