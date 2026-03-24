@@ -9,7 +9,7 @@ import {
 import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/components/ui/UIComponents";
 import { Modal } from "@/components/ui/Modal";
 import { api } from '@/services/api';
-import { Role, User, Permission } from '@/types';
+import { Role, User, Permission, Client } from '@/types';
 
 if (!api?.users) {
   throw new Error("API client missing users namespace — check api import path.");
@@ -44,6 +44,8 @@ export const UsersAdmin: React.FC = () => {
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: Role.VIEWER, permissions: [] as string[], clientId: '' });
   const [inviteResult, setInviteResult] = useState<{ link: string; email: string } | null>(null);
+  const [editRole, setEditRole] = useState<Role>(Role.VIEWER);
+  const [editIsActive, setEditIsActive] = useState(true);
 
   // Filtering
   const filteredUsers = users.filter(u => {
@@ -64,7 +66,7 @@ export const UsersAdmin: React.FC = () => {
         permissions: newUser.permissions.length ? newUser.permissions : undefined,
         clientId: newUser.role.startsWith('CLIENT_') ? newUser.clientId : undefined,
         avatar: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`
-      });
+      } as any);
       setUsers([...users, created as User]);
       setModalOpen(false);
       setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
@@ -178,9 +180,14 @@ export const UsersAdmin: React.FC = () => {
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" title="Edit role & permissions" onClick={() => { setEditUser(user); setEditPermissions(user.customPermissions || []); }}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                    <Button variant="ghost" size="sm" title="Edit role & permissions" onClick={() => {
+                        setEditUser(user);
+                        setEditRole(user.role as Role);
+                        setEditIsActive(user.isActive ?? true);
+                        setEditPermissions(user.customPermissions || []);
+                      }}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
                     <Button variant="ghost" size="sm" title="Disable Account" className="hover:text-rose-400">
                       <Power className="w-4 h-4" />
                     </Button>
@@ -197,13 +204,48 @@ export const UsersAdmin: React.FC = () => {
         </table>
       </GlassCard>
 
-      {/* Edit User Permissions Modal */}
-      <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title={editUser ? `Edit: ${editUser.name}` : ''}>
+      {/* Edit User Modal */}
+      <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title={editUser ? `Edit User: ${editUser.name}` : ''}>
         {editUser && (
-          <div className="space-y-4">
-            <p className="text-sm text-slate-400">Role: <strong className="text-slate-200">{editUser.role.replace(/_/g, ' ')}</strong></p>
+          <div className="space-y-5">
+
+            {/* Role */}
             <div>
-              <Label>Custom permissions (in addition to role defaults)</Label>
+              <Label>System Role</Label>
+              <Select
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as Role)}
+                className="mt-1"
+              >
+                {Object.values(Role).map(r => (
+                  <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                ))}
+              </Select>
+              <p className="text-[10px] text-slate-500 mt-1">Changing role updates all permissions derived from that role.</p>
+            </div>
+
+            {/* Active toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
+              <div>
+                <p className="text-sm font-medium text-slate-200">Account Active</p>
+                <p className="text-xs text-slate-500">Inactive users cannot log in.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditIsActive(v => !v)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  editIsActive ? 'bg-cyan-600' : 'bg-slate-600'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  editIsActive ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+
+            {/* Custom permissions */}
+            <div>
+              <Label>Custom Permissions (in addition to role defaults)</Label>
               <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
                 {Object.values(Permission).map(perm => (
                   <label key={perm} className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
@@ -223,14 +265,27 @@ export const UsersAdmin: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+
+            <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="ghost" onClick={() => setEditUser(null)}>Cancel</Button>
               <Button type="button" onClick={async () => {
                 if (!editUser) return;
-                await api.users.updatePermissions(editUser.id, editPermissions);
-                setUsers(users.map(u => u.id === editUser.id ? { ...u, customPermissions: editPermissions } : u));
-                setEditUser(null);
-              }}>Save permissions</Button>
+                try {
+                  const updated = await api.users.update(editUser.id, {
+                    role: editRole,
+                    isActive: editIsActive,
+                    permissions: editPermissions,
+                  } as any);
+                  setUsers(users.map(u => u.id === editUser.id
+                    ? { ...u, role: editRole, isActive: editIsActive, customPermissions: editPermissions }
+                    : u
+                  ));
+                  setEditUser(null);
+                  toast.success(`${editUser.name}'s profile updated`);
+                } catch (e) {
+                  toast.error('Failed to update user');
+                }
+              }}>Save Changes</Button>
             </div>
           </div>
         )}
