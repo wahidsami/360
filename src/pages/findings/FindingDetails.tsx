@@ -273,25 +273,27 @@ export const FindingDetails: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-3 items-center">
+          {/* AI Feature Hidden
           {findingId && (
             <Button variant="outline" size="sm" onClick={() => openAI({ findingId })}>
               <Sparkles className="w-4 h-4 mr-1" /> AI Analyze
             </Button>
           )}
+          */}
           {isEditing ? (
             <>
               <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                Cancel
+                {t('cancel_btn')}
               </Button>
               <Button variant="primary" size="sm" onClick={handleSaveDetails}>
-                Save Changes
+                {t('save_changes_btn')}
               </Button>
             </>
           ) : (
             <>
               <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                 <Button variant="secondary" size="sm" onClick={handleStartEdit}>
-                  <FileText className="w-4 h-4 mr-2" /> Edit Details
+                  <FileText className="w-4 h-4 mr-2" /> {t('edit_details')}
                 </Button>
               </PermissionGate>
               {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN) && finding.status === 'ready_for_testing' && (
@@ -302,7 +304,7 @@ export const FindingDetails: React.FC = () => {
                     className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
                     onClick={() => handleStatusUpdate('closed')}
                   >
-                    <CheckCircle className="w-4 h-4 mr-2" /> Verify Fixed
+                    <CheckCircle className="w-4 h-4 mr-2" /> {t('verify_fixed')}
                   </Button>
                   <Button
                     variant="outline"
@@ -310,7 +312,7 @@ export const FindingDetails: React.FC = () => {
                     className="border-rose-500/50 text-rose-400 hover:bg-rose-500/10"
                     onClick={() => handleStatusUpdate('open')}
                   >
-                    Reopen
+                    {t('reopen')}
                   </Button>
                 </>
               )}
@@ -321,7 +323,7 @@ export const FindingDetails: React.FC = () => {
                   className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
                   onClick={() => handleStatusUpdate('closed')}
                 >
-                  <CheckCircle className="w-4 h-4 mr-2" /> Mark Closed
+                  <CheckCircle className="w-4 h-4 mr-2" /> {t('mark_closed')}
                 </Button>
               </PermissionGate>
             </>
@@ -333,26 +335,26 @@ export const FindingDetails: React.FC = () => {
 
         {/* LEFT COLUMN: Summary Panel */}
         <div className="space-y-6">
-          <GlassCard title="Details">
+          <GlassCard title={t('details_panel')}>
             <div className="space-y-4 text-sm">
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
-                <span className="text-slate-400">Status</span>
+                <span className="text-slate-400">{t('label_status')}</span>
                 <Badge variant={finding.status === 'open' ? 'danger' : finding.status === 'closed' ? 'success' : finding.status === 'blocked' ? 'danger' : 'warning'}>{finding.status.toUpperCase()}</Badge>
               </div>
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
-                <span className="text-slate-400">Project</span>
+                <span className="text-slate-400">{t('label_project')}</span>
                 <span className="text-slate-200">{finding.projectName}</span>
               </div>
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
-                <span className="text-slate-400">Client</span>
+                <span className="text-slate-400">{t('label_client')}</span>
                 <span className="text-slate-200">{finding.clientName}</span>
               </div>
               <div className="flex justify-between border-b border-slate-700/50 pb-2">
-                <span className="text-slate-400">Created</span>
+                <span className="text-slate-400">{t('label_created')}</span>
                 <span className="text-slate-200">{finding.created}</span>
               </div>
               <div className="flex justify-between items-center pt-2">
-                <span className="text-slate-400">Assignee</span>
+                <span className="text-slate-400">{t('label_assignee')}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-cyan-900 text-cyan-400 flex items-center justify-center text-xs font-bold border border-cyan-500/30">
                     {finding.ownerName ? finding.ownerName.charAt(0) : 'U'}
@@ -366,7 +368,7 @@ export const FindingDetails: React.FC = () => {
               {(user?.role === Role.QA || user?.role === Role.PM || user?.role === Role.SUPER_ADMIN || user?.role === Role.OPS || user?.role === Role.DEV) ? (
                 <>
                   <div>
-                    <Label>Update Status</Label>
+                    <Label>{t('update_status')}</Label>
                     <Select
                       className="mt-1 text-sm py-1.5"
                       value={finding.status}
@@ -383,7 +385,7 @@ export const FindingDetails: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label>Update Severity</Label>
+                    <Label>{t('update_severity')}</Label>
                     <Select
                       className="mt-1 text-sm py-1.5"
                       value={finding.severity}
@@ -397,13 +399,13 @@ export const FindingDetails: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label>Update Assignee</Label>
+                    <Label>{t('update_assignee')}</Label>
                     <Select
                       className="mt-1 text-sm py-1.5"
                       value={finding.assignedToId || 'none'}
                       onChange={(e) => handleAssigneeUpdate(e.target.value)}
                     >
-                      <option value="none">Unassigned</option>
+                      <option value="none">{t('unassigned')}</option>
                       {assignableUsers.map(u => (
                         <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                       ))}
@@ -412,13 +414,13 @@ export const FindingDetails: React.FC = () => {
                 </>
               ) : (
                 <div className="pt-2">
-                  <p className="text-xs text-slate-500 italic">Only internal team members can modify these status & severity controls.</p>
+                  <p className="text-xs text-slate-500 italic">{t('internal_only_controls')}</p>
                 </div>
               )}
             </div>
           </GlassCard>
 
-          <GlassCard title="Related Assets">
+          <GlassCard title={t('related_assets')}>
             <div className="space-y-2">
               {finding.evidence?.map(file => (
                 <div key={file.id} className="flex items-center justify-between p-2 rounded bg-slate-800/30 border border-slate-700/30">
@@ -439,7 +441,7 @@ export const FindingDetails: React.FC = () => {
                 </div>
               ))}
               {(!finding.evidence || finding.evidence.length === 0) && (
-                <p className="text-xs text-slate-500 text-center py-2">No evidence attached.</p>
+                <p className="text-xs text-slate-500 text-center py-2">{t('no_evidence')}</p>
               )}
 
               <div className="mt-4">
@@ -456,7 +458,7 @@ export const FindingDetails: React.FC = () => {
                   disabled={uploading}
                   className="w-full"
                 >
-                  {uploading ? 'Uploading...' : 'Upload Evidence'}
+                  {uploading ? t('posting') : t('upload_evidence')}
                 </Button>
               </div>
             </div>
@@ -477,7 +479,7 @@ export const FindingDetails: React.FC = () => {
                   : 'text-slate-500 border-transparent hover:text-slate-300'
                   }`}
               >
-                {tab}
+                {t(`${tab}_tab`)}
               </button>
             ))}
           </div>
@@ -485,7 +487,7 @@ export const FindingDetails: React.FC = () => {
           {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <GlassCard title="Description">
+              <GlassCard title={t('finding_description')}>
                 {isEditing ? (
                   <TextArea
                     value={editForm.description}
@@ -500,7 +502,7 @@ export const FindingDetails: React.FC = () => {
                 )}
               </GlassCard>
 
-              <GlassCard title="Impact">
+              <GlassCard title={t('finding_impact')}>
                 {isEditing ? (
                   <TextArea
                     value={editForm.impact}
@@ -521,7 +523,7 @@ export const FindingDetails: React.FC = () => {
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-md font-semibold text-rose-100">Recommended Remediation</h3>
+                    <h3 className="text-md font-semibold text-rose-100">{t('finding_remediation')}</h3>
                     {isEditing ? (
                       <TextArea
                         value={editForm.remediation}
@@ -565,7 +567,7 @@ export const FindingDetails: React.FC = () => {
           {activeTab === 'comments' && (
             <div className="space-y-6">
               <GlassCard className="space-y-6">
-                {comments.length === 0 && <div className="text-center text-slate-500 py-8 text-sm">No comments yet. Start the conversation!</div>}
+                {comments.length === 0 && <div className="text-center text-slate-500 py-8 text-sm">{t('no_comments')}</div>}
                 {comments.filter(c => !c.parentId).map(thread => (
                   <div key={thread.id} className="space-y-4">
                     {/* Root Comment */}
@@ -620,7 +622,7 @@ export const FindingDetails: React.FC = () => {
                           if (txt) handlePostReply(thread.id, txt);
                         }}
                       >
-                        Reply to thread
+                        {t('reply_to_thread')}
                       </button>
                     </div>
                   </div>
@@ -631,7 +633,7 @@ export const FindingDetails: React.FC = () => {
               <div className="relative">
                 <TextArea
                   rows={3}
-                  placeholder="Post a new comment..."
+                  placeholder={t('post_comment')}
                   className="w-full pr-12 resize-none"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}

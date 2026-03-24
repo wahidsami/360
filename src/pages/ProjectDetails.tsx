@@ -436,9 +436,11 @@ export const ProjectDetails: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-3 items-center">
+          {/* AI Feature Hidden
           <Button variant="outline" size="sm" onClick={() => openAI({ projectId: project.id })} title="AI Assistant">
             <Sparkles className="w-4 h-4 mr-1" /> AI
           </Button>
+          */}
           <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'deployed' ? 'success' : 'neutral'}>
             {t(project.status).toUpperCase()}
           </Badge>
