@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GlassCard, Button, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { Repeat, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
@@ -41,6 +42,7 @@ function formatRecurrence(rule: { frequency: string; interval?: number; weekday?
 }
 
 export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId, onRefreshTasks }) => {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<RecurringTaskTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -151,7 +153,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
   if (loading) {
     return (
       <GlassCard className="p-8 text-center text-slate-400">
-        Loading recurring tasks…
+        {t('loading_recurring')}
       </GlassCard>
     );
   }
@@ -160,33 +162,33 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
-          <Repeat className="w-5 h-5" /> Recurring tasks
+          <Repeat className="w-5 h-5" /> {t('recurring_tasks_title')}
         </h3>
         <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="w-4 h-4 mr-1" /> Add template
+          <Plus className="w-4 h-4 mr-1" /> {t('add_template')}
         </Button>
       </div>
 
       <Modal 
         isOpen={showForm} 
         onClose={() => setShowForm(false)} 
-        title={editingId ? 'Edit task template' : 'Add recurring task template'}
+        title={editingId ? t('edit_task_template') : t('add_recurring_task_template')}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Task title</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('task_title_label')}</label>
             <input
               type="text"
-              placeholder="e.g. Weekly Security Audit"
+              placeholder={t('task_title_placeholder')}
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Description (optional)</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('desc_optional')}</label>
             <textarea
-              placeholder="Details about this recurring task..."
+              placeholder={t('desc_placeholder')}
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
@@ -195,7 +197,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('priority_label')}</label>
               <select
                 value={form.priority}
                 onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
@@ -208,7 +210,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Frequency</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('frequency_label')}</label>
               <select
                 value={form.frequency}
                 onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}
@@ -223,7 +225,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
           <div className="grid grid-cols-2 gap-4">
             {form.frequency === 'WEEKLY' ? (
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Day of Week</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('day_of_week')}</label>
                 <select
                   value={form.weekday}
                   onChange={e => setForm(f => ({ ...f, weekday: Number(e.target.value) }))}
@@ -236,7 +238,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Interval</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('interval_label')}</label>
                 <input
                   type="number"
                   min="1"
@@ -247,7 +249,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
               </div>
             )}
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Next Run Time</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('next_run_time')}</label>
               <input
                 type="datetime-local"
                 value={form.nextRunAt}
@@ -258,16 +260,16 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
           </div>
           <div className="flex gap-2 pt-4">
             <Button variant="primary" className="flex-1" onClick={handleSubmit}>
-              {editingId ? 'Save changes' : 'Create template'}
+              {editingId ? t('save_changes_btn') : t('create_template_btn')}
             </Button>
-            <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setShowForm(false)}>{t('cancel_btn')}</Button>
           </div>
         </div>
       </Modal>
 
       {templates.length === 0 && !showForm && (
         <GlassCard className="p-8 text-center text-slate-500">
-          No recurring task templates. Add one to automatically create tasks on a schedule.
+          {t('no_recurring_templates')}
         </GlassCard>
       )}
 

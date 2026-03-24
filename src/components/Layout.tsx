@@ -154,7 +154,7 @@ export const Layout: React.FC = () => {
 
   if (user && isInternalRole(user.role)) {
     menuItems.push({ to: '/app/my-work', icon: ClipboardList, label: t('my_work') });
-    menuItems.push({ to: '/app/calendar', icon: Calendar, label: t('calendar') || 'Calendar' });
+    menuItems.push({ to: '/app/calendar', icon: Calendar, label: t('calendar') });
   }
 
   menuItems.push(
@@ -171,12 +171,12 @@ export const Layout: React.FC = () => {
   }
 
   if (user && isInternalRole(user.role)) {
-    menuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') || 'Wiki' });
-    menuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') || 'Analytics' });
+    menuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') });
+    menuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') });
 
     if ([Role.SUPER_ADMIN, Role.OPS, Role.PM].includes(user.role)) {
-      menuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') || 'Automations' });
-      menuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') || 'Integrations' });
+      menuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') });
+      menuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') });
     }
   }
 
@@ -253,14 +253,14 @@ export const Layout: React.FC = () => {
                   <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
                   <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate uppercase tracking-wider">{user?.role.replace(/_/g, ' ')}</p>
                 </div>
-                <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Log Out">
+                <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title={t('logout')}>
                   <LogOut className="w-5 h-5" />
                 </button>
               </>
             )}
           </div>
           {isCollapsed && (
-            <button onClick={handleLogout} className="absolute bottom-6 right-1 bg-white dark:bg-slate-800 border border-[#E4E9F2] dark:border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shadow-sm" title="Log Out">
+            <button onClick={handleLogout} className="absolute bottom-6 right-1 bg-white dark:bg-slate-800 border border-[#E4E9F2] dark:border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shadow-sm" title={t('logout')}>
               <LogOut className="w-3 h-3" />
             </button>
           )}
@@ -294,9 +294,9 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-4">
 
 
-            <button type="button" onClick={() => openAI()} className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all group" title="AI Assistant">
+            {/* <button type="button" onClick={() => openAI()} className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all group" title={t('ai_assistant')}>
               <Sparkles className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            </button>
+            </button> */}
             <button onClick={toggleLang} className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all">
               <span className="font-bold text-xs flex items-center gap-2">
                 <Globe className="w-4 h-4" />
@@ -320,7 +320,7 @@ export const Layout: React.FC = () => {
               type="button"
               onClick={() => setChangelogOpen(true)}
               className="p-2 text-slate-400 dark:text-slate-500 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-full transition-all"
-              title="Changelog"
+              title={t('changelog')}
             >
               <History className="w-5 h-5" />
             </button>

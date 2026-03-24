@@ -53,7 +53,7 @@ export const MyWork: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold font-display text-white">{t('my_work')}</h1>
-        <p className="text-slate-400">Personal command center.</p>
+        <p className="text-slate-400">{t('personal_command_center')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -69,9 +69,9 @@ export const MyWork: React.FC = () => {
                   <div className="flex justify-between items-center mb-4">
                       <div className="flex gap-2">
                           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-32 py-1 text-xs">
-                              <option value="all">All</option>
-                              <option value="active">Active</option>
-                              <option value="done">Done</option>
+                              <option value="all">{t('all')}</option>
+                              <option value="active">{t('active')}</option>
+                              <option value="done">{t('done')}</option>
                           </Select>
                       </div>
                   </div>
@@ -92,7 +92,7 @@ export const MyWork: React.FC = () => {
                                               {task.dueDate && (
                                                   <>
                                                       <span className="w-1 h-1 bg-slate-600 rounded-full" />
-                                                      <span className={new Date(task.dueDate) < new Date() ? 'text-rose-400' : ''}>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                                                      <span className={new Date(task.dueDate) < new Date() ? 'text-rose-400' : ''}>{t('due_colon')} {new Date(task.dueDate).toLocaleDateString()}</span>
                                                   </>
                                               )}
                                           </div>
@@ -122,7 +122,7 @@ export const MyWork: React.FC = () => {
                            </div>
                        ))}
                    </div>
-                   <Button variant="ghost" className="w-full mt-4" onClick={() => navigate('/app/projects')}>View All Projects</Button>
+                   <Button variant="ghost" className="w-full mt-4" onClick={() => navigate('/app/projects')}>{t('view_all_projects')}</Button>
                </GlassCard>
           </div>
       </div>

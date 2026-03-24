@@ -12,12 +12,12 @@ import toast from 'react-hot-toast';
 
 const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
 const WIDGET_LABELS: Record<string, string> = {
-  'kpi-cards': 'KPI cards',
-  'tools-panel': 'Quick actions',
-  'revenue-chart': 'Revenue chart',
-  'latest-updates': 'Latest updates',
-  'projects-at-risk': 'Projects at risk',
-  'pending-approvals': 'Pending approvals',
+  'kpi-cards': 'widget_kpi_cards',
+  'tools-panel': 'widget_quick_actions',
+  'revenue-chart': 'widget_revenue_chart',
+  'latest-updates': 'widget_latest_updates',
+  'projects-at-risk': 'widget_projects_at_risk',
+  'pending-approvals': 'widget_pending_approvals',
 };
 
 const data = [
@@ -69,10 +69,10 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
       await api.me.updateDashboardPreferences({ widgets });
       setWidgetOrder(enabled);
       setCustomizeOpen(false);
-      toast.success('Dashboard updated');
+      toast.success(t('dashboard_updated'));
    };
 
-   if (loading) return <div className="text-center p-10 text-slate-500 font-bold uppercase tracking-widest animate-pulse">Initializing Command Center...</div>;
+   if (loading) return <div className="text-center p-10 text-slate-500 font-bold uppercase tracking-widest animate-pulse">{t('initializing')}</div>;
 
    const visible = widgetOrder.length ? widgetOrder : [...DEFAULT_WIDGET_IDS];
    const has = (id: string) => visible.includes(id);
@@ -84,7 +84,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                <h1 className="text-4xl font-black font-display text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard')}</h1>
                <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('welcome')}, {role.replace('_', ' ')}.</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={openCustomize} className="text-slate-500 hover:text-cyan-600 font-bold uppercase tracking-widest text-[10px]"><Settings2 className="w-4 h-4 mr-2" /> Customize Workspace</Button>
+            <Button variant="ghost" size="sm" onClick={openCustomize} className="text-slate-500 hover:text-cyan-600 font-bold uppercase tracking-widest text-[10px]"><Settings2 className="w-4 h-4 mr-2" /> {t('customize_workspace')}</Button>
          </div>
 
          {has('kpi-cards') && (
@@ -102,7 +102,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
                {has('revenue-chart') && (
-               <GlassCard title="Revenue Velocity">
+               <GlassCard title={t('revenue_velocity')}>
                   <div className="h-72 w-full min-h-[250px] mt-4">
                      {stats && (
                      <ResponsiveContainer width="100%" height="100%" minHeight={250}>
@@ -167,7 +167,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            </div>
                         </div>
                      ))}
-                     {stats.projectsAtRisk.length === 0 && <p className="text-slate-500 text-sm font-medium text-center py-4 italic">System stable. No critical risks.</p>}
+                     {stats.projectsAtRisk.length === 0 && <p className="text-slate-500 text-sm font-medium text-center py-4 italic">{t('system_stable')}</p>}
                   </div>
                </GlassCard>
                )}
@@ -175,7 +175,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                <GlassCard title={t('pending_approvals')}>
                   <div className="text-center py-10 mt-2">
                      <div className="text-6xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter drop-shadow-sm">{stats.pendingApprovals}</div>
-                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Awaiting Verification</p>
+                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">{t('awaiting_verification')}</p>
                   </div>
                </GlassCard>
                )}
@@ -183,13 +183,13 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          </div>
          )}
 
-         <Modal isOpen={customizeOpen} onClose={() => setCustomizeOpen(false)} title="Dashboard Preferences">
+         <Modal isOpen={customizeOpen} onClose={() => setCustomizeOpen(false)} title={t('dashboard_preferences')}>
             <div className="space-y-6">
-               <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">Workspace Visibility Controls</p>
+               <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">{t('workspace_visibility_controls')}</p>
                <div className="grid gap-3">
                   {customizeWidgets.map((w, i) => (
                      <label key={w.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all">
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight">{WIDGET_LABELS[w.id] || w.id}</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight">{t(WIDGET_LABELS[w.id] || w.id)}</span>
                         <input
                            type="checkbox"
                            checked={w.enabled}
@@ -200,8 +200,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   ))}
                </div>
                <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="ghost" onClick={() => setCustomizeOpen(false)} className="font-bold uppercase tracking-widest text-xs">Discard Changes</Button>
-                  <Button onClick={saveCustomize} className="font-black uppercase tracking-widest text-xs">Finalize Layout</Button>
+                  <Button variant="ghost" onClick={() => setCustomizeOpen(false)} className="font-bold uppercase tracking-widest text-xs">{t('discard_changes')}</Button>
+                  <Button onClick={saveCustomize} className="font-black uppercase tracking-widest text-xs">{t('finalize_layout')}</Button>
                </div>
             </div>
          </Modal>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 /* ──────────────────────────────────────────────────────────────
    Types
@@ -76,12 +77,15 @@ const HoverActions: React.FC<{
     onReply?: () => void;
     onDelete?: () => void;
     showDelete: boolean;
-}> = ({ onReply, onDelete, showDelete }) => (
+}> = ({ onReply, onDelete, showDelete }) => {
+    const { t } = useTranslation();
+    return (
     <div className="absolute -top-3 right-3 hidden group-hover:flex items-center gap-0.5 bg-slate-800 border border-slate-700 rounded-lg px-1 py-0.5 shadow-xl z-10">
-        {onReply && <ActionBtn title="Reply in thread" onClick={onReply}><MessageSquare className="w-3.5 h-3.5" /></ActionBtn>}
-        {showDelete && <ActionBtn title="Delete" onClick={onDelete} danger><Trash2 className="w-3.5 h-3.5" /></ActionBtn>}
+        {onReply && <ActionBtn title={t('reply_in_thread')} onClick={onReply}><MessageSquare className="w-3.5 h-3.5" /></ActionBtn>}
+        {showDelete && <ActionBtn title={t('delete_btn')} onClick={onDelete} danger><Trash2 className="w-3.5 h-3.5" /></ActionBtn>}
     </div>
-);
+    );
+};
 
 const ActionBtn: React.FC<{ title: string; onClick?: () => void; danger?: boolean; children: React.ReactNode }> = ({ title, onClick, danger, children }) => (
     <button
@@ -95,6 +99,7 @@ const ActionBtn: React.FC<{ title: string; onClick?: () => void; danger?: boolea
 
 /** Reply count badge like Slack */
 const ReplyBadge: React.FC<{ discussion: Discussion; onClick: () => void }> = ({ discussion, onClick }) => {
+    const { t } = useTranslation();
     if (discussion.replyCount === 0) return null;
     // Generate a mini stack of "reply avatars"  — fake 2-3 colored dots for visual effect
     return (
@@ -109,11 +114,11 @@ const ReplyBadge: React.FC<{ discussion: Discussion; onClick: () => void }> = ({
                 ))}
             </div>
             <span className="text-cyan-400 text-xs font-semibold group-hover/rep:underline">
-                {discussion.replyCount} {discussion.replyCount === 1 ? 'reply' : 'replies'}
+                {discussion.replyCount === 1 ? t('reply_count_one') : t('reply_count_other', { count: discussion.replyCount })}
             </span>
             {discussion.lastReplyAt && (
                 <span className="text-slate-500 text-xs">
-                    Last reply {formatDistanceToNow(new Date(discussion.lastReplyAt), { addSuffix: true })}
+                    {t('last_reply')} {formatDistanceToNow(new Date(discussion.lastReplyAt), { addSuffix: true })}
                 </span>
             )}
             <ChevronRight className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover/rep:opacity-100 transition-opacity" />
@@ -410,6 +415,7 @@ const ToolbarBtn: React.FC<{ title: string; onClick?: () => void; active?: boole
    New Thread Modal
 ────────────────────────────────────────────────────────────────*/
 const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: string) => Promise<void> }> = ({ onClose, onSubmit }) => {
+    const { t } = useTranslation();
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
     const [loading, setLoading] = useState(false);
@@ -464,24 +470,24 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
                     <div className="flex items-center gap-2">
                         <Hash className="w-5 h-5 text-slate-400" />
-                        <h3 className="text-base font-semibold text-white">New Thread</h3>
+                        <h3 className="text-base font-semibold text-white">{t('new_thread')}</h3>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded transition-colors"><X className="w-5 h-5" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1.5">Thread title</label>
+                        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1.5">{t('thread_title_label')}</label>
                         <input
                             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 text-sm focus:border-cyan-500 focus:outline-none"
-                            placeholder="e.g. API integration questions"
+                            placeholder={t('thread_title_placeholder')}
                             value={title} onChange={e => setTitle(e.target.value)}
                             autoFocus required
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1.5">Your message</label>
+                        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1.5">{t('your_message')}</label>
                         <MessageInput
-                            placeholder="What's on your mind? (Enter to send)"
+                            placeholder={t('message_placeholder')}
                             value={body}
                             onChange={setBody}
                             onSend={() => handleSubmit({ preventDefault: () => { } } as any)}
@@ -491,10 +497,10 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
                         />
                     </div>
                     <div className="flex justify-end gap-3 pt-1">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">{t('cancel_btn')}</button>
                         <button type="submit" disabled={loading || !title.trim() || !body.trim()}
                             className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 rounded-lg text-white text-sm font-medium transition-colors">
-                            {loading ? 'Posting...' : 'Post Thread'}
+                            {loading ? t('posting') : t('post_thread')}
                         </button>
                     </div>
                 </form>
@@ -516,6 +522,7 @@ const ThreadPanel: React.FC<{
     onDeleteReply: (reply: DiscussionReply) => Promise<void>;
     onDeleteThread: (discussion: Discussion) => Promise<void>;
 }> = ({ discussion, replies, loading, userId, onClose, onSendReply, onDeleteReply, onDeleteThread }) => {
+    const { t } = useTranslation();
     const [replyText, setReplyText] = useState('');
     const [sending, setSending] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -574,7 +581,7 @@ const ThreadPanel: React.FC<{
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-slate-400" />
-                    <span className="font-semibold text-white text-sm">Thread</span>
+                    <span className="font-semibold text-white text-sm">{t('thread')}</span>
                 </div>
                 <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded transition-colors"><X className="w-4 h-4" /></button>
             </div>
@@ -604,9 +611,9 @@ const ThreadPanel: React.FC<{
 
                 {/* Replies */}
                 {loading ? (
-                    <div className="flex items-center gap-2 px-2 py-4 text-slate-500 text-sm"><span className="animate-spin">⟳</span> Loading...</div>
+                    <div className="flex items-center gap-2 px-2 py-4 text-slate-500 text-sm"><span className="animate-spin">⟳</span> {t('loading_dots')}</div>
                 ) : replies.length === 0 ? (
-                    <p className="text-center text-slate-600 text-sm py-6">No replies yet</p>
+                    <p className="text-center text-slate-600 text-sm py-6">{t('no_replies_yet')}</p>
                 ) : (
                     replies.map((reply, i) => {
                         const showDayLabel = i === 0 || dayLabel(reply.createdAt) !== dayLabel(replies[i - 1].createdAt);
@@ -674,10 +681,10 @@ const ThreadPanel: React.FC<{
             {/* Reply input */}
             <div className="px-4 py-3 border-t border-slate-800 flex-shrink-0">
                 <p className="text-xs text-slate-500 mb-2">
-                    Reply to <span className="text-slate-300 font-medium">{discussion.authorName}</span>
+                    {t('reply_to')} <span className="text-slate-300 font-medium">{discussion.authorName}</span>
                 </p>
                 <MessageInput
-                    placeholder={`Reply to thread...`}
+                    placeholder={t('reply_to_thread')}
                     value={replyText}
                     onChange={setReplyText}
                     onSend={send}
@@ -702,6 +709,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     onCreateReply,
     onDeleteReply,
 }) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeThread, setActiveThread] = useState<Discussion | null>(null);
@@ -756,12 +764,12 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                 <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 flex-shrink-0">
                     <div className="flex items-center gap-2">
                         <Hash className="w-5 h-5 text-slate-400" />
-                        <span className="font-bold text-white">project-discussions</span>
+                        <span className="font-bold text-white">{t('project_discussions')}</span>
                         <span className="text-slate-600 text-sm">·</span>
-                        <span className="text-slate-500 text-sm">{discussions.length} threads</span>
+                        <span className="text-slate-500 text-sm">{t('threads_count', { count: discussions.length })}</span>
                     </div>
                     <Button onClick={() => setIsModalOpen(true)} className="text-sm py-1.5 px-4">
-                        <Plus className="w-4 h-4 mr-1.5" /> New Thread
+                        <Plus className="w-4 h-4 mr-1.5" /> {t('new_thread')}
                     </Button>
                 </div>
 
@@ -772,10 +780,10 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                             <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
                                 <MessageSquare className="w-8 h-8 text-slate-600" />
                             </div>
-                            <p className="text-slate-300 font-semibold">No threads yet</p>
-                            <p className="text-slate-600 text-sm mt-1 max-w-xs">Start a discussion to collaborate with your team.</p>
+                            <p className="text-slate-300 font-semibold">{t('no_threads_yet')}</p>
+                            <p className="text-slate-600 text-sm mt-1 max-w-xs">{t('start_discussion_desc')}</p>
                             <Button className="mt-5" onClick={() => setIsModalOpen(true)}>
-                                <Plus className="w-4 h-4 mr-2" /> Start a Thread
+                                <Plus className="w-4 h-4 mr-2" /> {t('start_a_thread')}
                             </Button>
                         </div>
                     ) : (

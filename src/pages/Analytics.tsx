@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart,
   Bar,
@@ -52,6 +53,7 @@ type AnalyticsData = {
 };
 
 const Analytics: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +63,7 @@ const Analytics: React.FC = () => {
         const res = await api.analytics.get();
         setData(res as AnalyticsData);
       } catch (e) {
-        toast.error('Failed to load analytics');
+        toast.error(t('failed_load_analytics'));
       } finally {
         setLoading(false);
       }
@@ -69,14 +71,14 @@ const Analytics: React.FC = () => {
     load();
   }, []);
 
-  if (loading) return <div className="p-10 text-slate-500 text-center">Loading analytics...</div>;
-  if (!data) return <div className="p-10 text-slate-500 text-center">No data.</div>;
+  if (loading) return <div className="p-10 text-slate-500 text-center">{t('loading_analytics')}</div>;
+  if (!data) return <div className="p-10 text-slate-500 text-center">{t('no_data')}</div>;
 
   const arAgingData = [
-    { name: '0-30 days', value: data.financial.arAging['0-30'], color: COLORS[0] },
-    { name: '31-60 days', value: data.financial.arAging['31-60'], color: COLORS[1] },
-    { name: '61-90 days', value: data.financial.arAging['61-90'], color: COLORS[2] },
-    { name: '90+ days', value: data.financial.arAging['90+'], color: COLORS[3] },
+    { name: `0-30 ${t('days')}`, value: data.financial.arAging['0-30'], color: COLORS[0] },
+    { name: `31-60 ${t('days')}`, value: data.financial.arAging['31-60'], color: COLORS[1] },
+    { name: `61-90 ${t('days')}`, value: data.financial.arAging['61-90'], color: COLORS[2] },
+    { name: `90+ ${t('days')}`, value: data.financial.arAging['90+'], color: COLORS[3] },
   ].filter((d) => d.value > 0);
 
   return (
@@ -84,17 +86,17 @@ const Analytics: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-white flex items-center gap-2">
           <BarChart3 className="w-8 h-8 text-cyan-500" />
-          Advanced Analytics
+          {t('advanced_analytics')}
         </h1>
-        <p className="text-slate-400 mt-1">Portfolio, team, financial, and findings insights.</p>
+        <p className="text-slate-400 mt-1">{t('analytics_subtitle')}</p>
       </div>
 
       {/* Portfolio */}
-      <GlassCard title="Portfolio analytics" className="flex items-center gap-2">
+      <GlassCard title={t('portfolio_analytics')} className="flex items-center gap-2">
         <TrendingUp className="w-5 h-5 text-cyan-500" />
         <div className="flex-1 grid md:grid-cols-2 gap-6">
           <div className="min-h-[200px]">
-            <h3 className="text-slate-300 text-sm font-medium mb-2">Projects by health</h3>
+            <h3 className="text-slate-300 text-sm font-medium mb-2">{t('projects_by_health')}</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.portfolio.byHealth}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -106,7 +108,7 @@ const Analytics: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="min-h-[200px]">
-            <h3 className="text-slate-300 text-sm font-medium mb-2">Projects by status</h3>
+            <h3 className="text-slate-300 text-sm font-medium mb-2">{t('projects_by_status')}</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.portfolio.byStatus}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -119,42 +121,42 @@ const Analytics: React.FC = () => {
           </div>
         </div>
         <p className="text-slate-500 text-sm mt-2">
-          Total projects: {data.portfolio.projectCount} · Budget total: {data.portfolio.totalBudget.toLocaleString()} SAR
+          {t('total_projects')}: {data.portfolio.projectCount} · {t('budget_total')}: {data.portfolio.totalBudget.toLocaleString()} SAR
         </p>
       </GlassCard>
 
       {/* Team */}
-      <GlassCard title="Team analytics" className="flex items-center gap-2">
+      <GlassCard title={t('team_analytics')} className="flex items-center gap-2">
         <Users className="w-5 h-5 text-cyan-500" />
         <div className="flex-1 space-y-4">
           <div className="flex flex-wrap gap-4 items-baseline">
             <p className="text-slate-400 text-sm">
-              Tasks completed (last 30 days): <span className="text-white font-medium">{data.team.tasksDoneLast30Days}</span>
+              {t('tasks_completed_30d')} <span className="text-white font-medium">{data.team.tasksDoneLast30Days}</span>
             </p>
             {data.team.completionRate != null && (
               <p className="text-slate-400 text-sm">
-                Completion rate: <span className="text-white font-medium">{data.team.completionRate}%</span>
+                {t('completion_rate')} <span className="text-white font-medium">{data.team.completionRate}%</span>
                 {data.team.totalTasks != null && (
-                  <span className="text-slate-500 ml-1">({data.team.doneTasks ?? 0} / {data.team.totalTasks} tasks)</span>
+                  <span className="text-slate-500 ml-1">({data.team.doneTasks ?? 0} / {data.team.totalTasks} {t('tasks')})</span>
                 )}
               </p>
             )}
           </div>
           {data.team.velocityByWeek && data.team.velocityByWeek.length > 0 && (
             <div className="min-h-[200px]">
-              <h3 className="text-slate-300 text-sm font-medium mb-2">Velocity (tasks completed per week)</h3>
+              <h3 className="text-slate-300 text-sm font-medium mb-2">{t('velocity_tasks_per_week')}</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={data.team.velocityByWeek}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="weekLabel" stroke="#64748b" fontSize={10} />
                   <YAxis stroke="#64748b" fontSize={12} />
                   <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }} />
-                  <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Completed" />
+                  <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} name={t('completed')} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )}
-          <h3 className="text-slate-300 text-sm font-medium mb-2">Open tasks by assignee</h3>
+          <h3 className="text-slate-300 text-sm font-medium mb-2">{t('open_tasks_by_assignee')}</h3>
           <div className="min-h-[240px]">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.team.byAssignee} layout="vertical" margin={{ left: 80 }}>
@@ -171,11 +173,11 @@ const Analytics: React.FC = () => {
 
       {/* Financial */}
       <PermissionGate permission={Permission.VIEW_FINANCIALS}>
-        <GlassCard title="Financial analytics" className="flex items-center gap-2">
+        <GlassCard title={t('financial_analytics')} className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-cyan-500" />
           <div className="flex-1 grid md:grid-cols-2 gap-6">
             <div className="min-h-[220px]">
-              <h3 className="text-slate-300 text-sm font-medium mb-2">Revenue by month (SAR)</h3>
+              <h3 className="text-slate-300 text-sm font-medium mb-2">{t('revenue_by_month')}</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={data.financial.revenueByMonth}>
                   <defs>
@@ -193,8 +195,8 @@ const Analytics: React.FC = () => {
               </ResponsiveContainer>
             </div>
             <div className="min-h-[200px]">
-              <h3 className="text-slate-300 text-sm font-medium mb-2">AR aging (SAR)</h3>
-              <p className="text-slate-500 text-sm mb-2">Total outstanding: {data.financial.totalOutstanding.toLocaleString()} SAR</p>
+              <h3 className="text-slate-300 text-sm font-medium mb-2">{t('ar_aging_title')}</h3>
+              <p className="text-slate-500 text-sm mb-2">{t('total_outstanding')}: {data.financial.totalOutstanding.toLocaleString()} SAR</p>
               {arAgingData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -215,7 +217,7 @@ const Analytics: React.FC = () => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-slate-500 text-sm">No outstanding AR.</p>
+                <p className="text-slate-500 text-sm">{t('no_outstanding_ar')}</p>
               )}
             </div>
           </div>
@@ -223,11 +225,11 @@ const Analytics: React.FC = () => {
       </PermissionGate>
 
       {/* Findings */}
-      <GlassCard title="Findings analytics" className="flex items-center gap-2">
+      <GlassCard title={t('findings_analytics')} className="flex items-center gap-2">
         <AlertCircle className="w-5 h-5 text-cyan-500" />
         <div className="flex-1 grid md:grid-cols-2 gap-6">
           <div className="min-h-[200px]">
-            <h3 className="text-slate-300 text-sm font-medium mb-2">By severity</h3>
+            <h3 className="text-slate-300 text-sm font-medium mb-2">{t('by_severity')}</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.findings.bySeverity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -239,7 +241,7 @@ const Analytics: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="min-h-[200px]">
-            <h3 className="text-slate-300 text-sm font-medium mb-2">By status</h3>
+            <h3 className="text-slate-300 text-sm font-medium mb-2">{t('by_status')}</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.findings.byStatus}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -252,8 +254,8 @@ const Analytics: React.FC = () => {
           </div>
         </div>
         <p className="text-slate-500 text-sm mt-2">
-          Closed: {data.findings.totalClosed}
-          {data.findings.mttrDays != null && ` · MTTR: ${data.findings.mttrDays} days`}
+          {t('closed_findings')}: {data.findings.totalClosed}
+          {data.findings.mttrDays != null && ` · ${t('mttr')}: ${data.findings.mttrDays} ${t('days')}`}
         </p>
       </GlassCard>
     </div>

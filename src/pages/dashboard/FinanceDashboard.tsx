@@ -20,13 +20,13 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
       load();
    }, []);
 
-   if (loading) return <div className="text-center p-10 text-slate-500">Loading Financial Data...</div>;
+   if (loading) return <div className="text-center p-10 text-slate-500">{t('loading_financial')}</div>;
 
    return (
       <div className="space-y-8">
        <div>
           <h1 className="text-4xl font-black font-display text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard')}</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Financial Overview & Accounts Receivable.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('financial_overview')}</p>
        </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -44,10 +44,10 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
                 <table className="w-full text-left text-sm">
                    <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800/50">
                       <tr>
-                         <th className="pb-4">Invoice</th>
-                         <th className="pb-4">Amount</th>
-                         <th className="pb-4">Due Date</th>
-                         <th className="pb-4">Status</th>
+                         <th className="pb-4">{t('invoice')}</th>
+                         <th className="pb-4">{t('amount')}</th>
+                         <th className="pb-4">{t('due_date')}</th>
+                         <th className="pb-4">{t('status')}</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -56,16 +56,16 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
                             <td className="py-4 font-mono font-bold text-slate-600 dark:text-slate-300">{inv.reference}</td>
                             <td className="py-4 text-rose-600 dark:text-rose-400 font-black">{inv.currency} {inv.amount.toLocaleString()}</td>
                             <td className="py-4 text-slate-500 dark:text-slate-400 font-medium">{inv.dueDate}</td>
-                            <td className="py-4"><Badge variant="danger" size="sm">Overdue</Badge></td>
+                            <td className="py-4"><Badge variant="danger" size="sm">{t('overdue')}</Badge></td>
                          </tr>
                       ))}
-                      {stats.overdueInvoices.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No overdue payments.</td></tr>}
+                      {stats.overdueInvoices.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">{t('no_overdue_payments')}</td></tr>}
                    </tbody>
                 </table>
              </div>
           </GlassCard>
 
-          <GlassCard title="Recent Invoices">
+          <GlassCard title={t('recent_invoices')}>
              <div className="space-y-4 mt-4">
                 {(stats.recentInvoices as Invoice[]).map(inv => (
                    <div key={inv.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-slate-100 dark:border-transparent hover:bg-white dark:hover:bg-slate-800/50 hover:shadow-md transition-all group">

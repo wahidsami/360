@@ -185,7 +185,7 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
         <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-6 flex flex-col gap-3 mb-4 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
                 <span className="text-base">🔮</span>
-                <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-900 dark:text-slate-400">Predictive Insights</h3>
+                <h3 className="text-[11px] font-black tracking-widest uppercase text-slate-900 dark:text-slate-400">{t('predictive_insights')}</h3>
             </div>
             <div className="space-y-2">
                 {insights.map((insight, idx) => (
@@ -234,9 +234,9 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
                     <Sparkles className="w-5 h-5" />
                 </div>
                 <div className="flex-grow">
-                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60 text-slate-500 dark:text-slate-400">PRIMARY ACTION</p>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{action.title}</h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{action.description}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60 text-slate-500 dark:text-slate-400">{t('primary_action')}</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{t(action.title, { defaultValue: action.title })}</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{t(action.description, { defaultValue: action.description })}</p>
 
                     {action.details && (
                         <div className="mt-3 space-y-2">
@@ -294,7 +294,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                 variant="primary"
                 className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 border-none shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_20px_rgba(34,211,238,0.5)] font-black uppercase tracking-widest text-[10px] px-6 h-10 transition-all rounded-xl"
             >
-                ⚡ Quick Actions
+                {t('quick_actions_btn')}
             </Button>
 
             {isOpen && (
@@ -452,7 +452,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 <Activity className="w-8 h-8" />
                             </div>
                             <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'completed' ? 'success' : 'neutral'} className="px-3 py-1 text-xs uppercase tracking-widest font-black">
-                                {project.status.replace(/_/g, ' ')}
+                                {t(`status_${project.status.toLowerCase()}`, { defaultValue: project.status.replace(/_/g, ' ') })}
                             </Badge>
                             <p className="text-[10px] text-cyan-400/60 font-bold mt-2 uppercase tracking-tighter">{t('current_status')}</p>
                         </div>
@@ -462,10 +462,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                        {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{(readiness?.stage || 'SETUP').toUpperCase()}</span>
+                                        {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{t(`stage_${(readiness?.stage || 'SETUP').toLowerCase()}`).toUpperCase()}</span>
                                     </h2>
                                     <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                        {readiness?.stageExplanation || 'Initial project parameters and team setup required.'}
+                                        {t(`stage_desc_${(readiness?.stage || 'SETUP').toLowerCase()}`, { defaultValue: readiness?.stageExplanation || 'Initial project parameters and team setup required.' })}
                                     </p>
                                 </div>
 
@@ -479,10 +479,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                                 <div className="flex flex-col items-center relative">
                                                     <div
                                                         className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
-                                                        title={s}
+                                                        title={t(`stage_${s.toLowerCase()}`)}
                                                     />
                                                     <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
-                                                        {s}
+                                                        {t(`stage_${s.toLowerCase()}`)}
                                                     </span>
                                                 </div>
                                                 {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
@@ -513,8 +513,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </div>
                     </div>
                     <div className="text-center">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness')}</h4>
-                        <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} setup checks complete</p>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
+                        <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
                     </div>
                 </GlassCard>
             </div>

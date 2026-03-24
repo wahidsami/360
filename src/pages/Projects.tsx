@@ -57,7 +57,7 @@ export const ProjectsList: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold font-display text-white">{t('projects')}</h1>
-          <p className="text-slate-400">Manage all active and planned missions.</p>
+          <p className="text-slate-400">{t('projects_subtitle')}</p>
         </div>
         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
           <Button onClick={() => navigate('new')} className="shadow-lg shadow-cyan-500/20">
@@ -79,12 +79,12 @@ export const ProjectsList: React.FC = () => {
           </div>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40">
             <option value="all">{t('all_statuses')}</option>
-            <option value="planning">Planning</option>
-            <option value="in_progress">In Progress</option>
-            <option value="testing">Testing</option>
-            <option value="deployed">Deployed</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="archived">Archived</option>
+            <option value="planning">{t('planning')}</option>
+            <option value="in_progress">{t('in_progress')}</option>
+            <option value="testing">{t('testing')}</option>
+            <option value="deployed">{t('deployed')}</option>
+            <option value="maintenance">{t('maintenance')}</option>
+            <option value="archived">{t('archived')}</option>
           </Select>
         </div>
       </GlassCard>
@@ -105,9 +105,9 @@ export const ProjectsList: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500">Retrieving mission data...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-500">{t('retrieving_mission_data')}</td></tr>
               ) : filteredProjects.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500">No projects found.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-500">{t('no_projects_found')}</td></tr>
               ) : (
                 filteredProjects.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-800/30 transition-colors cursor-pointer group" onClick={() => navigate(p.id)}>
@@ -119,11 +119,11 @@ export const ProjectsList: React.FC = () => {
                         <span className="font-medium text-slate-200">{p.name}</span>
                       </div>
                     </td>
-                    <td className="p-6 text-slate-400">{clients[p.clientId] || 'Unknown'}</td>
-                    <td className="p-6"><Badge variant="neutral">{p.status}</Badge></td>
+                    <td className="p-6 text-slate-400">{clients[p.clientId] || t('unknown')}</td>
+                    <td className="p-6"><Badge variant="neutral">{t(p.status)}</Badge></td>
                     <td className="p-6">
                       <Badge variant={p.health === 'good' ? 'success' : p.health === 'at-risk' ? 'warning' : 'danger'}>
-                        {p.health.toUpperCase()}
+                        {t(p.health).toUpperCase()}
                       </Badge>
                     </td>
                     <td className="p-6">

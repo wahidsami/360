@@ -64,7 +64,7 @@ export const ClientList: React.FC = () => {
 
   const handleArchive = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to archive this client?')) {
+    if (window.confirm(t('confirm_archive_client'))) {
       await api.clients.archive(id);
       loadData();
     }
@@ -77,7 +77,7 @@ export const ClientList: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold font-display text-white">{t('clients')}</h1>
-          <p className="text-slate-400">Manage your external partners and portfolios.</p>
+          <p className="text-slate-400">{t('clients_subtitle')}</p>
         </div>
         <PermissionGate permission={Permission.MANAGE_CLIENTS}>
           <Button onClick={() => navigate('new')} className="shadow-lg shadow-cyan-500/20">
@@ -102,9 +102,9 @@ export const ClientList: React.FC = () => {
             <div className="w-40">
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">{t('all_statuses')}</option>
-                <option value="active">Active</option>
-                <option value="lead">Lead</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">{t('active')}</option>
+                <option value="lead">{t('lead')}</option>
+                <option value="inactive">{t('inactive')}</option>
               </Select>
             </div>
             <div className="w-40">
@@ -132,9 +132,9 @@ export const ClientList: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Scanning database...</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-500">{t('scanning_database')}</td></tr>
               ) : filteredClients.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-500">No entities found.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-500">{t('no_entities_found')}</td></tr>
               ) : (
                 filteredClients.map((client) => (
                   <tr key={client.id} className="hover:bg-slate-800/30 transition-colors group cursor-pointer" onClick={() => navigate(client.id)}>
@@ -165,7 +165,7 @@ export const ClientList: React.FC = () => {
                     </td>
                     <td className="p-6">
                       <Badge variant={client.status === 'active' ? 'success' : client.status === 'lead' ? 'info' : 'neutral'}>
-                        {client.status.toUpperCase()}
+                        {t(client.status).toUpperCase()}
                       </Badge>
                     </td>
                     <td className="p-6">

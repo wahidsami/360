@@ -170,7 +170,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold font-display text-white">{t('findings')}</h1>
-          <p className="text-slate-400">Vulnerability assessment and quality assurance registry.</p>
+          <p className="text-slate-400">{t('findings_subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -184,7 +184,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
               }
             }}
           >
-            <Download className="w-4 h-4 mr-2" /> Export CSV
+            <Download className="w-4 h-4 mr-2" /> {t('export_csv')}
           </Button>
           {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
             <Button onClick={() => setIsModalOpen(true)} className="shadow-[0_0_15px_rgba(6,182,212,0.4)]">
@@ -196,10 +196,10 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KpiCard label="Critical Issues" value={findings.filter(f => f.severity.toLowerCase() === 'critical').length} icon={<ShieldAlert className="text-rose-500" />} />
-        <KpiCard label="Open Findings" value={findings.filter(f => f.status.toLowerCase() === 'open').length} icon={<AlertCircle className="text-amber-500" />} />
-        <KpiCard label="Resolution Rate" value={findings.length ? `${Math.round((findings.filter(f => f.status.toLowerCase() === 'closed').length / findings.length) * 100)}%` : '0%'} icon={<CheckCircle className="text-emerald-500" />} trend={12} />
-        <KpiCard label="Avg. Resolution Time" value="4.2 days" icon={<Calendar className="text-cyan-500" />} />
+        <KpiCard label={t('critical_issues')} value={findings.filter(f => f.severity.toLowerCase() === 'critical').length} icon={<ShieldAlert className="text-rose-500" />} />
+        <KpiCard label={t('open_findings')} value={findings.filter(f => f.status.toLowerCase() === 'open').length} icon={<AlertCircle className="text-amber-500" />} />
+        <KpiCard label={t('resolution_rate')} value={findings.length ? `${Math.round((findings.filter(f => f.status.toLowerCase() === 'closed').length / findings.length) * 100)}%` : '0%'} icon={<CheckCircle className="text-emerald-500" />} trend={12} />
+        <KpiCard label={t('avg_resolution_time')} value="4.2 days" icon={<Calendar className="text-cyan-500" />} />
       </div>
 
       {/* Filters */}
@@ -208,7 +208,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           <div className="md:col-span-4 relative">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
             <Input
-              placeholder="Search findings..."
+              placeholder={t('search_findings')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -216,7 +216,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           </div>
           <div className="md:col-span-2">
             <Select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
-              <option value="all">Severity: All</option>
+              <option value="all">{t('severity_all')}</option>
               <option value="critical">Critical</option>
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -225,7 +225,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           </div>
           <div className="md:col-span-2">
             <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="all">Status: All</option>
+              <option value="all">{t('status_all')}</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="in_review">In Review</option>
@@ -236,13 +236,13 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
           </div>
           <div className="md:col-span-2">
             <Select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
-              <option value="all">Client: All</option>
+              <option value="all">{t('client_all')}</option>
               {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </Select>
           </div>
           <div className="md:col-span-2 flex items-center justify-end">
             <Button variant="ghost" className="text-slate-400 hover:text-white">
-              <Filter className="w-4 h-4 mr-2" /> Advanced
+              <Filter className="w-4 h-4 mr-2" /> {t('advanced_filters')}
             </Button>
           </div>
         </div>

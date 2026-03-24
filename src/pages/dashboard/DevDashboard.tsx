@@ -31,7 +31,7 @@ export const DevDashboard: React.FC<{ role: Role }> = ({ role }) => {
     overdue: tasks.filter(t => t.status !== 'done' && t.dueDate && new Date(t.dueDate) < new Date()).length
   };
 
-  if (loading) return <div className="text-center p-10 text-slate-500">Loading Workspace...</div>;
+  if (loading) return <div className="text-center p-10 text-slate-500">{t('loading_workspace')}</div>;
 
   return (
     <div className="space-y-8">
@@ -62,7 +62,7 @@ export const DevDashboard: React.FC<{ role: Role }> = ({ role }) => {
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-500 mt-1 uppercase tracking-widest">
                         <Briefcase className="w-3 h-3" />
                         {task.dueDate && (
-                          <span className={new Date(task.dueDate) < new Date() ? 'text-rose-500' : ''}>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                          <span className={new Date(task.dueDate) < new Date() ? 'text-rose-500' : ''}>{t('due_colon')} {new Date(task.dueDate).toLocaleDateString()}</span>
                         )}
                       </div>
                     </div>
@@ -72,22 +72,22 @@ export const DevDashboard: React.FC<{ role: Role }> = ({ role }) => {
               ))}
               {tasks.filter(t => t.status !== 'done').length === 0 && <p className="text-slate-500 italic p-4 text-center">{t('no_tasks')}</p>}
             </div>
-            <Button variant="ghost" className="w-full mt-4 text-slate-500 hover:text-cyan-600 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/app/my-work')}>View All Work</Button>
+            <Button variant="ghost" className="w-full mt-4 text-slate-500 hover:text-cyan-600 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/app/my-work')}>{t('view_all_work')}</Button>
           </GlassCard>
         </div>
 
         <div>
-          <GlassCard title="Activity Feed">
+          <GlassCard title={t('activity_feed')}>
             <div className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-700/50 space-y-8 py-2">
               <div className="relative">
                 <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white dark:bg-cyan-900 border-2 border-cyan-500 shadow-sm transition-transform group-hover:scale-125"></div>
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight"> commented on <span className="text-cyan-600 dark:text-cyan-400">API Gateway</span></p>
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">2 hours ago</span>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight">{t('commented_on')} <span className="text-cyan-600 dark:text-cyan-400">API Gateway</span></p>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('two_hours_ago')}</span>
               </div>
               <div className="relative">
                 <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 shadow-sm"></div>
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight"> moved <span className="text-slate-900 dark:text-white">Auth Logic</span> to Review</p>
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">5 hours ago</span>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight">{t('moved')} <span className="text-slate-900 dark:text-white">Auth Logic</span> {t('to_review')}</p>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('five_hours_ago')}</span>
               </div>
             </div>
           </GlassCard>

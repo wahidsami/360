@@ -410,7 +410,7 @@ export const ProjectDetails: React.FC = () => {
     }
   };
 
-  if (!project) return <div className="p-10 text-center text-slate-500">Loading mission data...</div>;
+  if (!project) return <div className="p-10 text-center text-slate-500">{t('loading_mission_data')}</div>;
 
   return (
     <div className="space-y-6">
@@ -423,7 +423,7 @@ export const ProjectDetails: React.FC = () => {
             <h1 className="text-3xl font-bold font-display text-white">{project.name}</h1>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-slate-400 cursor-pointer hover:text-cyan-400 transition-colors" onClick={() => navigate(`/app/clients/${client?.id}`)}>
-                {client?.name || "Unknown Client"}
+                {client?.name || t('unknown_client')}
               </p>
               <span className="text-slate-600">•</span>
               <p className="text-slate-500 text-sm">
@@ -440,12 +440,12 @@ export const ProjectDetails: React.FC = () => {
             <Sparkles className="w-4 h-4 mr-1" /> AI
           </Button>
           <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'deployed' ? 'success' : 'neutral'}>
-            {project.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+            {t(project.status).toUpperCase()}
           </Badge>
           <PermissionGate permission={Permission.MANAGE_PROJECTS}>
             {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
               <Button variant="secondary" size="sm" onClick={() => navigate(`/app/projects/${project.id}/edit`)}>
-                <Edit className="w-4 h-4 mr-2" /> Edit
+                <Edit className="w-4 h-4 mr-2" /> {t('edit')}
               </Button>
             )}
           </PermissionGate>
@@ -464,7 +464,7 @@ export const ProjectDetails: React.FC = () => {
                 {idx > 0 && <div className="h-6 w-px bg-slate-700/50 mx-2 self-center shrink-0" />}
                 <div className="flex items-center gap-1">
                   <span className={`text-[10px] uppercase tracking-widest font-bold ${group.color} opacity-40 px-2 select-none whitespace-nowrap hidden lg:inline`}>
-                    {group.label}
+                    {t(`tab_group_${group.id}`)}
                   </span>
                   <div className="flex gap-0.5">
                     {groupTabs.map(tab => (
@@ -480,7 +480,7 @@ export const ProjectDetails: React.FC = () => {
                           : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
                           } ${isPending ? 'opacity-50' : ''}`}
                       >
-                        {tab.label}
+                        {t(`tab_${tab.id}`)}
                       </button>
                     ))}
                   </div>

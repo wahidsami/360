@@ -64,9 +64,9 @@ export const Calendar: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold font-display text-white flex items-center gap-2">
           <CalendarIcon className="w-8 h-8 text-cyan-500" />
-          {t('calendar') || 'Calendar'}
+          {t('calendar')}
         </h1>
-        <p className="text-slate-400 mt-1">{t('calendar_subtitle') || 'Your assigned tasks by due date.'}</p>
+        <p className="text-slate-400 mt-1">{t('calendar_subtitle')}</p>
       </div>
 
       <div className="calendar-wrap bg-slate-900/80 border border-slate-700 rounded-xl p-4 overflow-hidden [--fc-border-color:theme(colors.slate.700)] [--fc-button-bg-color:theme(colors.cyan.600)] [--fc-button-border-color:theme(colors.cyan.500)] [--fc-today-bg-color:theme(colors.cyan.500/10)] [--fc-page-bg-color:transparent] [--fc-neutral-bg-color:theme(colors.slate.800/50)] [--fc-list-event-hover-bg-color:theme(colors.slate.700)]">
@@ -87,8 +87,8 @@ export const Calendar: React.FC = () => {
             eventDisplay="block"
             dayMaxEvents={4}
             views={{
-              listWeek: { buttonText: t('week') || 'Week' },
-              dayGridMonth: { buttonText: t('month') || 'Month' },
+              listWeek: { buttonText: t('week') },
+              dayGridMonth: { buttonText: t('month') },
             }}
             themeSystem="standard"
             eventClassNames="fc-event-cyan"

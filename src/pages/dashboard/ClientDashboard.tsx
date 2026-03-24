@@ -29,20 +29,20 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
       load();
    }, [user]);
 
-   if (loading) return <div className="text-center p-10 text-slate-500">Loading Portal...</div>;
-   if (!stats) return <div className="text-center p-10 text-slate-500">No client association found. Contact support.</div>;
+   if (loading) return <div className="text-center p-10 text-slate-500">{t('loading_portal')}</div>;
+   if (!stats) return <div className="text-center p-10 text-slate-500">{t('no_client_assoc')}</div>;
 
    return (
       <div className="space-y-10">
          <div>
             <h1 className="text-4xl font-black font-display text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard')}</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Project Portfolio Overview & Asset Registry.</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('portfolio_overview')}</p>
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
             <KpiCard label={t('next_milestones')} value={stats.nextMilestonesCount ?? 0} icon={<Flag />} />
-            <KpiCard label="Pending Approvals" value="0" icon={<Clock />} />
+            <KpiCard label={t('pending_approvals')} value="0" icon={<Clock />} />
             <KpiCard label={t('last_activity')} value={stats.latestUpdatesCount ?? 0} />
          </div>
 
@@ -56,18 +56,18 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
                         <div key={p.id} className="p-5 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 rounded-2xl cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-lg transition-all group" onClick={() => navigate(`/app/projects/${p.id}`)}>
                            <div className="flex justify-between items-start mb-3">
                               <div>
-                                 <h4 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight group-hover:text-cyan-600 transition-colors">{p.name || 'Untitled Project'}</h4>
-                                 <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Deadline: {p.deadline || 'No deadline'}</p>
+                                 <h4 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight group-hover:text-cyan-600 transition-colors">{p.name || t('untitled_project')}</h4>
+                                 <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{t('deadline_colon')} {p.deadline || t('no_deadline')}</p>
                               </div>
                               <Badge variant={p.health === 'good' ? 'success' : 'warning'} size="sm">{p.health || 'unknown'}</Badge>
                            </div>
                            <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-full h-2 overflow-hidden shadow-inner">
                               <div className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-1000 group-hover:scale-x-105 origin-left" style={{ width: `${p.progress || 0}%` }}></div>
                            </div>
-                           <div className="flex justify-end mt-2 text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest">{p.progress || 0}% Complete</div>
+                           <div className="flex justify-end mt-2 text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest">{p.progress || 0}{t('percent_complete')}</div>
                         </div>
                      ))}
-                     {(!stats.myProjects || stats.myProjects.length === 0) && <p className="text-slate-500 text-sm font-medium text-center py-6 italic">No active projects in portfolio.</p>}
+                     {(!stats.myProjects || stats.myProjects.length === 0) && <p className="text-slate-500 text-sm font-medium text-center py-6 italic">{t('no_active_projects')}</p>}
                   </div>
                </GlassCard>
             </div>
@@ -86,7 +86,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            </div>
                         </div>
                      ))}
-                     {(!stats.files || stats.files.length === 0) && <p className="text-slate-500 text-sm font-medium text-center py-6 italic">No shared assets available.</p>}
+                     {(!stats.files || stats.files.length === 0) && <p className="text-slate-500 text-sm font-medium text-center py-6 italic">{t('no_shared_assets')}</p>}
                   </div>
                </GlassCard>
             </div>

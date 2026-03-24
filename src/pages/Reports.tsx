@@ -90,21 +90,21 @@ export const Reports: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold font-display text-white">{t('reports')}</h1>
-          <p className="text-slate-400">Intelligence aggregation and data export.</p>
+          <p className="text-slate-400">{t('reports_subtitle')}</p>
         </div>
         <Button className="shadow-[0_0_15px_rgba(6,182,212,0.4)]" onClick={() => setGenerateModalOpen(true)}>
-          <FileText className="w-4 h-4 mr-2" /> Generate Report
+          <FileText className="w-4 h-4 mr-2" /> {t('generate_report')}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KpiCard label="Total Reports" value="142" trend={12} icon={<FileText />} />
-        <KpiCard label="Generated (Mo)" value="24" trend={8} icon={<Activity />} />
-        <KpiCard label="Storage Used" value="1.2 GB" icon={<BarChart3 />} />
+        <KpiCard label={t('total_reports')} value="142" trend={12} icon={<FileText />} />
+        <KpiCard label={t('generated_mo')} value="24" trend={8} icon={<Activity />} />
+        <KpiCard label={t('storage_used')} value="1.2 GB" icon={<BarChart3 />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard title="Report Composition">
+        <GlassCard title={t('report_composition')}>
           <div className="h-64 w-full min-h-[200px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%" minHeight={100}>
               <RePieChart>
@@ -131,7 +131,7 @@ export const Reports: React.FC = () => {
           </div>
         </GlassCard>
 
-        <GlassCard title="Usage Trends">
+        <GlassCard title={t('usage_trends')}>
           <div className="h-64 w-full min-h-[200px]">
             <ResponsiveContainer width="100%" height="100%" minHeight={100}>
               <BarChart data={TREND_DATA}>
@@ -151,7 +151,7 @@ export const Reports: React.FC = () => {
 
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          <h3 className="text-lg font-semibold text-white">Archives</h3>
+          <h3 className="text-lg font-semibold text-white">{t('archives')}</h3>
           <div className="flex gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
               <Input
@@ -163,10 +163,10 @@ export const Reports: React.FC = () => {
               <Filter className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
             </div>
             <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-40">
-              <option value="all">All Types</option>
-              <option value="security">Security</option>
-              <option value="financial">Financial</option>
-              <option value="performance">Performance</option>
+              <option value="all">{t('all_types')}</option>
+              <option value="security">{t('security')}</option>
+              <option value="financial">{t('financial')}</option>
+              <option value="performance">{t('performance')}</option>
             </Select>
           </div>
         </div>
