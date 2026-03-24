@@ -1286,6 +1286,8 @@ export const api = {
       fetchApi('/users/me/dashboard-preferences', { silent: true }),
     updateDashboardPreferences: async (data: { widgets: { id: string; order: number; config?: Record<string, unknown> }[] }) =>
       fetchApi('/users/me/dashboard-preferences', { method: 'PATCH', body: JSON.stringify(data), silent: true }),
+    changePassword: async (data: { currentPassword: string; newPassword: string }) =>
+      fetchApi('/users/me/password', { method: 'PATCH', body: JSON.stringify(data) }),
   },
 
   dashboard: {
