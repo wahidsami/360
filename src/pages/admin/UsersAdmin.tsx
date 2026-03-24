@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import {
-  Search, Plus, MoreHorizontal, Shield, User as UserIcon,
-  Mail, Edit2, Power, Filter, CheckCircle, XCircle
+  Search, Plus, Shield, User as UserIcon,
+  Mail, Edit2, Power, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/components/ui/UIComponents";
 import { Modal } from "@/components/ui/Modal";
@@ -42,6 +43,7 @@ export const UsersAdmin: React.FC = () => {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: Role.VIEWER, permissions: [] as string[], clientId: '' });
+  const [inviteResult, setInviteResult] = useState<{ link: string; email: string } | null>(null);
 
   // Filtering
   const filteredUsers = users.filter(u => {
@@ -67,16 +69,16 @@ export const UsersAdmin: React.FC = () => {
       setModalOpen(false);
       setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
 
-      // Show invite link if available (it should be returned by create)
+      // Show invite result
       if ((created as any).inviteLink) {
-        // We can use a toast or alert, but a nice modal is better. 
-        // For now, let's use a simple prompt/alert to copy.
-        // In a real app we'd have a specific "User Created" modal.
-        window.prompt('User Created! Send this Invite Link to the user:', (created as any).inviteLink);
+        toast.success(`Invite email sent to ${newUser.email}`);
+        setInviteResult({ link: (created as any).inviteLink, email: newUser.email });
+      } else {
+        toast.success('User created successfully');
       }
     } catch (e) {
       console.error("Failed to create user", e);
-      alert('Failed to create user');
+      toast.error('Failed to create user. Please try again.');
     }
   };
 
@@ -316,7 +318,34 @@ export const UsersAdmin: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Invite Success Modal */}
+      <Modal isOpen={!!inviteResult} onClose={() => setInviteResult(null)} title="User Created">
+        {inviteResult && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+              <p className="text-sm text-emerald-300">
+                Invite email sent to <strong>{inviteResult.email}</strong>
+              </p>
+            </div>
+            <div>
+              <Label>Backup invite link (in case email doesn't arrive)</Label>
+              <div className="flex items-center gap-2 mt-2 p-2.5 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <ExternalLink className="w-4 h-4 text-slate-500 shrink-0" />
+                <p className="text-xs text-slate-400 truncate flex-1 font-mono">{inviteResult.link}</p>
+                <CopyButton value={inviteResult.link} />
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">Link expires in 72 hours. Single-use only.</p>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setInviteResult(null)}>Done</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
+
   );
 };
 
