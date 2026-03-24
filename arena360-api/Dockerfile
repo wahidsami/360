@@ -8,12 +8,15 @@ RUN apk add --no-cache openssl
 COPY package*.json ./
 COPY prisma ./prisma/
 
-RUN npm install
+# Force install ALL deps including devDependencies (e.g. @nestjs/cli needed for `nest build`)
+# NODE_ENV=production set by Coolify would skip devDeps — override it here
+RUN npm install --include=dev
 
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build
+# Use npx to call nest directly from node_modules — avoids PATH issues
+RUN npx nest build
 
 # Production stage
 FROM node:22-alpine
