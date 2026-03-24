@@ -16,7 +16,6 @@ export class UsersController {
 
     @Post()
     create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
-        // Pass current user's OrgId and UserId to scope new user and invite
         return this.usersService.create(createUserDto, req.user?.orgId, req.user?.id);
     }
 
@@ -26,12 +25,15 @@ export class UsersController {
         return this.usersService.findAll(req.user?.orgId);
     }
 
+    // Explicit @Roles on each PATCH so getAllAndOverride picks them up unambiguously
     @Patch(':id')
+    @Roles(GlobalRole.SUPER_ADMIN, GlobalRole.OPS, GlobalRole.PM, GlobalRole.DEV)
     update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.usersService.update(id, updateUserDto);
     }
 
     @Patch(':id/permissions')
+    @Roles(GlobalRole.SUPER_ADMIN, GlobalRole.OPS, GlobalRole.PM, GlobalRole.DEV)
     updatePermissions(@Param('id') id: string, @Body() dto: UpdatePermissionsDto) {
         return this.usersService.updatePermissions(id, dto.permissions);
     }
