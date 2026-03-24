@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ProjectUpdate, Permission } from '@/types';
 import { Button, GlassCard, Badge, Modal, Input } from '../ui/UIComponents';
 import { Plus, MessageSquare, Tag, Globe, Lock } from 'lucide-react';
@@ -11,6 +12,7 @@ interface UpdatesTabProps {
 }
 
 export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
+    const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,10 +37,10 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">Project Timeline</h3>
+                <h3 className="text-xl font-bold text-white">{t('project_timeline')}</h3>
                 <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                     <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" /> Post Update
+                        <Plus className="w-4 h-4 mr-2" /> {t('post_update')}
                     </Button>
                 </PermissionGate>
             </div>
@@ -57,14 +59,14 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
                                     <div className="flex items-center gap-2 mb-1">
                                         <h4 className="font-bold text-white text-lg">{update.title}</h4>
                                         {update.visibility === 'client' ?
-                                            <Badge size="sm" variant="success" className="opacity-70"><Globe className="w-3 h-3 mr-1" /> Client Visible</Badge> :
-                                            <Badge size="sm" variant="neutral" className="opacity-70"><Lock className="w-3 h-3 mr-1" /> Internal</Badge>
+                                            <Badge size="sm" variant="success" className="opacity-70"><Globe className="w-3 h-3 mr-1" /> {t('client_visible')}</Badge> :
+                                            <Badge size="sm" variant="neutral" className="opacity-70"><Lock className="w-3 h-3 mr-1" /> {t('internal')}</Badge>
                                         }
                                     </div>
                                     <p className="text-xs text-slate-500">
                                         {update.timestamp && !isNaN(new Date(update.timestamp).getTime()) ?
                                             formatDistanceToNow(new Date(update.timestamp), { addSuffix: true }) :
-                                            'Just now'} by <span className="text-slate-300">{update.authorName || 'Unknown'}</span>
+                                            t('just_now')} {t('by_author')} <span className="text-slate-300">{update.authorName || t('unknown')}</span>
                                     </p>
                                 </div>
                                 <Badge variant="neutral">{update.type}</Badge>
@@ -76,42 +78,42 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
                 {updates.length === 0 && (
                     <div className="ml-6 py-16 text-center bg-slate-800/10 border border-dashed border-slate-800 rounded-xl px-4">
                         <MessageSquare className="w-10 h-10 mx-auto mb-3 text-slate-700" />
-                        <p className="text-slate-500 italic text-sm">No project updates have been recorded yet.</p>
+                        <p className="text-slate-500 italic text-sm">{t('no_project_updates')}</p>
                         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                             <Button variant="ghost" size="sm" className="mt-4 text-cyan-500" onClick={() => setIsModalOpen(true)}>
-                                <Plus className="w-3 h-3 mr-2" /> Post an Update
+                                <Plus className="w-3 h-3 mr-2" /> {t('post_an_update')}
                             </Button>
                         </PermissionGate>
                     </div>
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Post Project Update">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('post_project_update')}>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <Input name="title" label="Update Title" required />
+                    <Input name="title" label={t('update_title')} required />
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('type')}</label>
                         <select name="type" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                            <option value="general">General</option>
-                            <option value="technical">Technical</option>
-                            <option value="milestone">Milestone Reached</option>
-                            <option value="alert">Alert/Issue</option>
+                            <option value="general">{t('general')}</option>
+                            <option value="technical">{t('technical')}</option>
+                            <option value="milestone">{t('milestone_reached')}</option>
+                            <option value="alert">{t('alert_issue')}</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Visibility</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('visibility_label')}</label>
                         <select name="visibility" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                            <option value="internal">Internal Team Only</option>
-                            <option value="client">Visible to Client</option>
+                            <option value="internal">{t('internal_team_only')}</option>
+                            <option value="client">{t('visible_to_client')}</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Content</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('content')}</label>
                         <textarea name="content" rows={5} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" required></textarea>
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Post Update</Button>
+                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" variant="primary">{t('post_update')}</Button>
                     </div>
                 </form>
             </Modal>

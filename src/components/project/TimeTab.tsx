@@ -104,8 +104,8 @@ export const TimeTab: React.FC<TimeTabProps> = ({ projectId, tasks, currentUserI
         <div className="flex items-center gap-2 text-slate-400">
           <Clock className="w-5 h-5" />
           <span className="text-sm">
-            Total: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
-            {totalBillable !== totalMinutes && ` (billable: ${Math.floor(totalBillable / 60)}h ${totalBillable % 60}m)`}
+            {t('total')}: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
+            {totalBillable !== totalMinutes && ` (${t('billable')}: ${Math.floor(totalBillable / 60)}h ${totalBillable % 60}m)`}
           </span>
         </div>
         <Button size="sm" onClick={openCreate} disabled={tasks.length === 0}>

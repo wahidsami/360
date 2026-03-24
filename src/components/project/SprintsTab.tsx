@@ -151,7 +151,7 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
             onClick={() => setSelectedSprintId('backlog')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedSprintId === 'backlog' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700'}`}
           >
-            <ListTodo className="w-4 h-4 inline mr-2" /> Backlog
+            <ListTodo className="w-4 h-4 inline mr-2" /> {t('backlog')}
           </button>
           {sprints.map((s) => (
             <button
@@ -189,7 +189,7 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
                 </div>
                 <div className="ml-auto flex items-center gap-4">
                   <span className="text-slate-400 text-sm">
-                    Points: <strong className="text-cyan-400">{completedPoints}</strong> / {totalPoints}
+                    {t('points')}: <strong className="text-cyan-400">{completedPoints}</strong> / {totalPoints}
                   </span>
                   <PermissionGate permission={Permission.MANAGE_TASKS}>
                     <button type="button" onClick={() => openEdit(s)} className="p-1.5 text-slate-400 hover:text-cyan-400">
@@ -221,11 +221,11 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-700 text-left text-slate-400">
-                  <th className="pb-2 pr-4">Title</th>
-                  <th className="pb-2 pr-4">Status</th>
-                  <th className="pb-2 pr-4">Points</th>
-                  <th className="pb-2 pr-4">Assignee</th>
-                  <th className="pb-2 pr-4">{selectedSprintId === 'backlog' ? (t('add_to_sprint') || 'Add to sprint') : 'Move to'}</th>
+                  <th className="pb-2 pr-4">{t('title')}</th>
+                  <th className="pb-2 pr-4">{t('status')}</th>
+                  <th className="pb-2 pr-4">{t('points')}</th>
+                  <th className="pb-2 pr-4">{t('assignee')}</th>
+                  <th className="pb-2 pr-4">{selectedSprintId === 'backlog' ? (t('add_to_sprint') || 'Add to sprint') : t('move_to')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -241,7 +241,7 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
                         onChange={(e) => handleMoveTaskToSprint(task.id, e.target.value === 'backlog' ? null : e.target.value)}
                         className="rounded bg-slate-800 border border-slate-600 text-slate-200 text-xs px-2 py-1"
                       >
-                        <option value="backlog">Backlog</option>
+                        <option value="backlog">{t('backlog')}</option>
                         {sprints.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
@@ -258,35 +258,35 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingSprint ? (t('edit_sprint') || 'Edit sprint') : (t('new_sprint') || 'New sprint')}>
         <div className="space-y-4">
           <div>
-            <Label>Name</Label>
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="mt-1" placeholder="Sprint 1" />
+            <Label>{t('name')}</Label>
+            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="mt-1" />
           </div>
           <div>
-            <Label>Goal (optional)</Label>
-            <Input value={form.goal} onChange={(e) => setForm((f) => ({ ...f, goal: e.target.value }))} className="mt-1" placeholder="Sprint goal" />
+            <Label>{t('goal_optional')}</Label>
+            <Input value={form.goal} onChange={(e) => setForm((f) => ({ ...f, goal: e.target.value }))} className="mt-1" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Start date</Label>
+              <Label>{t('start_date')}</Label>
               <Input type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label>End date</Label>
+              <Label>{t('end_date')}</Label>
               <Input type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} className="mt-1" />
             </div>
           </div>
           {editingSprint && (
             <div>
-              <Label>Status</Label>
+              <Label>{t('status')}</Label>
               <select
                 value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                 className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2"
               >
-                <option value="PLANNING">Planning</option>
-                <option value="ACTIVE">Active</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="CANCELLED">Cancelled</option>
+                <option value="PLANNING">{t('planning')}</option>
+                <option value="ACTIVE">{t('active')}</option>
+                <option value="COMPLETED">{t('completed')}</option>
+                <option value="CANCELLED">{t('cancelled')}</option>
               </select>
             </div>
           )}

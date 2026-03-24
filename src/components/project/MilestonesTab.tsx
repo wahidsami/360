@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Milestone, Permission } from '@/types';
 import { Button, GlassCard, Badge, Input, Select, Modal, ProgressBar } from '../ui/UIComponents';
 import { Plus, Flag, Calendar, Trash2, Edit, CheckCircle } from 'lucide-react';
@@ -12,6 +13,7 @@ interface MilestonesTabProps {
 }
 
 export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpsert, onDelete }) => {
+    const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMilestone, setEditingMilestone] = useState<Partial<Milestone> | null>(null);
 
@@ -41,7 +43,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Are you sure you want to delete this milestone?')) {
+        if (confirm(t('confirm_delete_milestone'))) {
             await onDelete(id);
         }
     };
@@ -58,12 +60,12 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
             <GlassCard className="p-6">
                 <div className="flex justify-between items-end mb-4">
                     <div>
-                        <h3 className="text-xl font-bold text-white">Project Milestones</h3>
-                        <p className="text-slate-400">{completedCount} of {milestones.length} completed</p>
+                        <h3 className="text-xl font-bold text-white">{t('project_milestones')}</h3>
+                        <p className="text-slate-400">{completedCount} {t('of')} {milestones.length} {t('completed_lowercase')}</p>
                     </div>
                     <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                         <Button onClick={() => { setEditingMilestone({}); setIsModalOpen(true); }}>
-                            <Plus className="w-4 h-4 mr-2" /> Add Milestone
+                            <Plus className="w-4 h-4 mr-2" /> {t('add_milestone')}
                         </Button>
                     </PermissionGate>
                 </div>
@@ -104,37 +106,37 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                 {milestones.length === 0 && (
                     <div className="text-center py-20 bg-slate-800/20 border border-dashed border-slate-700 rounded-xl">
                         <Flag className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-20" />
-                        <h4 className="text-slate-300 font-medium italic">No milestones defined yet.</h4>
-                        <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">Milestones help track high-level progress and stage completions.</p>
+                        <h4 className="text-slate-300 font-medium italic">{t('no_milestones')}</h4>
+                        <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">{t('milestones_help')}</p>
                         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                             <Button variant="secondary" size="sm" className="mt-6" onClick={() => { setEditingMilestone({}); setIsModalOpen(true); }}>
-                                <Plus className="w-4 h-4 mr-2" /> Add Your First Milestone
+                                <Plus className="w-4 h-4 mr-2" /> {t('add_first_milestone')}
                             </Button>
                         </PermissionGate>
                     </div>
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingMilestone?.id ? "Edit Milestone" : "New Milestone"}>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingMilestone?.id ? t('edit_milestone') : t('new_milestone')}>
                 <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                    <Input name="title" label="Title" defaultValue={editingMilestone?.title} required />
+                    <Input name="title" label={t('label_title')} defaultValue={editingMilestone?.title} required />
                     <div className="grid grid-cols-2 gap-4 text-left">
-                        <Input name="dueDate" type="date" label="Due Date" defaultValue={editingMilestone?.dueDate ? new Date(editingMilestone.dueDate).toISOString().split('T')[0] : ''} required />
-                        <Select name="status" label="Status" defaultValue={editingMilestone?.status || 'pending'}>
-                            <option value="pending">Pending</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                        <Input name="dueDate" type="date" label={t('due_date')} defaultValue={editingMilestone?.dueDate ? new Date(editingMilestone.dueDate).toISOString().split('T')[0] : ''} required />
+                        <Select name="status" label={t('status')} defaultValue={editingMilestone?.status || 'pending'}>
+                            <option value="pending">{t('pending')}</option>
+                            <option value="in_progress">{t('in_progress')}</option>
+                            <option value="completed">{t('completed')}</option>
+                            <option value="cancelled">{t('cancelled')}</option>
                         </Select>
                     </div>
-                    <Input name="description" label="Description" defaultValue={editingMilestone?.description} />
+                    <Input name="description" label={t('description')} defaultValue={editingMilestone?.description} />
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Progress (%)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('progress_percent')}</label>
                         <input name="percentComplete" type="range" min="0" max="100" className="w-full" defaultValue={editingMilestone?.percentComplete || 0} />
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Save Milestone</Button>
+                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" variant="primary">{t('save_milestone')}</Button>
                     </div>
                 </form>
             </Modal>

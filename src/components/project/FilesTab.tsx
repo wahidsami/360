@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileAsset, Permission } from '@/types';
 import { Button, GlassCard, Badge, Modal, Input } from '../ui/UIComponents';
 import { Upload, File, FileText, Image, Download, Eye, X, Trash2 } from 'lucide-react';
@@ -14,6 +15,7 @@ interface FilesTabProps {
 }
 
 export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload, onDelete }) => {
+    const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -30,7 +32,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedFile) {
-            alert("Please select a file first");
+            alert(t('please_select_file'));
             return;
         }
 
@@ -69,11 +71,11 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                 a.click();
                 document.body.removeChild(a);
             } else {
-                alert('Download URL not available.');
+                alert(t('download_url_not_available'));
             }
         } catch (err) {
             console.error('Download failed', err);
-            alert('Failed to download file.');
+            alert(t('failed_to_download'));
         } finally {
             setDownloadingId(null);
         }
@@ -95,7 +97,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                     fileId: file.id
                 });
             } else {
-                alert('View URL not available.');
+                alert(t('view_url_not_available'));
             }
         } catch (err) {
             console.error('View failed', err);
@@ -105,14 +107,14 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     };
 
     const handleDelete = async (file: FileAsset) => {
-        if (!window.confirm(`Are you sure you want to delete "${file.name}"? This cannot be undone.`)) return;
+        if (!window.confirm(t('confirm_delete_file').replace('{{name}}', file.name))) return;
         if (onDelete) {
             setDownloadingId(file.id);
             try {
                 await onDelete(file.id);
             } catch (err) {
                 console.error('Delete failed', err);
-                alert('Failed to delete file.');
+                alert(t('failed_to_delete_file'));
             } finally {
                 setDownloadingId(null);
             }
@@ -129,10 +131,10 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">Project Files</h3>
+                <h3 className="text-xl font-bold text-white">{t('project_files')}</h3>
                 <PermissionGate permission={Permission.MANAGE_TASKS}>
                     <Button onClick={() => setIsModalOpen(true)}>
-                        <Upload className="w-4 h-4 mr-2" /> Upload File
+                        <Upload className="w-4 h-4 mr-2" /> {t('upload_file')}
                     </Button>
                 </PermissionGate>
             </div>
@@ -151,7 +153,9 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                                     <span className="text-xs text-slate-500">{file.size}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-2">
-                                    {file.uploadedAt && !isNaN(new Date(file.uploadedAt).getTime()) ? `Uploaded ${formatDistanceToNow(new Date(file.uploadedAt))} ago by ${file.uploaderName}` : `Uploaded unknown date by ${file.uploaderName}`}
+                                    {file.uploadedAt && !isNaN(new Date(file.uploadedAt).getTime()) ? 
+                                        t('uploaded_ago_by').replace('{{time}}', formatDistanceToNow(new Date(file.uploadedAt))).replace('{{name}}', file.uploaderName || t('unknown')) : 
+                                        t('uploaded_unknown_date_by').replace('{{name}}', file.uploaderName || t('unknown'))}
                                 </p>
                             </div>
                         </div>
@@ -160,7 +164,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                                 onClick={() => handleDownload(file)}
                                 disabled={downloadingId === file.id}
                                 className="p-2 bg-slate-700 hover:bg-slate-600 rounded text-white disabled:opacity-50"
-                                title="Download"
+                                title={t('download')}
                             >
                                 <Download className="w-4 h-4" />
                             </button>
@@ -168,7 +172,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                                 onClick={() => handleView(file)}
                                 disabled={downloadingId === file.id}
                                 className="p-2 bg-slate-700/50 hover:bg-slate-700 rounded text-slate-400 hover:text-white disabled:opacity-50"
-                                title={file.visibility || 'View'}
+                                title={file.visibility || t('view')}
                             >
                                 <Eye className="w-4 h-4" />
                             </button>
@@ -177,7 +181,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                                     onClick={() => handleDelete(file)}
                                     disabled={downloadingId === file.id}
                                     className="p-2 bg-rose-900/40 hover:bg-rose-700/60 rounded text-rose-400 hover:text-rose-200 disabled:opacity-50"
-                                    title="Delete"
+                                    title={t('delete')}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -188,12 +192,12 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                 {files.length === 0 && (
                     <div className="col-span-full py-16 text-center text-slate-500 border-2 border-dashed border-slate-700 rounded-xl">
                         <Upload className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <p>No files uploaded yet.</p>
+                        <p>{t('no_files')}</p>
                     </div>
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedFile(null); }} title="Upload File">
+            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedFile(null); }} title={t('upload_file')}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div
                         onClick={() => fileInputRef.current?.click()}
@@ -209,13 +213,13 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                                     onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                                     className="mt-2 text-rose-400 hover:text-rose-300 flex items-center gap-1 text-xs"
                                 >
-                                    <X className="w-3 h-3" /> Remove
+                                    <X className="w-3 h-3" /> {t('remove_file')}
                                 </button>
                             </div>
                         ) : (
                             <>
                                 <Upload className="w-10 h-10 mx-auto text-slate-500 mb-2" />
-                                <p className="text-slate-300">Click to select or drag file here</p>
+                                <p className="text-slate-300">{t('click_or_drag_file')}</p>
                             </>
                         )}
                         <input
@@ -225,29 +229,29 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                             onChange={handleFileSelect}
                         />
                     </div>
-                    <Input name="name" label="Display Name" placeholder="Defaults to file name if empty" />
+                    <Input name="name" label={t('display_name')} placeholder={t('defaults_to_file_name')} />
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">{t('file_category')}</label>
                             <select name="category" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                                <option value="DOCS">Document/Report</option>
-                                <option value="DESIGNS">Design Asset</option>
-                                <option value="BUILDS">Build/Release</option>
-                                <option value="OTHER">Other</option>
+                                <option value="DOCS">{t('document_report')}</option>
+                                <option value="DESIGNS">{t('design_asset')}</option>
+                                <option value="BUILDS">{t('build_release')}</option>
+                                <option value="OTHER">{t('other')}</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Visibility</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">{t('visibility')}</label>
                             <select name="visibility" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                                <option value="INTERNAL">Internal Only</option>
-                                <option value="CLIENT">Shared with Client</option>
+                                <option value="INTERNAL">{t('internal_only')}</option>
+                                <option value="CLIENT">{t('shared_with_client')}</option>
                             </select>
                         </div>
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => { setIsModalOpen(false); setSelectedFile(null); }}>Cancel</Button>
+                        <Button type="button" variant="ghost" onClick={() => { setIsModalOpen(false); setSelectedFile(null); }}>{t('cancel')}</Button>
                         <Button type="submit" variant="primary" disabled={!selectedFile || isUploading}>
-                            {isUploading ? 'Uploading...' : 'Upload'}
+                            {isUploading ? t('uploading') : t('upload')}
                         </Button>
                     </div>
                 </form>

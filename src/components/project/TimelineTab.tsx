@@ -262,26 +262,26 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId, tasks, onRe
       <Modal isOpen={addDepModal} onClose={() => setAddDepModal(false)} title={t('add_dependency') || 'Add dependency'}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Predecessor (must complete first)</label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">{t('predecessor_hint')}</label>
             <select
               value={addPredecessor}
               onChange={(e) => setAddPredecessor(e.target.value)}
               className="w-full rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2"
             >
-              <option value="">Select task</option>
+              <option value="">{t('select_task')}</option>
               {tasks.map((tk) => (
                 <option key={tk.id} value={tk.id}>{tk.title}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Successor (starts after)</label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">{t('successor_hint')}</label>
             <select
               value={addSuccessor}
               onChange={(e) => setAddSuccessor(e.target.value)}
               className="w-full rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2"
             >
-              <option value="">Select task</option>
+              <option value="">{t('select_task')}</option>
               {tasks.map((tk) => (
                 <option key={tk.id} value={tk.id}>{tk.title}</option>
               ))}

@@ -26,7 +26,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ activity }) => {
     return (
       <GlassCard className="p-8 text-center">
         <Activity className="w-12 h-12 mx-auto text-slate-500 mb-4" />
-        <p className="text-slate-500">{t('no_activity') || 'No activity yet. Create or update tasks and findings to see the stream.'}</p>
+        <p className="text-slate-500">{t('no_activity_stream')}</p>
       </GlassCard>
     );
   }
@@ -36,7 +36,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ activity }) => {
       <GlassCard>
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Activity className="w-5 h-5 text-cyan-500" />
-          {t('activity') || 'Activity'}
+          {t('activity_tab')}
         </h3>
         <ul className="space-y-0 divide-y divide-slate-800">
           {activity.map((item) => (

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Permission, Role } from '@/types';
 import { GlassCard, KpiCard, ProgressBar, Badge, Button } from '../ui/UIComponents';
 import { Activity, Calendar, Clock, DollarSign, Flag, ArrowRight, CheckCircle, XCircle, AlertCircle, Info, Sparkles, Lock } from 'lucide-react';
@@ -80,6 +81,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
 }
 
 function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigate?: any }) {
+    const { t } = useTranslation();
     const getActivityIcon = (type: string) => {
         const icons: Record<string, string> = { task_overdue: '⏰', task_completed: '✅', finding_created: '📝', milestone_completed: '🎯', milestone_missed: '⚠️', budget_alert: '💰', member_added: '👤', file_uploaded: '📄', update_posted: '📢', blocker_created: '🚧' };
         return icons[type] || '•';
@@ -117,6 +119,7 @@ function calculateVelocity(tasks: any[]) {
 }
 
 function PredictiveInsights({ project, tasks, milestones, metrics }: { project: any, tasks: any[], milestones: any[], metrics: any }) {
+    const { t } = useTranslation();
     const insights = React.useMemo(() => {
         const predictions: any[] = [];
 
@@ -200,6 +203,7 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
 }
 
 function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: any, onNavigate?: any, allowedTabs?: string[] }) {
+    const { t } = useTranslation();
     if (!action) return null;
 
     // Map severity to colors
@@ -276,6 +280,7 @@ function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: a
 }
 
 function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = [] }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = React.useState(false);
     const canSee = (id: string) => allowedTabs.includes(id);
     const { user } = useAuth();
@@ -340,6 +345,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
 }
 
 export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, clientName, stats, tasks = [], findings = [], milestones = [], recentUpdates = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [] }) => {
+    const { t } = useTranslation();
     // Derived operational metrics
     const taskCount = stats?.taskCount || 0;
     const completedTasks = stats?.completedTasks || 0;
@@ -431,7 +437,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
     return (
         <div className="space-y-8 pb-12">
             <div className="flex justify-between items-center w-full border-b border-slate-200 dark:border-slate-800 pb-4 mb-2">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white px-2">Project Dashboard</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white px-2">{t('project_dashboard')}</h2>
                 <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 
@@ -448,7 +454,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'completed' ? 'success' : 'neutral'} className="px-3 py-1 text-xs uppercase tracking-widest font-black">
                                 {project.status.replace(/_/g, ' ')}
                             </Badge>
-                            <p className="text-[10px] text-cyan-400/60 font-bold mt-2 uppercase tracking-tighter">Current Status</p>
+                            <p className="text-[10px] text-cyan-400/60 font-bold mt-2 uppercase tracking-tighter">{t('current_status')}</p>
                         </div>
 
                         {/* Stage Progress */}
@@ -456,7 +462,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                        STAGE: <span className="text-cyan-600 dark:text-cyan-400">{(readiness?.stage || 'SETUP').toUpperCase()}</span>
+                                        {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{(readiness?.stage || 'SETUP').toUpperCase()}</span>
                                     </h2>
                                     <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                                         {readiness?.stageExplanation || 'Initial project parameters and team setup required.'}
@@ -507,7 +513,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </div>
                     </div>
                     <div className="text-center">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Workflow Readiness</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness')}</h4>
                         <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} setup checks complete</p>
                     </div>
                 </GlassCard>
@@ -524,10 +530,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             </div>
                             <div>
                                 <span className="text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{taskCount - completedTasks}</span>
-                                <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Active Tasks</h3>
+                                <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{t('active_tasks')}</h3>
                             </div>
                         </div>
-                        {overdueTasks > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{overdueTasks} Overdue</Badge>}
+                        {overdueTasks > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{overdueTasks} {t('overdue')}</Badge>}
                     </div>
 
                     <div className="space-y-3 mb-5">
@@ -571,17 +577,17 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <div className="p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400 shadow-sm transition-transform group-hover:scale-110">
                                 <Calendar className="w-5 h-5" />
                             </div>
-                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Schedule</h3>
+                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{t('schedule_title')}</h3>
                         </div>
-                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">At Risk</Badge>}
+                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{t('at_risk')}</Badge>}
                     </div>
 
                     <div className="space-y-4 mb-4">
                         <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-3.5 transition-all hover:bg-slate-100">
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">Project Deadline</p>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('project_deadline')}</p>
                             <div className="flex items-end justify-between">
                                 <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
-                                    {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'NOT SET'}
+                                    {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : t('not_set')}
                                 </p>
                                 {daysUntilDeadline !== null && (
                                     <span className={`text-[10px] font-black uppercase tracking-tighter mb-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/10 ${daysUntilDeadline < 14 ? 'text-amber-700 dark:text-amber-400 animate-pulse' : 'text-slate-500'}`}>
@@ -592,14 +598,14 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </div>
 
                         <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-xl p-3.5">
-                            <p className="text-[10px] text-amber-700 dark:text-amber-500/70 font-black uppercase tracking-widest mb-1.5 opacity-60">Next Milestone</p>
+                            <p className="text-[10px] text-amber-700 dark:text-amber-500/70 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('next_milestone')}</p>
                             {nextMilestone ? (
                                 <>
                                     <p className="text-sm font-bold text-amber-900 dark:text-amber-400 truncate mb-1">{nextMilestone.title}</p>
                                     <p className="text-[10px] text-amber-700 dark:text-amber-400/80 font-bold uppercase tracking-widest">Due {formatRelativeDate(nextMilestone.dueDate)}</p>
                                 </>
                             ) : (
-                                <p className="text-xs text-slate-500 font-medium italic">No upcoming milestones</p>
+                                <p className="text-xs text-slate-500 font-medium italic">{t('no_upcoming_milestones')}</p>
                             )}
                         </div>
                     </div>
@@ -638,10 +644,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <div className="p-3 bg-rose-50 dark:bg-rose-500/10 rounded-xl text-rose-600 dark:text-rose-400 shadow-sm transition-transform group-hover:scale-110">
                                 <AlertCircle className="w-5 h-5" />
                             </div>
-                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Quality</h3>
+                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{t('quality')}</h3>
                         </div>
                         <Badge variant={unresolvedFindings > 0 ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">
-                            {unresolvedFindings} Open
+                            {unresolvedFindings} {t('open')}
                         </Badge>
                     </div>
 
@@ -650,7 +656,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center mb-4 transition-all group-hover:scale-110">
                                 <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400 mb-1">Clean State</p>
+                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400 mb-1">{t('clean_state')}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{resolvedFindings} resolved historically</p>
                         </div>
                     ) : (
@@ -716,19 +722,19 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             {isStale ? 'STALE' : 'UP TO DATE'}
                         </Badge>
                     </div>
-                    <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 mb-4">Communication</h3>
+                    <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 mb-4">{t('communication')}</h3>
                     <div className="space-y-4">
                         <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50">
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">Last Weekly Update</p>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('last_weekly_update')}</p>
                             <p className="text-xl font-black text-slate-900 dark:text-white truncate tracking-tighter">{lastUpdateAge}</p>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
                             <div className="flex flex-col">
                                 <span className="text-sm font-black text-slate-900 dark:text-white leading-none">{recentUpdates.length}</span>
-                                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest mt-1">Total Posts</span>
+                                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest mt-1">{t('total_posts')}</span>
                             </div>
                             {canSee('updates') && (
-                                <Button variant="ghost" size="sm" className="h-8 text-[9px] uppercase font-black text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800" onClick={() => onNavigate?.('updates')}>Post Update &rarr;</Button>
+                                <Button variant="ghost" size="sm" className="h-8 text-[9px] uppercase font-black text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800" onClick={() => onNavigate?.('updates')}>{t('post_update')} &rarr;</Button>
                             )}
                         </div>
                     </div>
@@ -744,7 +750,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         <GlassCard className={`p-6 border-t-4 border-t-indigo-500 dark:border-slate-800 relative transition-colors h-full ${canSee('team') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-blue-500" /> TEAM CAPACITY
+                                    <Activity className="w-4 h-4 text-blue-500" /> {t('team_capacity')}
                                 </h3>
                                 {metrics.capacity.highLoad?.length > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 shadow-sm">{metrics.capacity.highLoad.length} High Load</Badge>}
                             </div>
@@ -807,14 +813,14 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             {metrics.capacity.available?.length > 0 && (
                                 <div className="mt-4 p-2 bg-emerald-500/10 rounded border border-emerald-500/20 text-center">
                                     <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
-                                        {metrics.capacity.available.length} member(s) available
+                                        {metrics.capacity.available.length} {t('members_available')}
                                     </span>
                                 </div>
                             )}
 
                             {canSee('team') && (
                                 <div className="mt-4 text-center pt-1 border-t border-slate-800/50">
-                                    <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">View Team Details &rarr;</span>
+                                    <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">{t('view_team_details')} &rarr;</span>
                                 </div>
                             )}
                         </GlassCard>
@@ -822,12 +828,12 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     <GlassCard className="p-6 border-t-4 border-t-rose-600 dark:border-slate-800 text-center flex flex-col items-center justify-center relative min-h-[200px]">
                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest w-full text-left flex items-center gap-2 absolute top-6 left-6">
-                            <Lock className="w-4 h-4 text-rose-500" /> BLOCKERS
+                            <Lock className="w-4 h-4 text-rose-500" /> {t('blockers')}
                         </h3>
                         {metrics.blockers.active.length === 0 ? (
                             <div className="flex flex-col items-center justify-center pt-6">
                                 <div className="p-2 bg-emerald-500/10 rounded-full mb-2"><CheckCircle className="w-6 h-6 text-emerald-500" /></div>
-                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Work Unblocked</span>
+                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">{t('work_unblocked')}</span>
                             </div>
                         ) : (
                             <div className="pt-6 w-full text-left">
@@ -836,7 +842,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                         <div key={blk.id} className="text-xs text-rose-300 p-2 bg-rose-500/10 rounded border border-rose-500/20">{blk.title}</div>
                                     ))}
                                 </div>
-                                <Button variant="ghost" size="sm" className="w-full text-[9px] uppercase tracking-widest text-cyan-400" onClick={() => onNavigate?.('tasks')}>Manage Blockers</Button>
+                                <Button variant="ghost" size="sm" className="w-full text-[9px] uppercase tracking-widest text-cyan-400" onClick={() => onNavigate?.('tasks')}>{t('manage_blockers')}</Button>
                             </div>
                         )}
                     </GlassCard>
@@ -850,19 +856,19 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         {/* Adaptive Checklists */}
                         <div className="space-y-2">
                             <ChecklistSection
-                                title="Core Setup"
+                                title={t('core_setup')}
                                 items={readiness?.sections.core.items || []}
                                 isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
                                 onAction={onAction} onNavigate={onNavigate}
                             />
                             <ChecklistSection
-                                title="Planning"
+                                title={t('planning')}
                                 items={readiness?.sections.planning.items || []}
                                 isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
                                 onAction={onAction} onNavigate={onNavigate}
                             />
                             <ChecklistSection
-                                title="Resources"
+                                title={t('resources')}
                                 items={readiness?.sections.resources.items || []}
                                 isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
                                 onAction={onAction} onNavigate={onNavigate}
@@ -876,21 +882,21 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     <ActivityFeed activities={activity} onNavigate={onNavigate} />
 
                     <GlassCard className="p-5 border-slate-800">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Project Context</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">{t('project_context_title')}</h4>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[9px] text-slate-500 uppercase font-black">Client Account</label>
-                                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{clientName || 'Unassigned'}</p>
+                                <label className="text-[9px] text-slate-500 uppercase font-black">{t('client_account')}</label>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{clientName || t('unassigned')}</p>
                             </div>
                             <div className="pt-3 border-t border-slate-800/50">
                                 <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('discussions')}>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">Team Discussions</span>
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">{t('team_discussions')}</span>
                                     <ArrowRight className="w-3 h-3 text-slate-600" />
                                 </div>
                             </div>
                             <div className="pt-3 border-t border-slate-800/50">
                                 <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('files')}>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">Project Files</span>
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">{t('project_files')}</span>
                                     <ArrowRight className="w-3 h-3 text-slate-600" />
                                 </div>
                             </div>
@@ -903,10 +909,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
             <GlassCard className="p-6 border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900/30">
                 <div className="flex items-center gap-3 mb-4">
                     <Info className="w-5 h-5 text-slate-400" />
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Project Brief & Scope</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('project_brief_scope')}</h3>
                 </div>
                 <div className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
-                    {project.description || "No project description provided. Add a scope summary to align the team."}
+                    {project.description || t('no_project_description_overview')}
                 </div>
             </GlassCard>
         </div>

@@ -16,6 +16,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 const stripePk = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 
 function PaymentForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: () => void }) {
+    const { t } = useTranslation();
     const stripe = useStripe();
     const elements = useElements();
     const [loading, setLoading] = useState(false);
@@ -32,8 +33,8 @@ function PaymentForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: (
             redirect: 'if_required',
         });
         setLoading(false);
-        if (err) {
-            setError(err.message || 'Payment failed');
+            if (err) {
+            setError(err.message || t('payment_failed'));
             return;
         }
         onSuccess();
@@ -44,8 +45,8 @@ function PaymentForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: (
             <PaymentElement />
             {error && <p className="text-sm text-rose-400">{error}</p>}
             <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit" disabled={!stripe || loading}>{loading ? 'Processing…' : 'Pay now'}</Button>
+                <Button type="button" variant="ghost" onClick={onClose}>{t('cancel')}</Button>
+                <Button type="submit" disabled={!stripe || loading}>{loading ? t('processing') : t('pay_now')}</Button>
             </div>
         </form>
     );
@@ -236,7 +237,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
             const { clientSecret } = await api.projects.createPaymentIntent(projectId, invoice.id);
             setPayClientSecret(clientSecret);
         } catch (e: any) {
-            toast.error(e?.message || 'Could not start payment');
+            toast.error(e?.message || t('could_not_start_payment'));
             setPayInvoice(null);
         } finally {
             setPayLoading(false);
@@ -247,7 +248,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
         if (!projectId) return;
         try {
             await api.approvals.create({ entityType, entityId, projectId });
-            toast.success('Approval requested');
+            toast.success(t('approval_requested'));
             loadApprovals();
         } catch (e) {
             toast.error((e as Error).message);
@@ -259,7 +260,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
         try {
             if (reviewModal.action === 'approve') await api.approvals.approve(reviewModal.id, reviewComment);
             else await api.approvals.reject(reviewModal.id, reviewComment);
-            toast.success(reviewModal.action === 'approve' ? 'Approved' : 'Rejected');
+            toast.success(reviewModal.action === 'approve' ? t('approved') : t('rejected'));
             setReviewModal(null);
             setReviewComment('');
             loadApprovals();
@@ -313,21 +314,21 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeView === 'overview' ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-400 hover:text-white'
                                 }`}
                         >
-                            Overview
+                            {t('overview')}
                         </button>
                         <button
                             onClick={() => setActiveView('contracts')}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeView === 'contracts' ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-400 hover:text-white'
                                 }`}
                         >
-                            Contracts
+                            {t('contracts_tab')}
                         </button>
                         <button
                             onClick={() => setActiveView('invoices')}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeView === 'invoices' ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-400 hover:text-white'
                                 }`}
                         >
-                            Invoices
+                            {t('invoices_tab')}
                         </button>
                     </div>
 
@@ -335,14 +336,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                         {activeView === 'contracts' && (
                             <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                                 <Button onClick={() => { setEditingItem(null); setIsContractModalOpen(true); }}>
-                                    <Plus className="w-4 h-4 mr-2" /> New Contract
+                                    <Plus className="w-4 h-4 mr-2" /> {t('new_contract')}
                                 </Button>
                             </PermissionGate>
                         )}
                         {activeView === 'invoices' && (
                             <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                                 <Button onClick={() => { setEditingItem(null); setIsInvoiceModalOpen(true); }}>
-                                    <Plus className="w-4 h-4 mr-2" /> New Invoice
+                                    <Plus className="w-4 h-4 mr-2" /> {t('new_invoice')}
                                 </Button>
                             </PermissionGate>
                         )}
@@ -353,7 +354,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                 {activeView === 'contracts' && (
                     <div className="space-y-4">
                         {contracts.length === 0 ? (
-                            <div className="text-center py-10 text-slate-500">No contracts found.</div>
+                            <div className="text-center py-10 text-slate-500">{t('no_contracts')}</div>
                         ) : (
                             contracts.map(contract => (
                                 <div key={contract.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
@@ -363,7 +364,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-white font-medium">{contract.title}</span>
-                                            <span className="text-slate-400 text-sm">{format(new Date(contract.startDate), 'MMM dd, yyyy')} - {contract.endDate ? format(new Date(contract.endDate), 'MMM dd, yyyy') : 'No End Date'}</span>
+                                            <span className="text-slate-400 text-sm">{format(new Date(contract.startDate), 'MMM dd, yyyy')} - {contract.endDate ? format(new Date(contract.endDate), 'MMM dd, yyyy') : t('no_end_date')}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
@@ -376,9 +377,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const overallStatus = steps.some((s: ApprovalInfo) => s.status === 'REJECTED') ? 'REJECTED' : steps.length > 0 && steps.every((s: ApprovalInfo) => s.status === 'APPROVED') ? 'APPROVED' : pendingStep ? 'PENDING' : null;
                                                     return (
                                                         <>
-                                                            {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
-                                                            {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
-                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
+                                                            {overallStatus === 'PENDING' && <Badge variant="warning">{t('pending_approval')}{steps.length > 1 ? ` (${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
+                                                            {overallStatus === 'APPROVED' && <Badge variant="success">{t('approved')}</Badge>}
+                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">{t('rejected')}</Badge>}
                                                             <Badge variant={contract.status === 'active' ? 'success' : 'neutral'}>{contract.status}</Badge>
                                                         </>
                                                     );
@@ -400,7 +401,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                                 </>
                                                             )}
                                                             {!hasPending && (
-                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('CONTRACT', contract.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
+                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('CONTRACT', contract.id)}><Send className="w-4 h-4 mr-1" /> {t('request_approval')}</Button>
                                                             )}
                                                             <Button variant="ghost" size="sm" onClick={() => openEditContract(contract)}><Edit className="w-4 h-4" /></Button>
                                                             <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteContract(contract.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -419,7 +420,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                 {activeView === 'invoices' && (
                     <div className="space-y-4">
                         {invoices.length === 0 ? (
-                            <div className="text-center py-10 text-slate-500">No invoices found.</div>
+                            <div className="text-center py-10 text-slate-500">{t('no_invoices')}</div>
                         ) : (
                             invoices.map(invoice => (
                                 <div key={invoice.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
@@ -442,9 +443,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                     const overallStatus = steps.some((s: ApprovalInfo) => s.status === 'REJECTED') ? 'REJECTED' : steps.length > 0 && steps.every((s: ApprovalInfo) => s.status === 'APPROVED') ? 'APPROVED' : pendingStep ? 'PENDING' : null;
                                                     return (
                                                         <>
-                                                            {overallStatus === 'PENDING' && <Badge variant="warning">Pending approval{steps.length > 1 ? ` (step ${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
-                                                            {overallStatus === 'APPROVED' && <Badge variant="success">Approved</Badge>}
-                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">Rejected</Badge>}
+                                                            {overallStatus === 'PENDING' && <Badge variant="warning">{t('pending_approval')}{steps.length > 1 ? ` (step ${steps.findIndex((s: ApprovalInfo) => s.status === 'PENDING') + 1}/${steps.length})` : ''}</Badge>}
+                                                            {overallStatus === 'APPROVED' && <Badge variant="success">{t('approved')}</Badge>}
+                                                            {overallStatus === 'REJECTED' && <Badge variant="danger">{t('rejected')}</Badge>}
                                                             <Badge variant={
                                                                 invoice.status?.toLowerCase() === 'paid' ? 'success' :
                                                                     invoice.status?.toLowerCase() === 'overdue' ? 'danger' :
@@ -470,10 +471,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                                 </>
                                                             )}
                                                             {!hasPending && (
-                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('INVOICE', invoice.id)}><Send className="w-4 h-4 mr-1" /> Request approval</Button>
+                                                                <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('INVOICE', invoice.id)}><Send className="w-4 h-4 mr-1" /> {t('request_approval')}</Button>
                                                             )}
                                                             {(invoice.status === 'issued' || invoice.status === 'ISSUED') && (
-                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> Pay with Card</Button>
+                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> {t('pay_with_card')}</Button>
                                                             )}
                                                             <Button variant="ghost" size="sm" onClick={() => openEditInvoice(invoice)}><Edit className="w-4 h-4" /></Button>
                                                             <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteInvoice(invoice.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -493,7 +494,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Simplified Overview */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-white">Recent Invoices</h3>
+                            <h3 className="text-lg font-medium text-white">{t('recent_invoices_short')}</h3>
                             {invoices.slice(0, 5).map(i => (
                                 <div key={i.id} className="flex justify-between items-center py-2 border-b border-slate-700/50 last:border-0">
                                     <div>
@@ -506,10 +507,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                     </div>
                                 </div>
                             ))}
-                            {invoices.length === 0 && <p className="text-slate-500 text-sm">No recent invoices.</p>}
+                            {invoices.length === 0 && <p className="text-slate-500 text-sm">{t('no_recent_invoices')}</p>}
                         </div>
                         <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-white">Contracts</h3>
+                            <h3 className="text-lg font-medium text-white">{t('contracts')}</h3>
                             {contracts.slice(0, 3).map(c => (
                                 <div key={c.id} className="p-4 bg-slate-800/40 rounded border border-slate-700">
                                     <div className="flex justify-between mb-2">
@@ -518,82 +519,82 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                     </div>
                                     <div className="flex justify-between items-end">
                                         <div className="text-xs text-slate-500">
-                                            {format(new Date(c.startDate), 'MMM dd')} - {c.endDate ? format(new Date(c.endDate), 'MMM dd, yyyy') : 'Perpetual'}
+                                            {format(new Date(c.startDate), 'MMM dd')} - {c.endDate ? format(new Date(c.endDate), 'MMM dd, yyyy') : t('perpetual')}
                                         </div>
                                         <div className="text-lg font-bold text-white"><SarSymbol /> {c.amount.toLocaleString()}</div>
                                     </div>
                                 </div>
                             ))}
-                            {contracts.length === 0 && <p className="text-slate-500 text-sm">No active contracts.</p>}
+                            {contracts.length === 0 && <p className="text-slate-500 text-sm">{t('no_active_contracts')}</p>}
                         </div>
                     </div>
                 )}
             </GlassCard>
 
             {/* Contract Modal */}
-            <Modal isOpen={isContractModalOpen} onClose={() => setIsContractModalOpen(false)} title={editingItem ? "Edit Contract" : "New Contract"}>
+            <Modal isOpen={isContractModalOpen} onClose={() => setIsContractModalOpen(false)} title={editingItem ? t('edit_contract') : t('new_contract')}>
                 <form onSubmit={handleCreateContract} className="space-y-4">
-                    <Input name="title" label="Contract Title" defaultValue={editingItem?.title} required />
+                    <Input name="title" label={t('contract_title')} defaultValue={editingItem?.title} required />
                     <div className="grid grid-cols-2 gap-4">
-                        <Input name="amount" type="number" label="Amount (SAR)" defaultValue={editingItem?.amount} required />
-                        <Input name="status" label="Status" defaultValue={editingItem?.status || 'active'} /> {/* Should be select */}
+                        <Input name="amount" type="number" label={t('amount_sar')} defaultValue={editingItem?.amount} required />
+                        <Input name="status" label={t('status')} defaultValue={editingItem?.status || 'active'} /> {/* Should be select */}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <Input name="startDate" type="date" label="Start Date" defaultValue={editingItem?.startDate ? new Date(editingItem.startDate).toISOString().split('T')[0] : ''} required />
-                        <Input name="endDate" type="date" label="End Date" defaultValue={editingItem?.endDate ? new Date(editingItem.endDate).toISOString().split('T')[0] : ''} />
+                        <Input name="startDate" type="date" label={t('start_date')} defaultValue={editingItem?.startDate ? new Date(editingItem.startDate).toISOString().split('T')[0] : ''} required />
+                        <Input name="endDate" type="date" label={t('end_date')} defaultValue={editingItem?.endDate ? new Date(editingItem.endDate).toISOString().split('T')[0] : ''} />
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => setIsContractModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Save Contract</Button>
+                        <Button type="button" variant="ghost" onClick={() => setIsContractModalOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" variant="primary">{t('save_contract')}</Button>
                     </div>
                 </form>
             </Modal>
 
             {/* Invoice Modal */}
-            <Modal isOpen={isInvoiceModalOpen} onClose={() => setIsInvoiceModalOpen(false)} title={editingItem ? "Edit Invoice" : "New Invoice"}>
+            <Modal isOpen={isInvoiceModalOpen} onClose={() => setIsInvoiceModalOpen(false)} title={editingItem ? t('edit_invoice') : t('new_invoice')}>
                 <form onSubmit={handleCreateInvoice} className="space-y-4">
-                    <Input name="invoiceNumber" label="Invoice Number" placeholder="e.g. INV-2026-001" defaultValue={editingItem?.invoiceNumber} required />
+                    <Input name="invoiceNumber" label={t('invoice_number')} placeholder="e.g. INV-2026-001" defaultValue={editingItem?.invoiceNumber} required />
                     <div className="grid grid-cols-2 gap-4">
-                        <Input name="amount" type="number" step="0.01" label="Amount (SAR)" defaultValue={editingItem?.amount} required />
-                        <Input name="dueDate" type="date" label="Due Date" defaultValue={editingItem?.dueDate ? new Date(editingItem.dueDate).toISOString().split('T')[0] : ''} required />
+                        <Input name="amount" type="number" step="0.01" label={t('amount_sar')} defaultValue={editingItem?.amount} required />
+                        <Input name="dueDate" type="date" label={t('due_date')} defaultValue={editingItem?.dueDate ? new Date(editingItem.dueDate).toISOString().split('T')[0] : ''} required />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Status</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('status')}</label>
                         <select name="status" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" defaultValue={editingItem?.status || 'draft'}>
-                            <option value="draft">Draft</option>
-                            <option value="issued">Issued</option>
-                            <option value="paid">Paid</option>
-                            <option value="overdue">Overdue</option>
+                            <option value="draft">{t('draft')}</option>
+                            <option value="issued">{t('issued')}</option>
+                            <option value="paid">{t('paid')}</option>
+                            <option value="overdue">{t('overdue')}</option>
                         </select>
                     </div>
                     {/* Optional Contract Link */}
                     {contracts.length > 0 && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Link to Contract (Optional)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">{t('link_to_contract_optional')}</label>
                             <select name="contractId" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" defaultValue={editingItem?.contractId || ''}>
-                                <option value="">None</option>
+                                <option value="">{t('none')}</option>
                                 {contracts.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                             </select>
                         </div>
                     )}
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => setIsInvoiceModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Save Invoice</Button>
+                        <Button type="button" variant="ghost" onClick={() => setIsInvoiceModalOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" variant="primary">{t('save_invoice')}</Button>
                     </div>
                 </form>
             </Modal>
 
             {reviewModal && (
-                <Modal isOpen={!!reviewModal} onClose={() => { setReviewModal(null); setReviewComment(''); }} title={reviewModal.action === 'approve' ? 'Approve request' : 'Reject request'}>
+                <Modal isOpen={!!reviewModal} onClose={() => { setReviewModal(null); setReviewComment(''); }} title={reviewModal.action === 'approve' ? t('approve_request') : t('reject_request')}>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Comment (optional)</label>
-                            <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" placeholder="Add a comment..." />
+                            <label className="block text-sm font-medium text-slate-300 mb-1">{t('comment_optional')}</label>
+                            <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" placeholder={t('add_comment_placeholder')} />
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button variant="ghost" onClick={() => { setReviewModal(null); setReviewComment(''); }}>Cancel</Button>
+                            <Button variant="ghost" onClick={() => { setReviewModal(null); setReviewComment(''); }}>{t('cancel')}</Button>
                             <Button variant={reviewModal.action === 'reject' ? 'danger' : 'primary'} onClick={handleApproveReject}>
-                                {reviewModal.action === 'approve' ? 'Approve' : 'Reject'}
+                                {reviewModal.action === 'approve' ? t('approve') : t('reject')}
                             </Button>
                         </div>
                     </div>
@@ -604,17 +605,17 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                 <Modal
                     isOpen={!!payInvoice}
                     onClose={() => { setPayInvoice(null); setPayClientSecret(null); }}
-                    title={`Pay invoice ${payInvoice.invoiceNumber} — ${formatSAR(payInvoice.amount)}`}
+                    title={`${t('pay_invoice_title')} ${payInvoice.invoiceNumber} — ${formatSAR(payInvoice.amount)}`}
                 >
                     {!stripePk ? (
-                        <p className="text-slate-400 text-sm">Configure VITE_STRIPE_PUBLISHABLE_KEY in the environment to enable Pay with Card.</p>
+                        <p className="text-slate-400 text-sm">{t('configure_stripe')}</p>
                     ) : payLoading || !payClientSecret ? (
-                        <p className="text-slate-400">Preparing payment…</p>
+                        <p className="text-slate-400">{t('preparing_payment')}</p>
                     ) : (
                         <Elements stripe={loadStripe(stripePk)} options={{ clientSecret: payClientSecret }}>
                             <PaymentForm
                                 onSuccess={() => {
-                                    toast.success('Payment successful');
+                                    toast.success(t('payment_successful'));
                                     setPayInvoice(null);
                                     setPayClientSecret(null);
                                     refreshData();

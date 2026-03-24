@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ProjectMember, Role, User, Permission } from '@/types';
 import { api } from '@/services/api';
 import { Button, Select, Badge, Avatar } from '../ui/UIComponents';
@@ -14,6 +15,7 @@ interface TeamTabProps {
 }
 
 export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, onRemove }) => {
+    const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [availableUsers, setAvailableUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<string>('');
@@ -49,10 +51,10 @@ export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">Project Team</h3>
+                <h3 className="text-xl font-bold text-white">{t('project_team')}</h3>
                 <PermissionGate permission={Permission.MANAGE_TEAM}>
                     <Button size="sm" onClick={() => setIsModalOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" /> Add Member
+                        <Plus className="w-4 h-4 mr-2" /> {t('add_member')}
                     </Button>
                 </PermissionGate>
             </div>
@@ -61,10 +63,10 @@ export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, 
                 <table className="w-full text-left text-sm">
                     <thead className="bg-slate-900 text-slate-400 uppercase font-medium">
                         <tr>
-                            <th className="p-4">Member</th>
-                            <th className="p-4">Role</th>
-                            <th className="p-4">Joined</th>
-                            <th className="p-4 text-right">Actions</th>
+                            <th className="p-4">{t('member')}</th>
+                            <th className="p-4">{t('role')}</th>
+                            <th className="p-4">{t('joined')}</th>
+                            <th className="p-4 text-right">{t('actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
@@ -109,7 +111,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, 
                         {members.length === 0 && (
                             <tr>
                                 <td colSpan={4} className="p-8 text-center text-slate-500">
-                                    No members assigned yet.
+                                    {t('no_members')}
                                 </td>
                             </tr>
                         )}
@@ -117,23 +119,23 @@ export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, 
                 </table>
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Team Member">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('add_team_member')}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">User</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">{t('user')}</label>
                         <select
                             className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-cyan-500"
                             value={selectedUser}
                             onChange={(e) => setSelectedUser(e.target.value)}
                         >
-                            <option value="">Select a user...</option>
+                            <option value="">{t('select_user')}</option>
                             {availableUsers.map(u => (
                                 <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                             ))}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Role</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">{t('role')}</label>
                         <select
                             className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-cyan-500"
                             value={selectedRole}
@@ -145,8 +147,8 @@ export const TeamTab: React.FC<TeamTabProps> = ({ members, onUpdateRole, onAdd, 
                         </select>
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleAdd} disabled={!selectedUser}>Add Member</Button>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleAdd} disabled={!selectedUser}>{t('add_member')}</Button>
                     </div>
                 </div>
             </Modal>
