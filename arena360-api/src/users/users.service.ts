@@ -87,9 +87,8 @@ export class UsersService {
             // Construct Invite Link
             let inviteLink: string | undefined;
             if (inviteToken) {
-                // Assuming Vite Frontend runs on localhost:5173 or inferred from env
-                // We'll use a standard format, can be configured via env later
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                // NOTE: Set FRONTEND_URL in arena360-api/.env (e.g. https://arena360.unifinitylab.com)
                 inviteLink = `${frontendUrl}/#/accept-invite?token=${inviteToken}`;
 
                 // Send Invite Email
@@ -154,40 +153,98 @@ export class UsersService {
     }
 
     async update(id: string, updateUserDto: UpdateUserDto): Promise<SafeUser> {
-        const user = await this.prisma.user.findUnique({ where: { id } });
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            include: { clientMemberships: true }
+        });
         if (!user) {
             throw new NotFoundException('User not found');
         }
 
+        const newRole = updateUserDto.role;
+        const oldRole = user.role;
+        const isChangingRole = newRole && newRole !== oldRole;
+        const newIsClientRole = newRole?.startsWith('CLIENT_');
+        const oldIsClientRole = oldRole?.startsWith('CLIENT_');
+
+        // Build core user update data
         let dataToUpdate: any = { ...updateUserDto };
         if (updateUserDto.permissions !== undefined) {
             dataToUpdate.customPermissions = updateUserDto.permissions;
-            delete dataToUpdate.permissions;
         }
+        delete dataToUpdate.permissions;
+        delete dataToUpdate.clientId; // handled separately below
+
         if (updateUserDto.password) {
             dataToUpdate.passwordHash = await bcrypt.hash(updateUserDto.password, 10);
             delete dataToUpdate.password;
         }
 
-        return this.prisma.user.update({
-            where: { id },
-            data: dataToUpdate,
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                avatar: true,
-                isActive: true,
-                orgId: true,
-                customPermissions: true,
-                twoFactorEnabled: true,
-                dashboardPreferences: true,
-                createdAt: true,
-                updatedAt: true,
+        // Run everything in a transaction so DB is always consistent
+        return this.prisma.$transaction(async (tx) => {
+
+            if (isChangingRole) {
+                if (newIsClientRole) {
+                    // Switching TO a client role — must link to a client
+                    const clientId = updateUserDto.clientId;
+
+                    if (oldIsClientRole && user.clientMemberships.length > 0) {
+                        // Was already a client user — update their existing membership
+                        if (clientId && clientId !== user.clientMemberships[0]?.clientId) {
+                            // Moving to a different client: delete old, create new
+                            await tx.clientMember.deleteMany({ where: { userId: id } });
+                            await tx.clientMember.create({
+                                data: { userId: id, clientId, role: newRole }
+                            });
+                        } else {
+                            // Same client, just update the role (e.g. CLIENT_MEMBER → CLIENT_OWNER)
+                            await tx.clientMember.updateMany({
+                                where: { userId: id },
+                                data: { role: newRole }
+                            });
+                        }
+                    } else {
+                        // Was an internal user — remove any stale memberships and create fresh
+                        await tx.clientMember.deleteMany({ where: { userId: id } });
+                        if (clientId) {
+                            await tx.clientMember.create({
+                                data: { userId: id, clientId, role: newRole }
+                            });
+                        }
+                        // Also remove from all project memberships (internal projects)
+                        await tx.projectMember.deleteMany({ where: { userId: id } });
+                    }
+
+                } else {
+                    // Switching FROM a client role TO an internal role
+                    // Remove all client & project memberships — they get reassigned by PM
+                    await tx.clientMember.deleteMany({ where: { userId: id } });
+                    await tx.projectMember.deleteMany({ where: { userId: id } });
+                }
             }
+
+            // Update the user record itself
+            return tx.user.update({
+                where: { id },
+                data: dataToUpdate,
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    role: true,
+                    avatar: true,
+                    isActive: true,
+                    orgId: true,
+                    customPermissions: true,
+                    twoFactorEnabled: true,
+                    dashboardPreferences: true,
+                    createdAt: true,
+                    updatedAt: true,
+                }
+            });
         });
     }
+
 
     async updatePermissions(id: string, permissions: string[]): Promise<SafeUser> {
         await this.prisma.user.findUniqueOrThrow({ where: { id } });

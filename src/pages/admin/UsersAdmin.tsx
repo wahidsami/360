@@ -46,6 +46,7 @@ export const UsersAdmin: React.FC = () => {
   const [inviteResult, setInviteResult] = useState<{ link: string; email: string } | null>(null);
   const [editRole, setEditRole] = useState<Role>(Role.VIEWER);
   const [editIsActive, setEditIsActive] = useState(true);
+  const [editClientId, setEditClientId] = useState('');
 
   // Filtering
   const filteredUsers = users.filter(u => {
@@ -185,6 +186,7 @@ export const UsersAdmin: React.FC = () => {
                         setEditRole(user.role as Role);
                         setEditIsActive(user.isActive ?? true);
                         setEditPermissions(user.customPermissions || []);
+                        setEditClientId((user as any).clientMemberships?.[0]?.clientId || '');
                       }}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -214,7 +216,7 @@ export const UsersAdmin: React.FC = () => {
               <Label>System Role</Label>
               <Select
                 value={editRole}
-                onChange={(e) => setEditRole(e.target.value as Role)}
+                onChange={(e) => { setEditRole(e.target.value as Role); setEditClientId(''); }}
                 className="mt-1"
               >
                 {Object.values(Role).map(r => (
@@ -223,6 +225,25 @@ export const UsersAdmin: React.FC = () => {
               </Select>
               <p className="text-[10px] text-slate-500 mt-1">Changing role updates all permissions derived from that role.</p>
             </div>
+
+            {/* Client selector — only shown for CLIENT_* roles */}
+            {editRole.startsWith('CLIENT_') && (
+              <div className="animate-in slide-in-from-top-2 duration-200">
+                <Label>Assigned Client Organization</Label>
+                <Select
+                  value={editClientId}
+                  onChange={(e) => setEditClientId(e.target.value)}
+                  className="mt-1"
+                  required
+                >
+                  <option value="">Select a Client...</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </Select>
+                <p className="text-[10px] text-slate-500 mt-1">User will be added as a member of this client. Previous client access is removed.</p>
+              </div>
+            )}
 
             {/* Active toggle */}
             <div className="flex items-center justify-between p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
@@ -275,6 +296,7 @@ export const UsersAdmin: React.FC = () => {
                     role: editRole,
                     isActive: editIsActive,
                     permissions: editPermissions,
+                    ...(editRole.startsWith('CLIENT_') && editClientId ? { clientId: editClientId } : {}),
                   } as any);
                   setUsers(users.map(u => u.id === editUser.id
                     ? { ...u, role: editRole, isActive: editIsActive, customPermissions: editPermissions }

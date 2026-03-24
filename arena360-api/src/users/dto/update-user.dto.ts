@@ -27,4 +27,9 @@ export class UpdateUserDto {
     @IsArray()
     @IsString({ each: true })
     permissions?: string[];
+
+    // Required when role is CLIENT_* — links user to a client organization
+    @IsString()
+    @IsOptional()
+    clientId?: string;
 }
