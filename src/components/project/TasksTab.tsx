@@ -281,6 +281,15 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                         <Input name="dueDate" type="date" label={t('due_date')} value={selectedTask.dueDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedTask({ ...selectedTask, dueDate: e.target.value })} />
                     </div>
 
+                    <div className="grid grid-cols-1 gap-4">
+                        <Select name="milestoneId" label={t('milestone')} value={selectedTask.milestoneId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTask({ ...selectedTask, milestoneId: e.target.value })}>
+                            <option value="">{t('no_milestone')}</option>
+                            {milestones.map(m => (
+                                <option key={m.id} value={m.id}>{m.title}</option>
+                            ))}
+                        </Select>
+                    </div>
+
                     {selectedTask.id && (
                         <div className="pt-4 border-t border-slate-700">
                             <CustomFieldsSection entityType="TASK" entityId={selectedTask.id} onValuesSaved={() => { }} />

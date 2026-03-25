@@ -325,6 +325,27 @@ export interface Milestone {
   ownerId?: string;
   ownerName?: string;
   description?: string;
+  tasks?: any[];
+  stats?: {
+    total: number;
+    completed: number;
+    overdue: number;
+    progress: number;
+    statusText: string;
+  };
+}
+
+export interface EvidenceFile {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+  uploader?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface Finding {
@@ -356,19 +377,6 @@ export interface Finding {
   updatedAt?: string;
   createdAt?: string;
   evidence?: EvidenceFile[];
-}
-
-export interface EvidenceFile {
-  id: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  createdAt: string;
-  uploader?: {
-    id: string;
-    name: string;
-    email: string;
-  };
 }
 
 export interface ProjectUpdate {

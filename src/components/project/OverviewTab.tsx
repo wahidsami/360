@@ -4,7 +4,7 @@ import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAct
 import { GlassCard, KpiCard, ProgressBar, Badge, Button } from '../ui/UIComponents';
 import { Activity, Calendar, Clock, DollarSign, Flag, ArrowRight, CheckCircle, XCircle, AlertCircle, Info, Sparkles, Lock } from 'lucide-react';
 import { formatSAR } from '../../utils/currency';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { CustomFieldsSection } from '../CustomFieldsSection';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -570,71 +570,73 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     )}
                 </GlassCard>
 
-                {/* Schedule / Milestone Health */}
-                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
-                    <div className="flex justify-between items-start mb-4">
+                {/* Milestones Summary */}
+                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 bg-white transition-all duration-300 flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group shadow-sm hover:shadow-xl' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
+                    <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400 shadow-sm transition-transform group-hover:scale-110">
-                                <Calendar className="w-5 h-5" />
+                                <Flag className="w-5 h-5" />
                             </div>
-                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{t('schedule_title')}</h3>
-                        </div>
-                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-bold shadow-sm">{t('at_risk')}</Badge>}
-                    </div>
-
-                    <div className="space-y-4 mb-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-3.5 transition-all hover:bg-slate-100">
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('project_deadline')}</p>
-                            <div className="flex items-end justify-between">
-                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
-                                    {project.deadline || (project as any).endDate ? new Date(project.deadline || (project as any).endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : t('not_set')}
-                                </p>
-                                {daysUntilDeadline !== null && (
-                                    <span className={`text-[10px] font-black uppercase tracking-tighter mb-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/10 ${daysUntilDeadline < 14 ? 'text-amber-700 dark:text-amber-400 animate-pulse' : 'text-slate-500'}`}>
-                                        {daysUntilDeadline}d remain
-                                    </span>
-                                )}
+                            <div>
+                                <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t('milestones_summary')}</h3>
+                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{completedMilestones}/{milestoneCount} <span className="text-[10px] text-slate-400 uppercase font-bold tracking-normal ml-1">Done</span></p>
                             </div>
                         </div>
-
-                        <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-xl p-3.5">
-                            <p className="text-[10px] text-amber-700 dark:text-amber-500/70 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('next_milestone')}</p>
-                            {nextMilestone ? (
-                                <>
-                                    <p className="text-sm font-bold text-amber-900 dark:text-amber-400 truncate mb-1">{nextMilestone.title}</p>
-                                    <p className="text-[10px] text-amber-700 dark:text-amber-400/80 font-bold uppercase tracking-widest">Due {formatRelativeDate(nextMilestone.dueDate)}</p>
-                                </>
-                            ) : (
-                                <p className="text-xs text-slate-500 font-medium italic">{t('no_upcoming_milestones')}</p>
-                            )}
-                        </div>
+                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-2 py-1 font-black uppercase tracking-widest shadow-sm animate-pulse">{atRiskMilestones} {t('at_risk')}</Badge>}
                     </div>
 
-                    <div className="flex-grow mt-auto space-y-3">
-                        {missedMilestonesList.length > 0 && (
-                            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-3.5">
-                                <div className="flex items-center gap-1.5 mb-2">
-                                    <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-                                    <span className="text-[10px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest">{missedMilestonesList.length} Missed</span>
+                    <div className="space-y-5 flex-grow">
+                        {milestones.slice(0, 3).map((m: any) => {
+                            const mStats = m.stats || {
+                                progress: m.percentComplete || 0,
+                                statusText: 'On Track',
+                                total: 0,
+                                completed: 0
+                            };
+                            const isOverdue = mStats.statusText === 'Overdue';
+                            const isAtRisk = mStats.statusText === 'At Risk';
+
+                            return (
+                                <div key={m.id} className="space-y-2 group/item">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate group-hover/item:text-cyan-500 transition-colors uppercase tracking-tight">{m.title}</span>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                {m.dueDate ? format(new Date(m.dueDate), 'MMM dd') : 'No Date'}
+                                            </span>
+                                        </div>
+                                        <Badge 
+                                            variant={isOverdue ? 'danger' : isAtRisk ? 'warning' : 'success'} 
+                                            size="sm" 
+                                            className="text-[8px] px-1 py-0 font-black uppercase tracking-tighter shrink-0"
+                                        >
+                                            {mStats.statusText}
+                                        </Badge>
+                                    </div>
+                                    <div className="relative pt-1">
+                                        <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                                            <span>{mStats.completed}/{mStats.total} Tasks</span>
+                                            <span>{mStats.progress}%</span>
+                                        </div>
+                                        <ProgressBar progress={mStats.progress} className="h-1 bg-slate-100 dark:bg-slate-800" />
+                                    </div>
                                 </div>
-                                <ul className="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 list-disc list-inside font-medium">
-                                    {missedMilestonesList.slice(0, 2).map((m: any) => (
-                                        <li key={m.id} className="truncate">{m.title}</li>
-                                    ))}
-                                    {missedMilestonesList.length > 2 && <li className="text-[10px] text-slate-400 italic list-none ml-2">+{missedMilestonesList.length - 2} more...</li>}
-                                </ul>
+                            );
+                        })}
+
+                        {milestones.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-8 opacity-40 grayscale">
+                                <Flag className="w-8 h-8 text-slate-300 mb-2" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">No milestones yet</p>
                             </div>
                         )}
-
-                        <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 mx-1">
-                            <div className="flex items-center gap-2">
-                                <Flag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                                    <span className="text-slate-900 dark:text-white">{completedMilestones}</span> / {milestoneCount} OK
-                                </span>
-                            </div>
-                        </div>
                     </div>
+
+                    {milestones.length > 3 && (
+                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+                            <span className="text-[10px] text-cyan-500 font-black uppercase tracking-widest group-hover:underline">View all {milestoneCount} milestones &rarr;</span>
+                        </div>
+                    )}
                 </GlassCard>
 
                 {/* Findings Summary */}

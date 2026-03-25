@@ -14,7 +14,7 @@ export class MilestonesService {
         // Verify user has access to this project
         await this.verifyProjectAccess(projectId, user);
 
-        return this.prisma.milestone.findMany({
+        const milestones = await this.prisma.milestone.findMany({
             where: {
                 projectId,
                 orgId: user.orgId
@@ -22,9 +22,53 @@ export class MilestonesService {
             include: {
                 owner: {
                     select: { id: true, name: true, email: true }
+                },
+                tasks: {
+                    where: { deletedAt: null },
+                    select: { id: true, title: true, status: true, dueDate: true }
                 }
             },
             orderBy: { dueDate: 'asc' }
+        });
+
+        // Calculate progress and status for each milestone
+        return milestones.map(m => {
+            const tasks = m.tasks || [];
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.status === 'DONE').length;
+            const overdue = tasks.filter(t => t.status !== 'DONE' && t.dueDate && new Date(t.dueDate) < new Date()).length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : m.percentComplete;
+
+            // Simple status logic: Progress vs Time
+            let statusText: 'On Track' | 'At Risk' | 'Overdue' = 'On Track';
+            const now = new Date();
+            const due = new Date(m.dueDate);
+            const created = new Date(m.createdAt);
+            
+            if (m.status === 'COMPLETED' || progress === 100) {
+                statusText = 'On Track';
+            } else if (now > due) {
+                statusText = 'Overdue';
+            } else {
+                const totalDuration = due.getTime() - created.getTime();
+                const elapsedDuration = now.getTime() - created.getTime();
+                const expectedProgress = totalDuration > 0 ? (elapsedDuration / totalDuration) * 100 : 0;
+                
+                if (progress < expectedProgress * 0.8) {
+                    statusText = 'At Risk';
+                }
+            }
+
+            return {
+                ...m,
+                stats: {
+                    total,
+                    completed,
+                    overdue,
+                    progress,
+                    statusText
+                }
+            };
         });
     }
 
