@@ -9,29 +9,31 @@ import ResetPassword from './pages/ResetPassword';
 import Signup from './pages/Signup';
 import AcceptInvite from './pages/auth/AcceptInvite';
 import AuthCallback from './pages/auth/AuthCallback';
-import Dashboard from './pages/Dashboard';
-import { ClientList } from './pages/Clients';
-import { ClientCreate } from './pages/ClientCreate';
-import { ClientDetails } from './pages/ClientDetails';
-import { ClientEdit } from './pages/ClientEdit';
-import { ProjectsList } from './pages/Projects';
-import { ProjectCreate } from './pages/ProjectCreate';
-import { ProjectDetails } from './pages/ProjectDetails';
-import { ProjectEdit } from './pages/ProjectEdit';
-import Settings from './pages/Settings';
-import { MyWork } from './pages/MyWork';
-import { Reports } from './pages/Reports';
-import { FindingsList } from './pages/findings/FindingsList';
-import { FindingDetails } from './pages/findings/FindingDetails';
-import UsersAdmin from './pages/admin/UsersAdmin';
-import RolesAdmin from './pages/admin/RolesAdmin';
-import Automations from './pages/Automations';
-import Integrations from './pages/Integrations';
-import Calendar from './pages/Calendar';
-import Wiki from './pages/Wiki';
-import Analytics from './pages/Analytics';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import './services/i18n';
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const ClientList = React.lazy(() => import('./pages/Clients').then((module) => ({ default: module.ClientList })));
+const ClientCreate = React.lazy(() => import('./pages/ClientCreate').then((module) => ({ default: module.ClientCreate })));
+const ClientDetails = React.lazy(() => import('./pages/ClientDetails').then((module) => ({ default: module.ClientDetails })));
+const ClientEdit = React.lazy(() => import('./pages/ClientEdit').then((module) => ({ default: module.ClientEdit })));
+const ProjectsList = React.lazy(() => import('./pages/Projects').then((module) => ({ default: module.ProjectsList })));
+const ProjectCreate = React.lazy(() => import('./pages/ProjectCreate').then((module) => ({ default: module.ProjectCreate })));
+const ProjectDetails = React.lazy(() => import('./pages/ProjectDetails').then((module) => ({ default: module.ProjectDetails })));
+const ProjectEdit = React.lazy(() => import('./pages/ProjectEdit').then((module) => ({ default: module.ProjectEdit })));
+const ProjectReportWorkspace = React.lazy(() => import('./pages/ProjectReportWorkspace'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const MyWork = React.lazy(() => import('./pages/MyWork').then((module) => ({ default: module.MyWork })));
+const Reports = React.lazy(() => import('./pages/Reports').then((module) => ({ default: module.Reports })));
+const FindingsList = React.lazy(() => import('./pages/findings/FindingsList').then((module) => ({ default: module.FindingsList })));
+const FindingDetails = React.lazy(() => import('./pages/findings/FindingDetails').then((module) => ({ default: module.FindingDetails })));
+const UsersAdmin = React.lazy(() => import('./pages/admin/UsersAdmin'));
+const RolesAdmin = React.lazy(() => import('./pages/admin/RolesAdmin'));
+const ReportTemplatesAdmin = React.lazy(() => import('./pages/admin/ReportTemplatesAdmin'));
+const Automations = React.lazy(() => import('./pages/Automations'));
+const Integrations = React.lazy(() => import('./pages/Integrations'));
+const Calendar = React.lazy(() => import('./pages/Calendar'));
+const Wiki = React.lazy(() => import('./pages/Wiki'));
+const Analytics = React.lazy(() => import('./pages/Analytics'));
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -58,12 +60,17 @@ const App: React.FC = () => {
     localStorage.setItem('arena360_theme', theme);
   }, []);
 
+  const routeFallback = (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-500">Loading...</div>
+  );
+
   return (
     <HashRouter>
       <ErrorBoundary>
         <AuthProvider>
           <AIProvider>
           <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+          <React.Suspense fallback={routeFallback}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
@@ -89,6 +96,7 @@ const App: React.FC = () => {
                 <Route index element={<ProjectsList />} />
                 <Route path="new" element={<ProjectCreate />} />
                 <Route path=":projectId" element={<ProjectDetails />} />
+                <Route path=":projectId/report-builder/:reportId" element={<ProjectReportWorkspace />} />
                 <Route path=":projectId/edit" element={<ProjectEdit />} />
               </Route>
 
@@ -100,6 +108,7 @@ const App: React.FC = () => {
               </Route>
 
               <Route path="admin">
+                <Route path="report-templates" element={<ReportTemplatesAdmin />} />
                 <Route path="users" element={<UsersAdmin />} />
                 <Route path="roles" element={<RolesAdmin />} />
               </Route>
@@ -117,6 +126,7 @@ const App: React.FC = () => {
 
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
+          </React.Suspense>
           </AIProvider>
         </AuthProvider>
       </ErrorBoundary>

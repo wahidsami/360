@@ -125,6 +125,81 @@ export class AiService {
     );
   }
 
+  async generateProjectReportNarratives(projectReportId: string, orgId: string): Promise<{
+    introduction: string;
+    executiveSummary: string;
+    recommendationsSummary: string;
+  }> {
+    const report = await this.prisma.projectReport.findFirst({
+      where: { id: projectReportId, orgId, deletedAt: null },
+      include: {
+        project: { select: { name: true } },
+        client: { select: { name: true } },
+        template: { select: { name: true, category: true } },
+        performedBy: { select: { name: true } },
+        entries: {
+          where: { deletedAt: null },
+          select: {
+            serviceName: true,
+            issueTitle: true,
+            issueDescription: true,
+            severity: true,
+            category: true,
+            subcategory: true,
+            recommendation: true,
+            status: true,
+          },
+        },
+      },
+    });
+    if (!report) throw new Error('Project report not found');
+
+    const payload = JSON.stringify(
+      {
+        report: {
+          title: report.title,
+          description: report.description,
+          template: report.template?.name,
+          category: report.template?.category,
+          project: report.project?.name,
+          client: report.client?.name,
+          performedBy: report.performedBy?.name,
+        },
+        counts: {
+          total: report.entries.length,
+          critical: report.entries.filter((entry) => entry.severity === 'CRITICAL').length,
+          high: report.entries.filter((entry) => entry.severity === 'HIGH').length,
+          medium: report.entries.filter((entry) => entry.severity === 'MEDIUM').length,
+          low: report.entries.filter((entry) => entry.severity === 'LOW').length,
+        },
+        entries: report.entries,
+      },
+      null,
+      2,
+    );
+
+    const raw = await this.chat(
+      'You are an accessibility audit reporting assistant. Use only the provided findings as source of truth. Write formal Arabic-first report text that can later be adapted to English. Do not invent issues or recommendations. Output valid JSON only.',
+      `Generate a JSON object with exactly these keys: introduction, executiveSummary, recommendationsSummary.
+
+Requirements:
+- introduction: 1 to 2 professional paragraphs introducing scope and overall result
+- executiveSummary: concise management summary with severity distribution and major themes
+- recommendationsSummary: grouped practical recommendation summary using only provided recommendations
+- Output valid JSON only
+
+Report data:
+${payload}`,
+    );
+
+    const parsed = JSON.parse(raw);
+    return {
+      introduction: parsed.introduction || '',
+      executiveSummary: parsed.executiveSummary || '',
+      recommendationsSummary: parsed.recommendationsSummary || '',
+    };
+  }
+
   async chatWithContext(messages: { role: string; content: string }[], context?: { projectId?: string; findingId?: string }, orgId?: string): Promise<string> {
     let system = 'You are a helpful assistant for a project management platform. Be concise and professional.';
     if (context?.projectId && orgId) {

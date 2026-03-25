@@ -133,6 +133,59 @@ enum ReportVisibility {
   CLIENT
 }
 
+enum ReportBuilderTemplateCategory {
+  ACCESSIBILITY
+  SECURITY
+  QA
+  PERFORMANCE
+  COMPLIANCE
+  OTHER
+}
+
+enum ReportBuilderTemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProjectReportStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProjectReportVisibility {
+  INTERNAL
+  CLIENT
+}
+
+enum ProjectReportEntrySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ProjectReportEntryStatus {
+  OPEN
+  ACCEPTED
+  FIXED
+  VERIFIED
+  DISMISSED
+}
+
+enum ProjectReportMediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum ProjectReportExportFormat {
+  PDF
+}
+
 enum ContractStatus {
   ACTIVE
   COMPLETED
@@ -178,6 +231,11 @@ model Org {
   slaPolicies     SLAPolicy[]
   slaTrackers     SLATracker[]
   wikiPages       WikiPage[]
+  reportBuilderTemplates ReportBuilderTemplate[]
+  clientReportTemplateAssignments ClientReportTemplateAssignment[]
+  projectReports ProjectReport[]
+  projectReportEntries ProjectReportEntry[]
+  projectReportExports ProjectReportExport[]
 }
 
 model User {
@@ -221,6 +279,13 @@ model User {
   discussions        Discussion[]     @relation("DiscussionAuthor")
   discussionReplies  DiscussionReply[] @relation("ReplyAuthor")
   createdTemplates   ReportTemplate[] @relation("TemplateCreator")
+  reportBuilderTemplatesCreated ReportBuilderTemplate[] @relation("ReportBuilderTemplateCreator")
+  reportBuilderTemplateVersionsPublished ReportBuilderTemplateVersion[] @relation("ReportBuilderTemplateVersionPublisher")
+  clientReportTemplateAssignmentsCreated ClientReportTemplateAssignment[] @relation("ClientReportTemplateAssignmentCreator")
+  projectReportsPerformed ProjectReport[] @relation("ProjectReportPerformer")
+  projectReportEntriesCreated ProjectReportEntry[] @relation("ProjectReportEntryCreator")
+  projectReportEntriesUpdated ProjectReportEntry[] @relation("ProjectReportEntryUpdater")
+  projectReportExportsGenerated ProjectReportExport[] @relation("ProjectReportExportGenerator")
   notifications      Notification[]   @relation("NotificationRecipient")
   notificationPrefs  NotificationPreference?
   timeEntries        TimeEntry[]
@@ -314,6 +379,8 @@ model Client {
   members   ClientMember[]
   projects  Project[]
   files     FileAsset[]
+  reportTemplateAssignments ClientReportTemplateAssignment[]
+  projectReports ProjectReport[]
   
   // Extended Fields
   industry      String?
@@ -381,6 +448,7 @@ model Project {
   files      FileAsset[]
   findings   Finding[]
   reports    Report[]
+  projectReports ProjectReport[]
   contracts  Contract[]
   invoices   Invoice[]
   discussions Discussion[]
@@ -565,6 +633,9 @@ model FileAsset {
   createdAt    DateTime       @default(now())
   deletedAt    DateTime?
 
+  projectReportEntryMedia ProjectReportEntryMedia[]
+  projectReportExports ProjectReportExport[]
+
   @@index([orgId])
   @@index([clientId])
   @@index([projectId])
@@ -675,6 +746,183 @@ model ReportTemplate {
 
   @@index([orgId])
   @@index([isBuiltIn])
+}
+
+model ReportBuilderTemplate {
+  id            String                       @id @default(cuid())
+  orgId         String
+  org           Org                          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name          String
+  code          String
+  description   String?
+  category      ReportBuilderTemplateCategory @default(OTHER)
+  status        ReportBuilderTemplateStatus  @default(DRAFT)
+  isBuiltIn     Boolean                      @default(false)
+  createdById   String?
+  createdBy     User?                        @relation("ReportBuilderTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime                     @default(now())
+  updatedAt     DateTime                     @updatedAt
+
+  versions      ReportBuilderTemplateVersion[]
+  assignments   ClientReportTemplateAssignment[]
+  projectReports ProjectReport[]
+
+  @@unique([orgId, code])
+  @@index([orgId])
+  @@index([category])
+  @@index([status])
+}
+
+model ReportBuilderTemplateVersion {
+  id            String                @id @default(cuid())
+  templateId    String
+  template      ReportBuilderTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  versionNumber Int
+  schemaJson    Json
+  pdfConfigJson Json?
+  aiConfigJson  Json?
+  taxonomyJson  Json?
+  isPublished   Boolean               @default(false)
+  publishedById String?
+  publishedBy   User?                 @relation("ReportBuilderTemplateVersionPublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  publishedAt   DateTime?
+  createdAt     DateTime              @default(now())
+
+  assignments   ClientReportTemplateAssignment[]
+  projectReports ProjectReport[]
+
+  @@unique([templateId, versionNumber])
+  @@index([templateId])
+  @@index([isPublished])
+}
+
+model ClientReportTemplateAssignment {
+  id                String                @id @default(cuid())
+  orgId             String
+  org               Org                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  templateId        String
+  template          ReportBuilderTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersionId String
+  templateVersion   ReportBuilderTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  isDefault         Boolean               @default(false)
+  isActive          Boolean               @default(true)
+  assignedById      String?
+  assignedBy        User?                 @relation("ClientReportTemplateAssignmentCreator", fields: [assignedById], references: [id], onDelete: SetNull)
+  assignedAt        DateTime              @default(now())
+
+  @@index([orgId])
+  @@index([clientId])
+  @@index([templateId])
+  @@index([templateVersionId])
+  @@index([isActive])
+}
+
+model ProjectReport {
+  id                String                   @id @default(cuid())
+  orgId             String
+  org               Org                      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId         String
+  project           Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId        String
+  template          ReportBuilderTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersionId String
+  templateVersion   ReportBuilderTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  status            ProjectReportStatus      @default(DRAFT)
+  visibility        ProjectReportVisibility  @default(INTERNAL)
+  performedById     String
+  performedBy       User                     @relation("ProjectReportPerformer", fields: [performedById], references: [id], onDelete: Restrict)
+  summaryJson       Json?
+  coverSnapshotJson Json?
+  publishedAt       DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  deletedAt         DateTime?
+
+  entries           ProjectReportEntry[]
+  exports           ProjectReportExport[]
+
+  @@index([orgId])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([templateId])
+  @@index([templateVersionId])
+  @@index([status])
+}
+
+model ProjectReportEntry {
+  id               String                   @id @default(cuid())
+  orgId            String
+  org              Org                      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  projectReportId  String
+  projectReport    ProjectReport            @relation(fields: [projectReportId], references: [id], onDelete: Cascade)
+  sortOrder        Int                      @default(0)
+  serviceName      String?
+  issueTitle       String
+  issueDescription String                   @db.Text
+  severity         ProjectReportEntrySeverity?
+  category         String?
+  subcategory      String?
+  pageUrl          String?
+  recommendation   String?                  @db.Text
+  status           ProjectReportEntryStatus @default(OPEN)
+  rowDataJson      Json?
+  createdById      String
+  createdBy        User                     @relation("ProjectReportEntryCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById      String?
+  updatedBy        User?                    @relation("ProjectReportEntryUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  deletedAt        DateTime?
+
+  media            ProjectReportEntryMedia[]
+
+  @@index([orgId])
+  @@index([projectReportId])
+  @@index([severity])
+  @@index([category])
+  @@index([subcategory])
+  @@index([status])
+}
+
+model ProjectReportEntryMedia {
+  id          String                 @id @default(cuid())
+  entryId      String
+  entry        ProjectReportEntry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  fileAssetId  String
+  fileAsset    FileAsset              @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  mediaType    ProjectReportMediaType
+  caption      String?
+  sortOrder    Int                    @default(0)
+  createdAt    DateTime               @default(now())
+
+  @@index([entryId])
+  @@index([fileAssetId])
+  @@index([mediaType])
+}
+
+model ProjectReportExport {
+  id              String                    @id @default(cuid())
+  orgId           String
+  org             Org                       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  projectReportId String
+  projectReport   ProjectReport             @relation(fields: [projectReportId], references: [id], onDelete: Cascade)
+  format          ProjectReportExportFormat @default(PDF)
+  fileAssetId     String?
+  fileAsset       FileAsset?                @relation(fields: [fileAssetId], references: [id], onDelete: SetNull)
+  exportVersion   Int                       @default(1)
+  generatedById   String?
+  generatedBy     User?                     @relation("ProjectReportExportGenerator", fields: [generatedById], references: [id], onDelete: SetNull)
+  generatedAt     DateTime                  @default(now())
+
+  @@index([orgId])
+  @@index([projectReportId])
+  @@index([format])
 }
 
 model Contract {

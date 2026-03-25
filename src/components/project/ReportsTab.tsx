@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Report, Permission, isInternalRole } from '@/types';
+import { ClientReportTemplateAssignment, ProjectReport, Report, Permission, ProjectReportVisibility, isInternalRole } from '@/types';
 import { Button, GlassCard, Badge, Modal, Input } from '../ui/UIComponents';
-import { FileText, Plus, Download, Calendar, FileDown, Send, Check, X, Trash2, Upload } from 'lucide-react';
+import { ArrowRight, FileText, Plus, Download, Calendar, FileDown, Send, Check, X, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PermissionGate } from '../PermissionGate';
 import { format } from 'date-fns';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '@/services/api';
 import toast from 'react-hot-toast';
 
@@ -25,17 +25,28 @@ interface ApprovalInfo {
 
 export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports, onRefresh }) => {
     const { projectId } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [reports, setReports] = useState<Report[]>(initialReports);
+    const [builderReports, setBuilderReports] = useState<ProjectReport[]>([]);
+    const [assignedTemplates, setAssignedTemplates] = useState<ClientReportTemplateAssignment[]>([]);
     const [approvalByReportId, setApprovalByReportId] = useState<Record<string, ApprovalInfo | null>>({});
     const [reviewModal, setReviewModal] = useState<{ id: string; action: 'approve' | 'reject' } | null>(null);
     const [reviewComment, setReviewComment] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBuilderModalOpen, setBuilderModalOpen] = useState(false);
     const [generateModalOpen, setGenerateModalOpen] = useState(false);
     const [generateFormat, setGenerateFormat] = useState<'pptx' | 'pdf'>('pptx');
     const [generateReportId, setGenerateReportId] = useState<string>('');
     const [generating, setGenerating] = useState(false);
     const [editingReport, setEditingReport] = useState<Partial<Report> | null>(null);
+    const [builderDraft, setBuilderDraft] = useState({
+        assignmentId: '',
+        title: '',
+        description: '',
+        visibility: 'INTERNAL' as ProjectReportVisibility,
+    });
+    const hasAccessibilityFlow = assignedTemplates.some((assignment) => assignment.template.category === 'ACCESSIBILITY');
 
     const refreshReports = async () => {
         if (projectId) {
@@ -44,6 +55,28 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                 setReports(r);
                 onRefresh?.();
             } catch (e) { console.error(e); }
+        }
+    };
+
+    const refreshBuilderData = async () => {
+        if (!projectId) return;
+        try {
+            const [templates, projectReports] = await Promise.all([
+                api.reportBuilderProjects.listAvailableTemplates(projectId),
+                api.reportBuilderProjects.listProjectReports(projectId),
+            ]);
+            setAssignedTemplates(templates);
+            setBuilderReports(projectReports);
+            if (!builderDraft.assignmentId && templates.length > 0) {
+                const defaultAssignment = templates.find((assignment) => assignment.isDefault) || templates[0];
+                setBuilderDraft((current) => ({
+                    ...current,
+                    assignmentId: defaultAssignment.id,
+                    title: current.title || `${defaultAssignment.template.name} - ${format(new Date(), 'yyyy-MM-dd')}`,
+                }));
+            }
+        } catch (e) {
+            console.error('Failed to load report builder data', e);
         }
     };
 
@@ -95,6 +128,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
         }).catch(() => { });
     }, [projectId, reports.map((r) => r.id).join(',')]);
 
+    useEffect(() => {
+        refreshBuilderData();
+    }, [projectId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!projectId) return;
@@ -116,6 +153,34 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
         await refreshReports();
         setIsModalOpen(false);
         setEditingReport(null);
+    };
+
+    const handleCreateBuilderReport = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!projectId) return;
+
+        const selectedAssignment = assignedTemplates.find((assignment) => assignment.id === builderDraft.assignmentId);
+        if (!selectedAssignment) {
+            toast.error('Select an assigned template first');
+            return;
+        }
+
+        try {
+            const report = await api.reportBuilderProjects.createProjectReport(projectId, {
+                templateId: selectedAssignment.templateId,
+                templateVersionId: selectedAssignment.templateVersionId,
+                title: builderDraft.title.trim(),
+                description: builderDraft.description.trim() || undefined,
+                visibility: builderDraft.visibility,
+            });
+            toast.success('Report workspace created');
+            setBuilderModalOpen(false);
+            await refreshBuilderData();
+            navigate(`/app/projects/${projectId}/report-builder/${report.id}`);
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error?.message || 'Failed to create report workspace');
+        }
     };
 
     const handlePublish = async (report: Report) => {
@@ -201,17 +266,131 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
             <div className="flex justify-between items-center flex-wrap gap-2">
                 <h3 className="text-xl font-bold text-white">Reports & Documentation</h3>
                 <div className="flex gap-2">
+                    <PermissionGate permission={Permission.CREATE_PROJECT_REPORTS}>
+                        <Button variant="secondary" onClick={() => setBuilderModalOpen(true)} disabled={assignedTemplates.length === 0}>
+                            <Plus className="w-4 h-4 mr-2" /> New Report Workspace
+                        </Button>
+                    </PermissionGate>
                     <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                         <Button variant="outline" onClick={() => setGenerateModalOpen(true)}>
                             <FileDown className="w-4 h-4 mr-2" /> Generate (PPT/PDF)
                         </Button>
                         <Button onClick={() => { setEditingReport(null); setIsModalOpen(true); }}>
-                            <Plus className="w-4 h-4 mr-2" /> Create Report
+                            <Plus className="w-4 h-4 mr-2" /> {hasAccessibilityFlow ? 'Legacy Report' : 'Create Report'}
                         </Button>
                     </PermissionGate>
                 </div>
             </div>
 
+            <GlassCard className="p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-cyan-400" />
+                            <h4 className="text-lg font-bold text-white">Custom Report Builder</h4>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-400 max-w-3xl">
+                            New accessibility reporting lives here. Create a project report from an assigned client template, then open the workspace to add structured findings and prepare the Arabic-first export flow.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <Badge variant="info">{assignedTemplates.length} assigned templates</Badge>
+                        <Badge variant="neutral">{builderReports.length} report workspaces</Badge>
+                    </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-4">
+                    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assigned Templates</p>
+                        <div className="mt-3 space-y-3">
+                            {assignedTemplates.map((assignment) => (
+                                <button
+                                    key={assignment.id}
+                                    type="button"
+                                    onClick={() =>
+                                        setBuilderDraft((current) => ({
+                                            ...current,
+                                            assignmentId: assignment.id,
+                                            title: current.title || `${assignment.template.name} - ${format(new Date(), 'yyyy-MM-dd')}`,
+                                        }))
+                                    }
+                                    className={`w-full rounded-xl border p-3 text-left transition-all ${
+                                        builderDraft.assignmentId === assignment.id
+                                            ? 'border-cyan-500/50 bg-cyan-500/10'
+                                            : 'border-slate-800 bg-slate-950/40 hover:border-cyan-500/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="font-medium text-slate-200">{assignment.template.name}</p>
+                                        {assignment.isDefault && <Badge variant="success">Default</Badge>}
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        v{assignment.templateVersion.versionNumber} • {assignment.template.category}
+                                    </p>
+                                </button>
+                            ))}
+                            {assignedTemplates.length === 0 && (
+                                <p className="text-sm text-slate-500">
+                                    No client template assignment yet. Assign one from the admin template dashboard first.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {builderReports.map((report) => (
+                            <GlassCard key={report.id} className="p-5 border-cyan-500/20 bg-gradient-to-br from-slate-900/90 to-slate-950">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge variant={report.status === 'PUBLISHED' ? 'success' : 'info'}>{report.status}</Badge>
+                                            <Badge variant="neutral">{report.visibility}</Badge>
+                                            <Badge variant="warning">v{report.templateVersion.versionNumber}</Badge>
+                                        </div>
+                                        <h4 className="mt-3 text-lg font-bold text-white">{report.title}</h4>
+                                        <p className="mt-1 text-sm text-slate-400 line-clamp-2">{report.description || 'No description yet.'}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 text-xs text-slate-500 space-y-1">
+                                    <p>Template: {report.template.name}</p>
+                                    <p>Performed by: {report.performedBy?.name || 'Unknown'}</p>
+                                    <p>Entries: {report._count?.entries ?? 0}</p>
+                                </div>
+                                <div className="mt-5 flex justify-end">
+                                    <Button size="sm" onClick={() => navigate(`/app/projects/${projectId}/report-builder/${report.id}`)}>
+                                        Open Workspace <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                </div>
+                            </GlassCard>
+                        ))}
+
+                        {builderReports.length === 0 && (
+                            <div className="md:col-span-2 rounded-xl border border-dashed border-cyan-500/20 bg-cyan-500/5 p-8 text-center">
+                                <h4 className="text-slate-200 font-semibold">No report workspaces yet</h4>
+                                <p className="mt-2 text-sm text-slate-500 max-w-xl mx-auto">
+                                    Start with a client-assigned accessibility template, create the report workspace here, and continue the actual findings entry in the new flow.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </GlassCard>
+
+            {hasAccessibilityFlow && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-100">
+                    Accessibility reporting now defaults to the new template-based workspace above. The cards below remain available only for the older generic report flow.
+                </div>
+            )}
+
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h4 className="text-lg font-semibold text-white">{hasAccessibilityFlow ? 'Legacy Report Archive' : 'Existing Reports'}</h4>
+                        <p className="text-sm text-slate-500">
+                            {hasAccessibilityFlow ? 'Older generic reports and manual exports remain here during the migration.' : 'Generic reports and manual exports.'}
+                        </p>
+                    </div>
+                </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {reports.map((report) => (
                     <GlassCard key={report.id} className="p-5 flex flex-col justify-between group hover:border-cyan-500/50 transition-all">
@@ -333,6 +512,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                     </div>
                 )}
             </div>
+            </div>
 
             <Modal isOpen={generateModalOpen} onClose={() => setGenerateModalOpen(false)} title="Generate Report">
                 <div className="space-y-4">
@@ -357,6 +537,69 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports: initialReports,
                         <Button type="button" onClick={handleGenerate} disabled={generating}>{generating ? 'Generating…' : 'Generate & Download'}</Button>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal isOpen={isBuilderModalOpen} onClose={() => setBuilderModalOpen(false)} title="Create Report Workspace">
+                <form onSubmit={handleCreateBuilderReport} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Assigned template</label>
+                        <select
+                            value={builderDraft.assignmentId}
+                            onChange={(e) => {
+                                const nextAssignmentId = e.target.value;
+                                const nextAssignment = assignedTemplates.find((assignment) => assignment.id === nextAssignmentId);
+                                setBuilderDraft((current) => ({
+                                    ...current,
+                                    assignmentId: nextAssignmentId,
+                                    title: nextAssignment ? `${nextAssignment.template.name} - ${format(new Date(), 'yyyy-MM-dd')}` : current.title,
+                                }));
+                            }}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"
+                            required
+                        >
+                            <option value="">Select template</option>
+                            {assignedTemplates.map((assignment) => (
+                                <option key={assignment.id} value={assignment.id}>
+                                    {assignment.template.name} / v{assignment.templateVersion.versionNumber}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <Input
+                        label="Workspace title"
+                        value={builderDraft.title}
+                        onChange={(e) => setBuilderDraft((current) => ({ ...current, title: e.target.value }))}
+                        required
+                    />
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Visibility</label>
+                        <select
+                            value={builderDraft.visibility}
+                            onChange={(e) => setBuilderDraft((current) => ({ ...current, visibility: e.target.value as ProjectReportVisibility }))}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"
+                        >
+                            <option value="INTERNAL">Internal</option>
+                            <option value="CLIENT">Client</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                        <textarea
+                            rows={4}
+                            value={builderDraft.description}
+                            onChange={(e) => setBuilderDraft((current) => ({ ...current, description: e.target.value }))}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+                            placeholder="Accessibility audit scope, language notes, or client-specific context"
+                        />
+                    </div>
+                    <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-sm text-slate-400">
+                        The workspace uses the assigned template version as an immutable snapshot, so later admin template edits will not break this report.
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="ghost" onClick={() => setBuilderModalOpen(false)}>Cancel</Button>
+                        <Button type="submit" disabled={assignedTemplates.length === 0}>Create Workspace</Button>
+                    </div>
+                </form>
             </Modal>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingReport ? "Edit Report" : "Create New Report"}>

@@ -34,6 +34,7 @@ import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { SlaModule } from './sla/sla.module';
 import { WikiModule } from './wiki/wiki.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ReportBuilderModule } from './report-builder/report-builder.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
@@ -105,6 +106,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     SlaModule,
     WikiModule,
     PaymentsModule,
+    ReportBuilderModule,
     RecurringTasksModule,
     ScheduleModule.forRoot(),
   ],

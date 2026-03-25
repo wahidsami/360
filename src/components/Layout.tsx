@@ -162,7 +162,7 @@ export const Layout: React.FC = () => {
     { to: '/app/projects', icon: Briefcase, label: t('projects') }
   );
 
-  if (user && [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.FINANCE].includes(user.role)) {
+  if (user && [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.FINANCE, Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user.role)) {
     menuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
   }
 
@@ -181,6 +181,7 @@ export const Layout: React.FC = () => {
   }
 
   if (user?.role === Role.SUPER_ADMIN) {
+    menuItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'Report Templates' });
     menuItems.push({ to: '/app/admin/users', icon: ShieldCheck, label: t('admin') });
   }
 

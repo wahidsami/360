@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness } from '../types';
+import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility } from '../types';
 import toast from 'react-hot-toast';
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
@@ -98,6 +98,9 @@ export const api = {
     });
     if (!res.ok) return [];
     return res.json();
+  },
+  admin: {
+    getRoles: async (): Promise<string[]> => Object.values(Role),
   },
   export: {
     findingsCsv: async () => {
@@ -1281,6 +1284,229 @@ export const api = {
     }
   },
 
+  reportBuilderAdmin: {
+    listTemplates: async (): Promise<ReportBuilderTemplate[]> => {
+      return fetchApi('/admin/report-builder/templates');
+    },
+    createTemplate: async (payload: {
+      name: string;
+      code: string;
+      description?: string;
+      category?: ReportBuilderTemplateCategory;
+      status?: ReportBuilderTemplateStatus;
+    }): Promise<ReportBuilderTemplate> => {
+      return fetchApi('/admin/report-builder/templates', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    updateTemplate: async (
+      templateId: string,
+      payload: Partial<{
+        name: string;
+        code: string;
+        description: string;
+        category: ReportBuilderTemplateCategory;
+        status: ReportBuilderTemplateStatus;
+      }>,
+    ): Promise<ReportBuilderTemplate> => {
+      return fetchApi(`/admin/report-builder/templates/${templateId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+    createTemplateVersion: async (
+      templateId: string,
+      payload: {
+        schemaJson: Record<string, unknown>;
+        pdfConfigJson?: Record<string, unknown>;
+        aiConfigJson?: Record<string, unknown>;
+        taxonomyJson?: Record<string, unknown>;
+      },
+    ): Promise<ReportBuilderTemplateVersion> => {
+      return fetchApi(`/admin/report-builder/templates/${templateId}/versions`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    publishTemplateVersion: async (
+      templateId: string,
+      versionId: string,
+    ): Promise<ReportBuilderTemplateVersion> => {
+      return fetchApi(`/admin/report-builder/templates/${templateId}/versions/${versionId}/publish`, {
+        method: 'POST',
+      });
+    },
+    listClientAssignments: async (clientId: string): Promise<ClientReportTemplateAssignment[]> => {
+      return fetchApi(`/admin/report-builder/clients/${clientId}/assignments`);
+    },
+    createClientAssignment: async (
+      clientId: string,
+      payload: {
+        templateId: string;
+        templateVersionId: string;
+        isDefault?: boolean;
+        isActive?: boolean;
+      },
+    ): Promise<ClientReportTemplateAssignment> => {
+      return fetchApi(`/admin/report-builder/clients/${clientId}/assignments`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    updateClientAssignment: async (
+      assignmentId: string,
+      payload: { isDefault?: boolean; isActive?: boolean },
+    ): Promise<ClientReportTemplateAssignment> => {
+      return fetchApi(`/admin/report-builder/client-assignments/${assignmentId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+  },
+
+  reportBuilderProjects: {
+    listAvailableTemplates: async (projectId: string): Promise<ClientReportTemplateAssignment[]> => {
+      return fetchApi(`/projects/${projectId}/report-builder/templates`);
+    },
+    listProjectReports: async (projectId: string): Promise<ProjectReport[]> => {
+      return fetchApi(`/projects/${projectId}/project-reports`);
+    },
+    listClientVisibleReports: async (): Promise<ProjectReport[]> => {
+      return fetchApi('/project-reports/client-visible');
+    },
+    createProjectReport: async (
+      projectId: string,
+      payload: {
+        templateId: string;
+        templateVersionId: string;
+        title: string;
+        description?: string;
+        visibility?: ProjectReportVisibility;
+        performedById?: string;
+      },
+    ): Promise<ProjectReport> => {
+      return fetchApi(`/projects/${projectId}/project-reports`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    getProjectReport: async (reportId: string): Promise<ProjectReport> => {
+      return fetchApi(`/project-reports/${reportId}`);
+    },
+    updateProjectReport: async (
+      reportId: string,
+      payload: Partial<{
+        title: string;
+        description: string;
+        status: ProjectReportStatus;
+        visibility: ProjectReportVisibility;
+        performedById: string;
+        summaryJson: Record<string, unknown>;
+        coverSnapshotJson: Record<string, unknown>;
+      }>,
+    ): Promise<ProjectReport> => {
+      return fetchApi(`/project-reports/${reportId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+    listEntries: async (reportId: string): Promise<ProjectReportEntry[]> => {
+      return fetchApi(`/project-reports/${reportId}/entries`);
+    },
+    createEntry: async (
+      reportId: string,
+      payload: {
+        sortOrder?: number;
+        serviceName?: string;
+        issueTitle: string;
+        issueDescription: string;
+        severity?: ProjectReportEntrySeverity;
+        category?: string;
+        subcategory?: string;
+        pageUrl?: string;
+        recommendation?: string;
+        status?: ProjectReportEntryStatus;
+        rowDataJson?: Record<string, unknown>;
+      },
+    ): Promise<ProjectReportEntry> => {
+      return fetchApi(`/project-reports/${reportId}/entries`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    updateEntry: async (
+      reportId: string,
+      entryId: string,
+      payload: Partial<{
+        sortOrder: number;
+        serviceName: string;
+        issueTitle: string;
+        issueDescription: string;
+        severity: ProjectReportEntrySeverity;
+        category: string;
+        subcategory: string;
+        pageUrl: string;
+        recommendation: string;
+        status: ProjectReportEntryStatus;
+        rowDataJson: Record<string, unknown>;
+      }>,
+    ): Promise<ProjectReportEntry> => {
+      return fetchApi(`/project-reports/${reportId}/entries/${entryId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+    deleteEntry: async (reportId: string, entryId: string): Promise<void> => {
+      await fetchApi(`/project-reports/${reportId}/entries/${entryId}`, {
+        method: 'DELETE',
+      });
+    },
+    uploadEntryMedia: async (
+      reportId: string,
+      entryId: string,
+      file: File,
+      caption?: string,
+    ) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (caption) formData.append('caption', caption);
+      const response = await fetch(`${API_URL}/project-reports/${reportId}/entries/${entryId}/media`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error('Evidence upload failed');
+      }
+      return response.json();
+    },
+    deleteEntryMedia: async (reportId: string, entryId: string, mediaId: string): Promise<void> => {
+      await fetchApi(`/project-reports/${reportId}/entries/${entryId}/media/${mediaId}`, {
+        method: 'DELETE',
+      });
+    },
+    getPreviewHtml: async (reportId: string): Promise<string> => {
+      const res = await fetchApi(`/project-reports/${reportId}/preview`);
+      return res.html || '';
+    },
+    getLatestExport: async (reportId: string): Promise<{ url: string; exportVersion: number }> => {
+      return fetchApi(`/project-reports/${reportId}/latest-export`);
+    },
+    generateAiSummary: async (reportId: string): Promise<{ narratives: { introduction: string; executiveSummary: string; recommendationsSummary: string } }> => {
+      return fetchApi(`/project-reports/${reportId}/generate-ai-summary`, {
+        method: 'POST',
+      });
+    },
+    exportPdf: async (reportId: string): Promise<{ downloadUrl?: string; export?: unknown }> => {
+      return fetchApi(`/project-reports/${reportId}/export-pdf`, {
+        method: 'POST',
+      });
+    },
+  },
+
   me: {
     getDashboardPreferences: async (): Promise<{ widgets: { id: string; order: number; config?: Record<string, unknown> }[] }> =>
       fetchApi('/users/me/dashboard-preferences', { silent: true }),
@@ -1365,4 +1591,34 @@ export const api = {
       }
     }
   }
+};
+
+const fetchApiText = async (endpoint: string, options: RequestInit & { silent?: boolean } = {}) => {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...getAuthHeader(),
+      ...options.headers,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let message = 'API Error';
+    try {
+      const error = text ? JSON.parse(text) : {};
+      message = error.message || message;
+      if (Array.isArray(message)) {
+        message = message.join(', ');
+      }
+    } catch {
+      message = text || message;
+    }
+    if (!options.silent) {
+      toast.error(message);
+    }
+    throw new Error(message);
+  }
+
+  return res.text();
 };

@@ -24,7 +24,15 @@ export enum Permission {
   MANAGE_USERS = 'MANAGE_USERS',
   VIEW_ADMIN = 'VIEW_ADMIN',
   MANAGE_TASKS = 'MANAGE_TASKS',
-  MANAGE_TEAM = 'MANAGE_TEAM'
+  MANAGE_TEAM = 'MANAGE_TEAM',
+  MANAGE_REPORT_TEMPLATES = 'MANAGE_REPORT_TEMPLATES',
+  ASSIGN_REPORT_TEMPLATES = 'ASSIGN_REPORT_TEMPLATES',
+  CREATE_PROJECT_REPORTS = 'CREATE_PROJECT_REPORTS',
+  EDIT_PROJECT_REPORTS = 'EDIT_PROJECT_REPORTS',
+  EDIT_PROJECT_REPORT_ENTRIES = 'EDIT_PROJECT_REPORT_ENTRIES',
+  GENERATE_PROJECT_REPORT_EXPORTS = 'GENERATE_PROJECT_REPORT_EXPORTS',
+  PUBLISH_PROJECT_REPORTS = 'PUBLISH_PROJECT_REPORTS',
+  VIEW_CLIENT_REPORTS = 'VIEW_CLIENT_REPORTS'
 }
 
 export interface User {
@@ -89,6 +97,7 @@ export interface FileAsset {
   id: string;
   entityId: string;
   name: string;
+  filename?: string;
   category: 'contract' | 'invoice' | 'brief' | 'design' | 'docs' | 'build' | 'report' | 'other';
   type: string;
   size: string;
@@ -109,6 +118,116 @@ export interface Report {
   url?: string;
   /** Backend: key for generated file (e.g. reports/xxx.pptx) */
   generatedFileKey?: string | null;
+}
+
+export type ReportBuilderTemplateCategory =
+  | 'ACCESSIBILITY'
+  | 'SECURITY'
+  | 'QA'
+  | 'PERFORMANCE'
+  | 'COMPLIANCE'
+  | 'OTHER';
+
+export type ReportBuilderTemplateStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export interface ReportBuilderTemplateVersion {
+  id: string;
+  templateId: string;
+  versionNumber: number;
+  schemaJson: Record<string, unknown>;
+  pdfConfigJson?: Record<string, unknown> | null;
+  aiConfigJson?: Record<string, unknown> | null;
+  taxonomyJson?: Record<string, unknown> | null;
+  isPublished: boolean;
+  publishedAt?: string | null;
+  createdAt: string;
+}
+
+export interface ReportBuilderTemplate {
+  id: string;
+  name: string;
+  code: string;
+  description?: string | null;
+  category: ReportBuilderTemplateCategory;
+  status: ReportBuilderTemplateStatus;
+  createdAt: string;
+  updatedAt: string;
+  versions: ReportBuilderTemplateVersion[];
+  _count?: {
+    assignments: number;
+    projectReports: number;
+  };
+}
+
+export interface ClientReportTemplateAssignment {
+  id: string;
+  clientId: string;
+  templateId: string;
+  templateVersionId: string;
+  isDefault: boolean;
+  isActive: boolean;
+  assignedAt: string;
+  template: Pick<ReportBuilderTemplate, 'id' | 'name' | 'code' | 'category' | 'status'>;
+  templateVersion: ReportBuilderTemplateVersion;
+}
+
+export type ProjectReportStatus = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED';
+export type ProjectReportVisibility = 'INTERNAL' | 'CLIENT';
+export type ProjectReportEntrySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type ProjectReportEntryStatus = 'OPEN' | 'ACCEPTED' | 'FIXED' | 'VERIFIED' | 'DISMISSED';
+
+export interface ProjectReportEntryMedia {
+  id: string;
+  mediaType: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  caption?: string | null;
+  sortOrder: number;
+  fileAsset: FileAsset;
+}
+
+export interface ProjectReportEntry {
+  id: string;
+  projectReportId: string;
+  sortOrder: number;
+  serviceName?: string | null;
+  issueTitle: string;
+  issueDescription: string;
+  severity?: ProjectReportEntrySeverity | null;
+  category?: string | null;
+  subcategory?: string | null;
+  pageUrl?: string | null;
+  recommendation?: string | null;
+  status: ProjectReportEntryStatus;
+  rowDataJson?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+  media?: ProjectReportEntryMedia[];
+}
+
+export interface ProjectReport {
+  id: string;
+  projectId: string;
+  clientId: string;
+  templateId: string;
+  templateVersionId: string;
+  title: string;
+  description?: string | null;
+  status: ProjectReportStatus;
+  visibility: ProjectReportVisibility;
+  summaryJson?: Record<string, unknown> | null;
+  coverSnapshotJson?: Record<string, unknown> | null;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+  client?: { id: string; name: string };
+  template: Pick<ReportBuilderTemplate, 'id' | 'name' | 'code' | 'category' | 'status'>;
+  templateVersion: ReportBuilderTemplateVersion;
+  performedBy?: Pick<User, 'id' | 'name' | 'email' | 'role'>;
+  exports?: Array<{ id: string; exportVersion: number; fileAsset?: FileAsset | null }>;
+  _count?: {
+    entries: number;
+    exports: number;
+  };
 }
 
 export interface Notification {
@@ -360,13 +479,13 @@ export interface KpiStat {
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.SUPER_ADMIN]: Object.values(Permission),
   [Role.OPS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_CLIENTS, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
-  [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
+  [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM, Permission.CREATE_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORT_ENTRIES, Permission.GENERATE_PROJECT_REPORT_EXPORTS, Permission.PUBLISH_PROJECT_REPORTS],
   [Role.DEV]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS],
-  [Role.QA]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_TASKS],
+  [Role.QA]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_TASKS, Permission.CREATE_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORT_ENTRIES, Permission.GENERATE_PROJECT_REPORT_EXPORTS],
   [Role.FINANCE]: [Permission.VIEW_DASHBOARD, Permission.VIEW_FINANCIALS, Permission.VIEW_CLIENTS],
-  [Role.CLIENT_OWNER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS],
-  [Role.CLIENT_MANAGER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS],
-  [Role.CLIENT_MEMBER]: [Permission.VIEW_DASHBOARD],
+  [Role.CLIENT_OWNER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.VIEW_CLIENT_REPORTS],
+  [Role.CLIENT_MANAGER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.VIEW_CLIENT_REPORTS],
+  [Role.CLIENT_MEMBER]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENT_REPORTS],
   [Role.VIEWER]: [Permission.VIEW_DASHBOARD]
 };
 
