@@ -86,7 +86,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
   const [samplePreviewHtml, setSamplePreviewHtml] = React.useState('');
   const [samplePreviewLoadingId, setSamplePreviewLoadingId] = React.useState('');
   const [templateForm, setTemplateForm] = React.useState({
-    name: '',
+    name: 'Accessibility Audit',
     code: 'accessibility-audit',
     description: 'Fixed accessibility audit template for project-level reports.',
   });
@@ -280,9 +280,11 @@ export const ReportTemplatesAdmin: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <NavLink to="/app/admin/users"><Button variant="outline" size="sm">Users</Button></NavLink>
           <NavLink to="/app/admin/roles"><Button variant="outline" size="sm">Roles</Button></NavLink>
-          <Button size="sm" onClick={() => setTemplateModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> New Accessibility Template
-          </Button>
+          {templates.length === 0 && (
+            <Button size="sm" onClick={() => setTemplateModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Create Report Type
+            </Button>
+          )}
         </div>
       </div>
 
@@ -294,8 +296,8 @@ export const ReportTemplatesAdmin: React.FC = () => {
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <GlassCard className="p-4">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Templates</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Fixed accessibility templates and their latest versions.</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Report Type</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">One fixed accessibility report type and its versions.</p>
             </div>
             <div className="space-y-3">
               {templates.map((template) => {
@@ -320,7 +322,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
               })}
               {templates.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  No templates yet. Create the first accessibility template to start the flow.
+                  No report type yet. Create the accessibility report type to start the flow.
                 </div>
               )}
             </div>
@@ -506,11 +508,11 @@ export const ReportTemplatesAdmin: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="Create Accessibility Template" maxWidth="max-w-2xl">
+      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="Create Accessibility Report Type" maxWidth="max-w-2xl">
         <form className="space-y-4" onSubmit={handleCreateTemplate}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Template name" value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
-            <Input label="Template code" value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required />
+            <Input label="Report type name" value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
+            <Input label="Report type code" value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required disabled />
           </div>
           <TextArea label="Description" value={templateForm.description} onChange={(event) => setTemplateForm((current) => ({ ...current, description: event.target.value }))} />
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
