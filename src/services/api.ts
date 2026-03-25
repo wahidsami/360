@@ -250,8 +250,9 @@ export const api = {
   },
 
   clients: {
-    list: async (): Promise<Client[]> => {
-      const clients = await fetchApi('/clients');
+    list: async (includeArchived?: boolean): Promise<Client[]> => {
+      const qs = includeArchived ? '?includeArchived=true' : '';
+      const clients = await fetchApi(`/clients${qs}`);
       return (clients || []).map(normalizeClient);
     },
     get: async (id: string): Promise<Client | undefined> => {
@@ -286,6 +287,9 @@ export const api = {
     },
     archive: async (id: string): Promise<void> => {
       await fetchApi(`/clients/${id}/archive`, { method: 'PATCH' });
+    },
+    delete: async (id: string): Promise<void> => {
+      await fetchApi(`/clients/${id}`, { method: 'DELETE' });
     },
     getMembers: async (clientId: string): Promise<ClientMember[]> => {
       try {
@@ -424,6 +428,9 @@ export const api = {
     },
     archive: async (id: string): Promise<void> => {
       await fetchApi(`/projects/${id}/archive`, { method: 'PATCH' });
+    },
+    delete: async (id: string): Promise<void> => {
+      await fetchApi(`/projects/${id}`, { method: 'DELETE' });
     },
     getMilestones: async (projectId: string): Promise<Milestone[]> => {
       try {

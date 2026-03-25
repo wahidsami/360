@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, Delete, Query } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -16,8 +16,8 @@ export class ClientsController {
     }
 
     @Get()
-    findAll(@Request() req: any) {
-        return this.clientsService.findAll(req.user);
+    findAll(@Request() req: any, @Query() query: any) {
+        return this.clientsService.findAll(req.user, query);
     }
 
     @Get(':id')
@@ -33,6 +33,11 @@ export class ClientsController {
     @Patch(':id/archive')
     archive(@Request() req: any, @Param('id') id: string) {
         return this.clientsService.archive(id, req.user);
+    }
+
+    @Delete(':id')
+    remove(@Request() req: any, @Param('id') id: string) {
+        return this.clientsService.remove(id, req.user);
     }
 
     // --- Members ---

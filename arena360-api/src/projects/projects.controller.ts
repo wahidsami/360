@@ -50,6 +50,11 @@ export class ProjectsController {
         return this.projectsService.archive(id, req.user);
     }
 
+    @Delete(':id')
+    remove(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.remove(id, req.user);
+    }
+
     // --- Members ---
     @Get(':id/members')
     getMembers(@Param('id') id: string) {

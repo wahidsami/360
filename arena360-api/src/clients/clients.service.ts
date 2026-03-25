@@ -59,13 +59,18 @@ export class ClientsService {
         });
     }
 
-    async findAll(user: UserWithRoles) {
+    async findAll(user: UserWithRoles, query: any = {}) {
+        const where: any = {
+            ...ScopeUtils.clientScope(user, 'id'),
+            deletedAt: null
+        };
+        
+        if (query.includeArchived !== 'true') {
+            where.status = { not: 'ARCHIVED' };
+        }
+
         const clients = await this.prisma.client.findMany({
-            where: {
-                ...ScopeUtils.clientScope(user, 'id'),
-                status: { not: 'ARCHIVED' },
-                deletedAt: null
-            },
+            where,
             include: {
                 projects: {
                     select: { id: true, status: true, health: true }

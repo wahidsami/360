@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Archive, Folder } from 'lucide-react';
+import { Plus, Search, Eye, Archive, Folder, Trash2 } from 'lucide-react';
 import { Project, Client, Permission } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, Input, Select } from '../components/ui/UIComponents';
@@ -48,6 +48,8 @@ export const ProjectsList: React.FC = () => {
     }
     if (statusFilter !== 'all') {
       result = result.filter(p => p.status === statusFilter);
+    } else {
+      result = result.filter(p => p.status !== 'archived');
     }
     setFilteredProjects(result);
   };
@@ -139,6 +141,15 @@ export const ProjectsList: React.FC = () => {
                         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`${p.id}/edit`); }}>
                             <Folder className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={async (e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Are you sure you want to completely delete this project?')) {
+                              await api.projects.delete(p.id);
+                              loadData();
+                            }
+                          }}>
+                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
                           </Button>
                         </PermissionGate>
                       </div>

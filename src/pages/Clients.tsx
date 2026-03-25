@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Edit, Archive, Filter } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Archive, Filter, Trash2 } from 'lucide-react';
 import { Client, Permission, Project } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, Input, Select } from '../components/ui/UIComponents';
@@ -29,7 +29,7 @@ export const ClientList: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     const [clientsData, projectsData] = await Promise.all([
-      api.clients.list(),
+      api.clients.list(true),
       api.projects.list()
     ]);
     setClients(clientsData);
@@ -53,6 +53,8 @@ export const ClientList: React.FC = () => {
 
     if (statusFilter !== 'all') {
       result = result.filter(c => c.status === statusFilter);
+    } else {
+      result = result.filter(c => c.status !== 'archived');
     }
 
     if (industryFilter !== 'all') {
@@ -66,6 +68,14 @@ export const ClientList: React.FC = () => {
     e.stopPropagation();
     if (window.confirm(t('confirm_archive_client'))) {
       await api.clients.archive(id);
+      loadData();
+    }
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to completely delete this client?')) {
+      await api.clients.delete(id);
       loadData();
     }
   };
@@ -105,6 +115,7 @@ export const ClientList: React.FC = () => {
                 <option value="active">{t('active')}</option>
                 <option value="lead">{t('lead')}</option>
                 <option value="inactive">{t('inactive')}</option>
+                <option value="archived">{t('archived')}</option>
               </Select>
             </div>
             <div className="w-40">
@@ -189,7 +200,10 @@ export const ClientList: React.FC = () => {
                             <Edit className="w-4 h-4 text-slate-400 hover:text-amber-400" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={(e) => handleArchive(client.id, e)}>
-                            <Archive className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                            <Archive className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={(e) => handleDelete(client.id, e)}>
+                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
                           </Button>
                         </PermissionGate>
                       </div>
