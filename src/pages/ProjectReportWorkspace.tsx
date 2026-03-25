@@ -74,7 +74,6 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [previewModalOpen, setPreviewModalOpen] = React.useState(false);
   const [previewHtml, setPreviewHtml] = React.useState('');
   const [previewLoading, setPreviewLoading] = React.useState(false);
-  const [exportingPdf, setExportingPdf] = React.useState(false);
   const [previewLocale, setPreviewLocale] = React.useState<AccessibilityAuditOutputLocale>('en');
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
@@ -82,7 +81,6 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const canEditEntries = hasPermission(Permission.EDIT_PROJECT_REPORT_ENTRIES);
   const canEditReport = hasPermission(Permission.EDIT_PROJECT_REPORTS);
-  const canGenerate = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
 
   const taxonomy = React.useMemo(() => getVersionTaxonomy(report?.templateVersion), [report?.templateVersion]);
@@ -253,26 +251,6 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handleExportPdf = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
-    if (!reportId) return;
-    setExportingPdf(true);
-    try {
-      const result = await api.reportBuilderProjects.exportPdf(reportId, locale);
-      if (result.downloadUrl) {
-        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
-      }
-      await loadData();
-      toast.success('PDF export generated.');
-    } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error?.message || 'Failed to export PDF. Open preview and use Print / Save PDF while the server runtime is being fixed.',
-      );
-    } finally {
-      setExportingPdf(false);
-    }
-  };
-
   const handlePrintPreview = () => {
     const iframe = document.getElementById('project-report-preview-frame') as HTMLIFrameElement | null;
     const frameWindow = iframe?.contentWindow;
@@ -282,18 +260,6 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
     frameWindow.focus();
     frameWindow.print();
-  };
-
-  const handleGenerateAiSummary = async () => {
-    if (!reportId) return;
-    try {
-      const result = await api.reportBuilderProjects.generateAiSummary(reportId);
-      setReport((current) => (current ? { ...current, summaryJson: result.narratives } : current));
-      toast.success('AI report summary generated.');
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error?.message || 'Failed to generate AI summary.');
-    }
   };
 
   const handleDownloadLatestExport = async () => {
@@ -359,16 +325,6 @@ export const ProjectReportWorkspace: React.FC = () => {
             <Button variant="outline" onClick={handleDownloadLatestExport}>
               <Download className="mr-2 h-4 w-4" /> Download Latest Export
             </Button>
-          )}
-          {canGenerate && (
-            <>
-              <Button variant="outline" onClick={handleGenerateAiSummary}>
-                <Bot className="mr-2 h-4 w-4" /> Generate AI Summary
-              </Button>
-              <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
-                <Download className="mr-2 h-4 w-4" /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
-              </Button>
-            </>
           )}
           {canEditReport && (
             <Select value={report.status} onChange={(event) => handleStatusChange(event.target.value as ProjectReport['status'])} className="min-w-[180px]">
