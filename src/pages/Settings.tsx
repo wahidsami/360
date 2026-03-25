@@ -126,6 +126,7 @@ const Settings: React.FC = () => {
     setTheme(next);
     localStorage.setItem('arena360_theme', next);
     document.documentElement.classList.toggle('theme-light', next === 'light');
+    document.documentElement.classList.toggle('dark', next === 'dark');
     toast.success(next === 'light' ? 'Light theme applied' : 'Dark theme applied');
   };
 

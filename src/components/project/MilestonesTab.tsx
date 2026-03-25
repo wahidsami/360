@@ -65,8 +65,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
             <GlassCard className="p-6">
                 <div className="flex justify-between items-end mb-4">
                     <div>
-                        <h3 className="text-xl font-bold text-white tracking-tight">{t('project_milestones')}</h3>
-                        <p className="text-slate-400 text-sm">{completedCount} {t('of')} {milestones.length} {t('milestones_completed')}</p>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t('project_milestones')}</h3>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm">{completedCount} {t('of')} {milestones.length} {t('milestones_completed')}</p>
                     </div>
                     <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                         <Button onClick={() => { setEditingMilestone({}); setIsModalOpen(true); }} size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 border-none shadow-[0_0_15px_rgba(34,211,238,0.3)]">
@@ -74,7 +74,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                         </Button>
                     </PermissionGate>
                 </div>
-                <ProgressBar progress={progress} className="h-2 bg-slate-800" />
+                <ProgressBar progress={progress} className="h-2 bg-slate-100 dark:bg-slate-800" />
             </GlassCard>
 
             <div className="space-y-4">
@@ -98,11 +98,11 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                     const isMissed = new Date(milestone.dueDate) < new Date() && milestone.status !== 'completed';
 
                     return (
-                        <div key={milestone.id} className={`p-5 rounded-2xl border transition-all duration-300 ${milestone.status === 'completed' ? 'bg-slate-900/40 border-slate-800/50 opacity-80' : 'bg-slate-800/40 border-slate-700/50 hover:border-cyan-500/30'}`}>
+                        <div key={milestone.id} className={`p-5 rounded-2xl border transition-all duration-300 ${milestone.status === 'completed' ? 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/50 opacity-80' : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/50 hover:border-cyan-500/30'}`}>
                             <div className="flex justify-between items-start">
                                 <div className="flex-grow space-y-4">
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <h4 className={`text-lg font-bold tracking-tight ${milestone.status === 'completed' ? 'text-slate-500 line-through' : 'text-white'}`}>
+                                        <h4 className={`text-lg font-bold tracking-tight ${milestone.status === 'completed' ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-white'}`}>
                                             {milestone.title}
                                         </h4>
                                         <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                                         </div>
                                     </div>
 
-                                    <p className="text-slate-400 text-sm max-w-2xl leading-relaxed">{milestone.description}</p>
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm max-w-2xl leading-relaxed">{milestone.description}</p>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                                         <div className="space-y-2">
@@ -125,11 +125,11 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                                                 <span className="text-slate-500">{stats.completed}/{stats.total} {t('tasks_done')}</span>
                                                 <span className="text-cyan-400">{stats.progress}%</span>
                                             </div>
-                                            <ProgressBar progress={stats.progress} className="h-1.5 bg-slate-800" />
+                                            <ProgressBar progress={stats.progress} className="h-1.5 bg-slate-100 dark:bg-slate-800" />
                                         </div>
 
                                         <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/50 rounded-lg">
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
                                                 <Calendar className="w-3.5 h-3.5 text-cyan-500" />
                                                 <span>{t('due')}: {format(new Date(milestone.dueDate), 'MMM dd')}</span>
                                             </div>
@@ -155,17 +155,17 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
 
                                     {/* Task List */}
                                     {expandedMilestones[milestone.id] && stats.total > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-2">
+                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50 space-y-2">
                                             {milestone.tasks.map((task: any) => {
                                                 const isTaskOverdue = task.status !== 'DONE' && task.dueDate && new Date(task.dueDate) < new Date();
                                                 return (
-                                                    <div key={task.id} className="group/task flex items-center justify-between p-3 rounded-xl bg-slate-900/30 border border-slate-800/50 hover:border-slate-700 transition-all">
+                                                    <div key={task.id} className="group/task flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                                                         <div className="flex items-center gap-3">
                                                             <div className={task.status === 'DONE' ? 'text-emerald-500' : task.status === 'IN_PROGRESS' ? 'text-cyan-500' : 'text-slate-500'}>
                                                                 {task.status === 'DONE' ? <CheckCircle2 className="w-4 h-4" /> : task.status === 'IN_PROGRESS' ? <PlayCircle className="w-4 h-4 animate-pulse" /> : <Clock className="w-4 h-4" />}
                                                             </div>
                                                             <div>
-                                                                <p className={`text-sm font-semibold tracking-tight ${task.status === 'DONE' ? 'text-slate-500 line-through' : 'text-slate-200'}`}>{task.title}</p>
+                                                                <p className={`text-sm font-semibold tracking-tight ${task.status === 'DONE' ? 'text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{task.title}</p>
                                                                 <div className="flex items-center gap-2 mt-0.5">
                                                                     <span className={`text-[10px] font-black uppercase tracking-widest ${task.status === 'DONE' ? 'text-slate-600' : task.status === 'IN_PROGRESS' ? 'text-cyan-600' : 'text-slate-500'}`}>
                                                                         {t(task.status.toLowerCase())}
@@ -190,7 +190,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
 
                                 <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                                     <div className="flex gap-1 ml-4 shrink-0">
-                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(milestone)} className="text-slate-500 hover:text-white hover:bg-slate-700/50">
+                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(milestone)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700/50">
                                             <Edit className="w-4 h-4" />
                                         </Button>
                                         <Button variant="ghost" size="sm" onClick={() => handleDelete(milestone.id)} className="text-slate-500 hover:text-rose-400 hover:bg-rose-500/10">
@@ -203,9 +203,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                     );
                 })}
                 {milestones.length === 0 && (
-                    <div className="text-center py-20 bg-slate-800/20 border border-dashed border-slate-700 rounded-xl">
-                        <Flag className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-20" />
-                        <h4 className="text-slate-300 font-medium italic">{t('no_milestones')}</h4>
+                    <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/20 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                        <Flag className="w-12 h-12 mx-auto mb-4 text-slate-400 dark:text-slate-600 opacity-50 dark:opacity-20" />
+                        <h4 className="text-slate-600 dark:text-slate-300 font-medium italic">{t('no_milestones')}</h4>
                         <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">{t('milestones_help')}</p>
                         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                             <Button variant="secondary" size="sm" className="mt-6" onClick={() => { setEditingMilestone({}); setIsModalOpen(true); }}>
@@ -230,7 +230,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                     </div>
                     <Input name="description" label={t('description')} defaultValue={editingMilestone?.description} />
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('progress_percent')}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('progress_percent')}</label>
                         <input name="percentComplete" type="range" min="0" max="100" className="w-full" defaultValue={editingMilestone?.percentComplete || 0} />
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
