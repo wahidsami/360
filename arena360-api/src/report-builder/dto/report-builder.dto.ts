@@ -9,6 +9,7 @@ import {
   IsUrl,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import {
   ProjectReportEntrySeverity,
   ProjectReportEntryStatus,
@@ -185,6 +186,7 @@ export class CreateProjectReportEntryDto {
   subcategory?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
   @IsUrl({ require_tld: false }, { message: 'pageUrl must be a valid URL' })
   pageUrl?: string;
 
@@ -232,6 +234,7 @@ export class UpdateProjectReportEntryDto {
   subcategory?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
   @IsUrl({ require_tld: false }, { message: 'pageUrl must be a valid URL' })
   pageUrl?: string;
 

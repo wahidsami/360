@@ -67,6 +67,16 @@ export class ReportBuilderAdminController {
     return this.service.publishTemplateVersion(req.user.orgId, id, versionId, req.user);
   }
 
+  @Get('templates/:id/versions/:versionId/sample-preview')
+  @RequirePermissions('MANAGE_REPORT_TEMPLATES')
+  getTemplateVersionSamplePreview(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+  ) {
+    return this.service.getTemplateVersionSamplePreview(req.user.orgId, id, versionId);
+  }
+
   @Get('clients/:clientId/assignments')
   @RequirePermissions('ASSIGN_REPORT_TEMPLATES')
   listClientAssignments(@Request() req: any, @Param('clientId') clientId: string) {

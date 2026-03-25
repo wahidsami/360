@@ -1337,6 +1337,12 @@ export const api = {
         method: 'POST',
       });
     },
+    getTemplateVersionSamplePreview: async (templateId: string, versionId: string): Promise<string> => {
+      const res = await fetchApi(
+        `/admin/report-builder/templates/${templateId}/versions/${versionId}/sample-preview`,
+      );
+      return res.html || '';
+    },
     listClientAssignments: async (clientId: string): Promise<ClientReportTemplateAssignment[]> => {
       return fetchApi(`/admin/report-builder/clients/${clientId}/assignments`);
     },
