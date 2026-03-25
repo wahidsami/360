@@ -249,14 +249,23 @@ export class ReportBuilderService {
     return 'DOCUMENT';
   }
 
-  private severityLabel(severity?: string | null) {
-    const labels: Record<string, string> = {
-      CRITICAL: '\u062D\u0631\u062C\u0629',
-      HIGH: '\u0639\u0627\u0644\u064A\u0629',
-      MEDIUM: '\u0645\u062A\u0648\u0633\u0637\u0629',
-      LOW: '\u0645\u0646\u062E\u0641\u0636\u0629',
-    };
-    return labels[severity || 'LOW'] || '\u0645\u0646\u062E\u0641\u0636\u0629';
+  private severityLabel(severity: string | null | undefined, locale: 'ar' | 'en' = 'ar') {
+    const labels: Record<'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW', string> =
+      locale === 'en'
+        ? {
+            CRITICAL: 'Critical',
+            HIGH: 'High',
+            MEDIUM: 'Medium',
+            LOW: 'Low',
+          }
+        : {
+            CRITICAL: '\u062D\u0631\u062C\u0629',
+            HIGH: '\u0639\u0627\u0644\u064A\u0629',
+            MEDIUM: '\u0645\u062A\u0648\u0633\u0637\u0629',
+            LOW: '\u0645\u0646\u062E\u0641\u0636\u0629',
+          };
+    const normalizedSeverity = (severity || 'LOW') as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+    return labels[normalizedSeverity] || labels.LOW;
   }
 
   private async logActivity(data: {
@@ -572,9 +581,9 @@ export class ReportBuilderService {
     const summary = (report.summaryJson || {}) as Record<string, string>;
     const severityCounts = [
       { label: labels.totalIssues, count: entries.length, severity: null },
-      { label: this.severityLabel('HIGH'), count: entries.filter((entry) => entry.severity === 'HIGH').length, severity: 'HIGH' },
-      { label: this.severityLabel('MEDIUM'), count: entries.filter((entry) => entry.severity === 'MEDIUM').length, severity: 'MEDIUM' },
-      { label: this.severityLabel('LOW'), count: entries.filter((entry) => entry.severity === 'LOW').length, severity: 'LOW' },
+      { label: this.severityLabel('HIGH', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'HIGH').length, severity: 'HIGH' },
+      { label: this.severityLabel('MEDIUM', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'MEDIUM').length, severity: 'MEDIUM' },
+      { label: this.severityLabel('LOW', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'LOW').length, severity: 'LOW' },
     ];
     const schemaVersion = report.templateVersion;
     const serviceHeader = this.getSchemaLabel(schemaVersion, 'serviceName', localeConfig.locale, localeConfig.locale === 'ar' ? '\u0627\u0633\u0645 \u0627\u0644\u062E\u062F\u0645\u0629' : 'Service Name');
@@ -633,7 +642,7 @@ export class ReportBuilderService {
           '<td>' + (this.escapeHtml(serviceName) || '<span class="muted">-</span>') + '</td>' +
           '<td><strong>' + this.escapeHtml(issueTitle) + '</strong>' +
           (issueDescription ? '<div class="cell-note">' + this.escapeHtml(issueDescription) + '</div>' : '') + '</td>' +
-          '<td><span class="severity severity-' + ((entry.severity || 'LOW').toLowerCase()) + '">' + this.escapeHtml(this.severityLabel(entry.severity)) + '</span></td>' +
+          '<td><span class="severity severity-' + ((entry.severity || 'LOW').toLowerCase()) + '">' + this.escapeHtml(this.severityLabel(entry.severity, localeConfig.locale)) + '</span></td>' +
           '<td>' + (this.escapeHtml(category) || '<span class="muted">-</span>') + '</td>' +
           '<td>' + (this.escapeHtml(subcategory) || '<span class="muted">-</span>') + '</td>' +
           '<td>' + pageUrlHtml + '</td>' +

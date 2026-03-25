@@ -641,9 +641,6 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Button type="button" size="sm" variant="outline" onClick={handlePrintPreview}>
                 Print / Save PDF
               </Button>
-              <Button type="button" size="sm" onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
-                {exportingPdf ? 'Exporting...' : 'Export PDF'}
-              </Button>
             </div>
           </div>
           <iframe id="project-report-preview-frame" title="Accessibility Report Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />
