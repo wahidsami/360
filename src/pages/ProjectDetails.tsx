@@ -558,7 +558,7 @@ export const ProjectDetails: React.FC = () => {
             {activeTab === 'files' && <FilesTab files={files} onUpload={handleUploadFile} onDownload={handleDownloadFile} onDelete={handleDeleteFile} />}
             {activeTab === 'team' && <TeamTab members={members} onUpdateRole={handleUpdateRole} onAdd={handleAddMember} onRemove={handleRemoveMember} />}
             {activeTab === 'findings' && <FindingsTab findings={findings} projectId={projectId!} onRefresh={handleRefreshFindings} />}
-            {activeTab === 'reports' && <ReportsTab reports={reports} onRefresh={loadData} />}
+            {activeTab === 'reports' && <ReportsTab reports={reports} projectName={project?.name} onRefresh={loadData} />}
             {activeTab === 'testing' && <EnvironmentsTab environments={environments} />}
             {activeTab === 'financials' && <FinancialsTab contract={financials.contract} invoices={financials.invoices} onRefresh={loadData} />}
             {activeTab === 'discussions' && <DiscussionsTab

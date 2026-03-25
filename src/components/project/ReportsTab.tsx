@@ -11,10 +11,11 @@ import { PermissionGate } from '../PermissionGate';
 
 interface ReportsTabProps {
   reports: Report[];
+  projectName?: string | null;
   onRefresh?: () => void;
 }
 
-export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
+export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
@@ -36,6 +37,11 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
     [assignments],
   );
 
+  const buildDefaultReportTitle = React.useCallback(
+    () => `${(projectName || 'Project').trim()} - Accessibility Report - ${format(new Date(), 'yyyy-MM-dd')}`,
+    [projectName],
+  );
+
   const loadData = React.useCallback(async () => {
     if (!projectId) return;
     try {
@@ -51,7 +57,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
         setDraft((current) => ({
           ...current,
           assignmentId: defaultAssignment.id,
-          title: current.title || `Accessibility Report - ${format(new Date(), 'yyyy-MM-dd')}`,
+          title: current.title || buildDefaultReportTitle(),
         }));
       }
       onRefresh?.();
@@ -59,7 +65,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
       console.error(error);
       toast.error('Failed to load accessibility reports.');
     }
-  }, [draft.assignmentId, onRefresh, projectId]);
+  }, [buildDefaultReportTitle, draft.assignmentId, onRefresh, projectId]);
 
   useEffect(() => {
     loadData();
@@ -138,7 +144,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
                     setDraft((current) => ({
                       ...current,
                       assignmentId: assignment.id,
-                      title: `Accessibility Report - ${format(new Date(), 'yyyy-MM-dd')}`,
+                      title: buildDefaultReportTitle(),
                     }))
                   }
                   className={`w-full rounded-xl border p-3 text-left transition-all ${
@@ -211,7 +217,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
                 setDraft((current) => ({
                   ...current,
                   assignmentId: nextAssignmentId,
-                  title: `Accessibility Report - ${format(new Date(), 'yyyy-MM-dd')}`,
+                  title: buildDefaultReportTitle(),
                 }));
               }}
               className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2.5 text-white"
