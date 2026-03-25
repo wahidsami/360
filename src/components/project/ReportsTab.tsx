@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, FileText, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -60,7 +60,6 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
           title: current.title || buildDefaultReportTitle(),
         }));
       }
-      onRefresh?.();
     } catch (error) {
       console.error(error);
       toast.error('Failed to load accessibility reports.');
@@ -92,6 +91,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
       toast.success('Accessibility report created.');
       setCreateOpen(false);
       await loadData();
+      onRefresh?.();
       navigate(`/app/projects/${projectId}/report-builder/${report.id}`);
     } catch (error: any) {
       console.error(error);

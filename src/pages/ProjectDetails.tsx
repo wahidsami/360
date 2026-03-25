@@ -142,7 +142,7 @@ export const ProjectDetails: React.FC = () => {
     }, 300);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!projectId) return;
     const p = await api.projects.get(projectId);
     if (p) {
@@ -192,7 +192,7 @@ export const ProjectDetails: React.FC = () => {
         console.error("Critical error loading project data", error);
       }
     }
-  };
+  }, [projectId]);
 
   const handlePostUpdate = async (update: Partial<ProjectUpdate>) => {
     if (!project) return;
