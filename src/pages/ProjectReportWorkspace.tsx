@@ -5,8 +5,14 @@ import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, Modal, Select, TextArea } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-import { ACCESSIBILITY_AUDIT_CATEGORIES, ACCESSIBILITY_AUDIT_MAIN_CATEGORIES, AccessibilityAuditMainCategory } from '@/features/accessibility/accessibilityAuditConfig';
-import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, Role } from '@/types';
+import {
+  ACCESSIBILITY_AUDIT_MAIN_CATEGORIES,
+  AccessibilityAuditMainCategory,
+  AccessibilityAuditOutputLocale,
+  getAccessibilityOutputLocale,
+  resolveAccessibilityTaxonomy,
+} from '@/features/accessibility/accessibilityAuditConfig';
+import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, ReportBuilderTemplateVersion, Role } from '@/types';
 
 const SEVERITIES: ProjectReportEntrySeverity[] = ['HIGH', 'MEDIUM', 'LOW'];
 const DEFAULT_ENTRY_STATUS: ProjectReportEntryStatus = 'OPEN';
@@ -50,6 +56,8 @@ const mediaActionLabel = (media: ProjectReportEntryMedia) => {
   return 'View Evidence';
 };
 
+const getVersionTaxonomy = (version?: ReportBuilderTemplateVersion | null) => resolveAccessibilityTaxonomy(version?.taxonomyJson);
+
 export const ProjectReportWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const { projectId, reportId } = useParams();
@@ -67,6 +75,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [previewHtml, setPreviewHtml] = React.useState('');
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [exportingPdf, setExportingPdf] = React.useState(false);
+  const [previewLocale, setPreviewLocale] = React.useState<AccessibilityAuditOutputLocale>('en');
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
   const [categoryFilter, setCategoryFilter] = React.useState<'ALL' | AccessibilityAuditMainCategory>('ALL');
@@ -76,7 +85,12 @@ export const ProjectReportWorkspace: React.FC = () => {
   const canGenerate = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
 
-  const subcategoryOptions = entryDraft.category ? ACCESSIBILITY_AUDIT_CATEGORIES[entryDraft.category] : [];
+  const taxonomy = React.useMemo(() => getVersionTaxonomy(report?.templateVersion), [report?.templateVersion]);
+  const availableCategories = React.useMemo(
+    () => taxonomy.categories.filter((category): category is AccessibilityAuditMainCategory => ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(category)),
+    [taxonomy.categories],
+  );
+  const subcategoryOptions = entryDraft.category ? taxonomy.subcategories[entryDraft.category] || [] : [];
 
   const filteredEntries = React.useMemo(() => {
     return entries.filter((entry) => {
@@ -121,6 +135,11 @@ export const ProjectReportWorkspace: React.FC = () => {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  React.useEffect(() => {
+    if (!report?.templateVersion) return;
+    setPreviewLocale(getAccessibilityOutputLocale(report.templateVersion));
+  }, [report?.templateVersion]);
 
   const openEntryModal = (entry?: ProjectReportEntry) => {
     if (entry) {
@@ -218,11 +237,12 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handlePreview = async () => {
+  const handlePreview = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
     if (!reportId) return;
     setPreviewLoading(true);
     try {
-      const html = await api.reportBuilderProjects.getPreviewHtml(reportId);
+      const html = await api.reportBuilderProjects.getPreviewHtml(reportId, locale);
+      setPreviewLocale(locale);
       setPreviewHtml(html);
       setPreviewModalOpen(true);
     } catch (error) {
@@ -233,11 +253,11 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
     if (!reportId) return;
     setExportingPdf(true);
     try {
-      const result = await api.reportBuilderProjects.exportPdf(reportId);
+      const result = await api.reportBuilderProjects.exportPdf(reportId, locale);
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
       }
@@ -245,10 +265,23 @@ export const ProjectReportWorkspace: React.FC = () => {
       toast.success('PDF export generated.');
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || 'Failed to export PDF.');
+      toast.error(
+        error?.message || 'Failed to export PDF. Open preview and use Print / Save PDF while the server runtime is being fixed.',
+      );
     } finally {
       setExportingPdf(false);
     }
+  };
+
+  const handlePrintPreview = () => {
+    const iframe = document.getElementById('project-report-preview-frame') as HTMLIFrameElement | null;
+    const frameWindow = iframe?.contentWindow;
+    if (!frameWindow) {
+      toast.error('Preview frame is not ready yet.');
+      return;
+    }
+    frameWindow.focus();
+    frameWindow.print();
   };
 
   const handleGenerateAiSummary = async () => {
@@ -409,7 +442,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             </Select>
             <Select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'ALL' | AccessibilityAuditMainCategory)}>
               <option value="ALL">All categories</option>
-              {ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+              {availableCategories.map((category) => <option key={category} value={category}>{category}</option>)}
             </Select>
           </div>
         </div>
@@ -525,7 +558,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <Select label="Main Category" value={entryDraft.category} onChange={(event) => setEntryDraft((current) => ({ ...current, category: event.target.value as AccessibilityAuditMainCategory, subcategory: '' }))} required>
                 <option value="">Select Category</option>
-                {ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                {availableCategories.map((category) => <option key={category} value={category}>{category}</option>)}
               </Select>
               <Select label="Subcategory" value={entryDraft.subcategory} onChange={(event) => setEntryDraft((current) => ({ ...current, subcategory: event.target.value }))} required>
                 <option value="">Select Sub-Category</option>
@@ -594,10 +627,26 @@ export const ProjectReportWorkspace: React.FC = () => {
 
       <Modal isOpen={previewModalOpen} onClose={() => setPreviewModalOpen(false)} title="Accessibility Report Preview" maxWidth="max-w-6xl">
         <div className="space-y-4">
-          <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-sm text-slate-600 dark:text-slate-300">
-            This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.
+          <div className="flex flex-col gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant={previewLocale === 'en' ? 'primary' : 'outline'} onClick={() => handlePreview('en')}>
+                English
+              </Button>
+              <Button type="button" size="sm" variant={previewLocale === 'ar' ? 'primary' : 'outline'} onClick={() => handlePreview('ar')}>
+                العربية
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={handlePrintPreview}>
+                Print / Save PDF
+              </Button>
+              <Button type="button" size="sm" onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
+                {exportingPdf ? 'Exporting...' : 'Export PDF'}
+              </Button>
+            </div>
           </div>
-          <iframe title="Accessibility Report Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />
+          <iframe id="project-report-preview-frame" title="Accessibility Report Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />
         </div>
       </Modal>
     </div>

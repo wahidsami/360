@@ -62,8 +62,45 @@ export class ReportBuilderService {
     };
   }
 
+  private normalizePreviewLocale(locale?: string | null): 'en' | 'ar' | undefined {
+    if (!locale) return undefined;
+    return String(locale).toLowerCase().startsWith('ar') ? 'ar' : 'en';
+  }
+
+  private resolvePreviewDirection(locale: 'en' | 'ar'): 'ltr' | 'rtl' {
+    return locale === 'ar' ? 'rtl' : 'ltr';
+  }
+
+  private getAllowedAccessibilityTaxonomy(version?: { taxonomyJson?: any } | null) {
+    const rawCategories = Array.isArray(version?.taxonomyJson?.accessibilityCategories)
+      ? version?.taxonomyJson?.accessibilityCategories
+      : [];
+    const selectedCategories = rawCategories
+      .map((item: any) => (typeof item === 'string' ? item : item?.value))
+      .filter((value: any): value is string => typeof value === 'string' && value.trim().length > 0);
+
+    const categories: string[] = selectedCategories.length > 0 ? selectedCategories : [...ACCESSIBILITY_AUDIT_MAIN_CATEGORIES];
+
+    const subcategorySource = version?.taxonomyJson?.accessibilitySubcategories || {};
+    const subcategories: Record<string, string[]> = {};
+
+    categories.forEach((category: string) => {
+      const rawItems = Array.isArray(subcategorySource?.[category]) ? subcategorySource[category] : [];
+      const selected = rawItems
+        .map((item: any) => (typeof item === 'string' ? item : item?.value))
+        .filter((value: any): value is string => typeof value === 'string' && value.trim().length > 0);
+
+      subcategories[category] =
+        selected.length > 0
+          ? selected
+          : [...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || [])];
+    });
+
+    return { categories, subcategories };
+  }
+
   private validateAccessibilityEntryInput(
-    report: { template?: { category?: string | null } },
+    report: { template?: { category?: string | null }; templateVersion?: { taxonomyJson?: any } | null },
     input: {
       serviceName?: string | null;
       issueTitle?: string | null;
@@ -113,15 +150,14 @@ export class ReportBuilderService {
       throw new BadRequestException('Select a main category before choosing a subcategory.');
     }
 
-    if (category && !ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(category)) {
+    const allowedTaxonomy = this.getAllowedAccessibilityTaxonomy(report.templateVersion);
+
+    if (category && !allowedTaxonomy.categories.includes(category)) {
       throw new BadRequestException('Category must match the accessibility audit category list.');
     }
 
     if (subcategory) {
-      const allowedSubcategories: string[] =
-        category && category in ACCESSIBILITY_AUDIT_CATEGORIES
-          ? [...ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES]]
-          : [];
+      const allowedSubcategories: string[] = category ? [...(allowedTaxonomy.subcategories[category] || [])] : [];
 
       if (!allowedSubcategories.includes(subcategory)) {
         throw new BadRequestException('Subcategory must match the selected accessibility audit category.');
@@ -299,6 +335,20 @@ export class ReportBuilderService {
     } as const;
   }
 
+  private getPreviewLocaleConfig(
+    version?: { schemaJson?: any; pdfConfigJson?: any } | null,
+    localeOverride?: string,
+  ) {
+    const normalized = this.normalizePreviewLocale(localeOverride);
+    if (!normalized) {
+      return this.getTemplateLocale(version);
+    }
+    return {
+      locale: normalized,
+      direction: this.resolvePreviewDirection(normalized),
+    } as const;
+  }
+
   private getPreviewLabels(locale: 'ar' | 'en') {
     if (locale === 'en') {
       return {
@@ -371,15 +421,19 @@ export class ReportBuilderService {
     fallback: string,
   ) {
     const field = this.getSchemaField(version, key);
+    const rawLabel = typeof field?.label === 'string' ? field.label : undefined;
+    const rawLabelEn = typeof field?.labelEn === 'string' ? field.labelEn : undefined;
+    const rawLabelAr = typeof field?.labelAr === 'string' ? field.labelAr : undefined;
+    const looksArabic = (value?: string) => !!value && /[\u0600-\u06FF]/.test(value);
     const value =
       locale === 'en'
-        ? field?.labelEn || field?.label || fallback
-        : field?.label || field?.labelEn || fallback;
+        ? rawLabelEn || (!looksArabic(rawLabel) ? rawLabel : undefined) || fallback
+        : rawLabelAr || (looksArabic(rawLabel) ? rawLabel : undefined) || fallback;
     return this.normalizeDisplayText(String(value || fallback));
   }
 
-  private buildSampleTemplatePreviewData(template: any, version: any) {
-    const { locale, direction } = this.getTemplateLocale(version);
+  private buildSampleTemplatePreviewData(template: any, version: any, localeOverride?: string) {
+    const { locale, direction } = this.getPreviewLocaleConfig(version, localeOverride);
     const labels = this.getPreviewLabels(locale);
     const categoryValue =
       version?.taxonomyJson?.accessibilityCategories?.[0]?.value || ACCESSIBILITY_AUDIT_MAIN_CATEGORIES[0];
@@ -714,19 +768,24 @@ export class ReportBuilderService {
     );
   }
 
-  private async renderProjectReportHtml(reportId: string, user: UserWithRoles) {
+  private async renderProjectReportHtml(reportId: string, user: UserWithRoles, localeOverride?: string) {
     const previewData = await this.buildProjectReportPreviewData(reportId, user);
-    return this.renderReportHtml(previewData);
+    const localeConfig = this.getPreviewLocaleConfig(previewData.report?.templateVersion, localeOverride);
+    return this.renderReportHtml({
+      ...previewData,
+      locale: localeConfig.locale,
+      direction: localeConfig.direction,
+    });
   }
 
-  async getTemplateVersionSamplePreview(orgId: string, templateId: string, versionId: string) {
+  async getTemplateVersionSamplePreview(orgId: string, templateId: string, versionId: string, localeOverride?: string) {
     const template = await this.ensureTemplateInOrg(templateId, orgId);
     const version = await this.prisma.reportBuilderTemplateVersion.findFirst({
       where: { id: versionId, templateId },
     });
     if (!version) throw new NotFoundException('Tool version not found');
 
-    const samplePreview = this.buildSampleTemplatePreviewData(template, version);
+    const samplePreview = this.buildSampleTemplatePreviewData(template, version, localeOverride);
     return { html: this.renderReportHtml(samplePreview) };
   }
 
@@ -1449,8 +1508,8 @@ export class ReportBuilderService {
     return { success: true };
   }
 
-  async getProjectReportPreview(reportId: string, user: UserWithRoles) {
-    const html = await this.renderProjectReportHtml(reportId, user);
+  async getProjectReportPreview(reportId: string, user: UserWithRoles, localeOverride?: string) {
+    const html = await this.renderProjectReportHtml(reportId, user, localeOverride);
     return { html };
   }
 
@@ -1535,9 +1594,10 @@ export class ReportBuilderService {
     };
   }
 
-  async exportProjectReportPdf(reportId: string, user: UserWithRoles) {
+  async exportProjectReportPdf(reportId: string, user: UserWithRoles, localeOverride?: string) {
     const { report } = await this.buildProjectReportPreviewData(reportId, user);
-    const html = await this.renderProjectReportHtml(reportId, user);
+    const localeConfig = this.getPreviewLocaleConfig(report.templateVersion, localeOverride);
+    const html = await this.renderProjectReportHtml(reportId, user, localeOverride);
     const browser = await this.launchPdfBrowser();
 
     try {
@@ -1555,7 +1615,8 @@ export class ReportBuilderService {
         },
       });
 
-      const pdfFilename = `${this.sanitizeFilename(report.title || 'project-report')}.pdf`;
+      const localeSuffix = localeConfig.locale === 'ar' ? '-ar' : '-en';
+      const pdfFilename = `${this.sanitizeFilename(report.title || 'project-report')}${localeSuffix}.pdf`;
       const storageKey = this.storage.generateStorageKey(
         user.orgId,
         'PROJECT',

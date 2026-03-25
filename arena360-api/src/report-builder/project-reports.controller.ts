@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UploadedFile,
   UseGuards,
@@ -21,6 +22,7 @@ import {
   CreateProjectReportDto,
   CreateProjectReportEntryDto,
   ReorderProjectReportEntriesDto,
+  ReportPreviewLocaleDto,
   UpdateProjectReportDto,
   UpdateProjectReportEntryDto,
 } from './dto/report-builder.dto';
@@ -145,8 +147,8 @@ export class ProjectReportsController {
   }
 
   @Get('project-reports/:reportId/preview')
-  getProjectReportPreview(@Request() req: any, @Param('reportId') reportId: string) {
-    return this.service.getProjectReportPreview(reportId, req.user);
+  getProjectReportPreview(@Request() req: any, @Param('reportId') reportId: string, @Query('locale') locale?: string) {
+    return this.service.getProjectReportPreview(reportId, req.user, locale);
   }
 
   @Get('project-reports/:reportId/latest-export')
@@ -162,7 +164,11 @@ export class ProjectReportsController {
 
   @Post('project-reports/:reportId/export-pdf')
   @RequirePermissions('GENERATE_PROJECT_REPORT_EXPORTS')
-  exportProjectReportPdf(@Request() req: any, @Param('reportId') reportId: string) {
-    return this.service.exportProjectReportPdf(reportId, req.user);
+  exportProjectReportPdf(
+    @Request() req: any,
+    @Param('reportId') reportId: string,
+    @Body() dto: ReportPreviewLocaleDto,
+  ) {
+    return this.service.exportProjectReportPdf(reportId, req.user, dto?.locale);
   }
 }

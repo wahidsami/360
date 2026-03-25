@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -73,8 +74,9 @@ export class ReportBuilderAdminController {
     @Request() req: any,
     @Param('id') id: string,
     @Param('versionId') versionId: string,
+    @Query('locale') locale?: string,
   ) {
-    return this.service.getTemplateVersionSamplePreview(req.user.orgId, id, versionId);
+    return this.service.getTemplateVersionSamplePreview(req.user.orgId, id, versionId, locale);
   }
 
   @Get('clients/:clientId/assignments')

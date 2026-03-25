@@ -1337,9 +1337,9 @@ export const api = {
         method: 'POST',
       });
     },
-    getTemplateVersionSamplePreview: async (templateId: string, versionId: string): Promise<string> => {
+    getTemplateVersionSamplePreview: async (templateId: string, versionId: string, locale: 'en' | 'ar' = 'en'): Promise<string> => {
       const res = await fetchApi(
-        `/admin/report-builder/templates/${templateId}/versions/${versionId}/sample-preview`,
+        `/admin/report-builder/templates/${templateId}/versions/${versionId}/sample-preview?locale=${locale}`,
       );
       return res.html || '';
     },
@@ -1494,8 +1494,8 @@ export const api = {
         method: 'DELETE',
       });
     },
-    getPreviewHtml: async (reportId: string): Promise<string> => {
-      const res = await fetchApi(`/project-reports/${reportId}/preview`);
+    getPreviewHtml: async (reportId: string, locale: 'en' | 'ar' = 'en'): Promise<string> => {
+      const res = await fetchApi(`/project-reports/${reportId}/preview?locale=${locale}`);
       return res.html || '';
     },
     getLatestExport: async (reportId: string): Promise<{ url: string; exportVersion: number }> => {
@@ -1506,9 +1506,10 @@ export const api = {
         method: 'POST',
       });
     },
-    exportPdf: async (reportId: string): Promise<{ downloadUrl?: string; export?: unknown }> => {
+    exportPdf: async (reportId: string, locale: 'en' | 'ar' = 'en'): Promise<{ downloadUrl?: string; export?: unknown }> => {
       return fetchApi(`/project-reports/${reportId}/export-pdf`, {
         method: 'POST',
+        body: JSON.stringify({ locale }),
       });
     },
   },

@@ -255,3 +255,9 @@ export class ReorderProjectReportEntriesDto {
   @IsArray()
   items: Array<{ id: string; sortOrder: number }>;
 }
+
+export class ReportPreviewLocaleDto {
+  @IsOptional()
+  @IsString()
+  locale?: string;
+}
