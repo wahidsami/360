@@ -99,7 +99,7 @@ const ClientReportsView: React.FC<{
           icon={<ShieldCheck />}
         />
         <KpiCard
-          label="Template Versions"
+          label="Tool Versions"
           value={String(new Set(reports.map((report) => report.templateVersionId)).size)}
           icon={<BarChart3 />}
         />
@@ -112,7 +112,7 @@ const ClientReportsView: React.FC<{
         </div>
         <div className="relative flex-1 md:max-w-sm w-full">
           <Input
-            placeholder="Search reports, projects, or templates"
+            placeholder="Search reports, projects, or tools"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"

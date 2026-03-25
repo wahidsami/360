@@ -308,7 +308,7 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Badge variant="neutral">{report.visibility}</Badge>
             </div>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {report.template.name} / Version {report.templateVersion.versionNumber} / Performed by {report.performedBy?.name || 'Unknown'}
+              {report.template.name} / Tool version {report.templateVersion.versionNumber} / Performed by {report.performedBy?.name || 'Unknown'}
             </p>
             {isClientUser && (
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -395,7 +395,7 @@ export const ProjectReportWorkspace: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Findings List</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Fixed accessibility findings structure from the assigned template. Categories and subcategories stay aligned with the product definition.
+              Fixed accessibility findings structure from the assigned tool. Categories and subcategories stay aligned with the product definition.
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">

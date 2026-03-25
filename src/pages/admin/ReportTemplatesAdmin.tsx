@@ -88,7 +88,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
   const [templateForm, setTemplateForm] = React.useState({
     name: 'Accessibility Audit',
     code: 'accessibility-audit',
-    description: 'Fixed accessibility audit template for project-level reports.',
+    description: 'Fixed accessibility audit tool for project-level reports.',
   });
   const [assignmentForm, setAssignmentForm] = React.useState({
     templateVersionId: '',
@@ -143,7 +143,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
         }
       } catch (error) {
         console.error(error);
-        toast.error('Failed to load accessibility template administration.');
+        toast.error('Failed to load accessibility tool administration.');
       } finally {
         setIsLoading(false);
       }
@@ -173,9 +173,9 @@ export const ReportTemplatesAdmin: React.FC = () => {
   if (user?.role !== Role.SUPER_ADMIN) {
     return (
       <GlassCard className="max-w-3xl">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Accessibility Templates</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Accessibility Tool</h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          This area is restricted to <code>SUPER_ADMIN</code>. Template publishing and client assignment stay centralized here.
+          This area is restricted to <code>SUPER_ADMIN</code>. Tool version publishing and client assignment stay centralized here.
         </p>
       </GlassCard>
     );
@@ -190,10 +190,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
       });
       await loadTemplates(created.id);
       setTemplateModalOpen(false);
-      toast.success('Accessibility template created.');
+      toast.success('Accessibility tool created.');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create accessibility template.');
+      toast.error('Failed to create accessibility tool.');
     }
   };
 
@@ -204,10 +204,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
       await api.reportBuilderAdmin.createTemplateVersion(selectedTemplate.id, buildAccessibilityVersionPayload());
       await loadTemplates(selectedTemplate.id);
       setVersionModalOpen(false);
-      toast.success('Template version drafted.');
+      toast.success('Tool version drafted.');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create template version.');
+      toast.error('Failed to create tool version.');
     }
   };
 
@@ -216,10 +216,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
     try {
       await api.reportBuilderAdmin.publishTemplateVersion(selectedTemplate.id, versionId);
       await loadTemplates(selectedTemplate.id);
-      toast.success('Template version published.');
+      toast.success('Tool version published.');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to publish template version.');
+      toast.error('Failed to publish tool version.');
     }
   };
 
@@ -250,10 +250,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
         isActive: assignmentForm.isActive,
       });
       await loadAssignments(selectedClientId);
-      toast.success('Template assigned to client.');
+      toast.success('Accessibility tool assigned to client.');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to assign template.');
+      toast.error('Failed to assign accessibility tool.');
     }
   };
 
@@ -272,9 +272,9 @@ export const ReportTemplatesAdmin: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">Admin / Accessibility Templates</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">Admin / Accessibility Tool</h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Create fixed accessibility templates, publish immutable versions, preview the exported layout, and assign them to clients.
+            Manage the fixed accessibility tool, publish immutable versions, preview the exported layout, and assign it to clients.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -282,7 +282,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
           <NavLink to="/app/admin/roles"><Button variant="outline" size="sm">Roles</Button></NavLink>
           {templates.length === 0 && (
             <Button size="sm" onClick={() => setTemplateModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Create Report Type
+              <Plus className="mr-2 h-4 w-4" /> Create Accessibility Tool
             </Button>
           )}
         </div>
@@ -290,14 +290,14 @@ export const ReportTemplatesAdmin: React.FC = () => {
 
       {isLoading ? (
         <GlassCard>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Loading accessibility template administration...</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Loading accessibility tool administration...</p>
         </GlassCard>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <GlassCard className="p-4">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Report Type</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">One fixed accessibility report type and its versions.</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Accessibility Tool</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">One fixed accessibility tool and its versions.</p>
             </div>
             <div className="space-y-3">
               {templates.map((template) => {
@@ -322,7 +322,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
               })}
               {templates.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  No report type yet. Create the accessibility report type to start the flow.
+                  No accessibility tool yet. Create it to start the audit flow.
                 </div>
               )}
             </div>
@@ -460,7 +460,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
                             Keep active
                           </label>
                         </div>
-                        <Button type="submit" className="w-full" disabled={!selectedClientId || !assignmentForm.templateVersionId}>Assign Template</Button>
+                        <Button type="submit" className="w-full" disabled={!selectedClientId || !assignmentForm.templateVersionId}>Assign Tool</Button>
                       </form>
                     </GlassCard>
 
@@ -484,7 +484,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
                             </div>
                           </div>
                         ))}
-                        {selectedClientId && filteredAssignments.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No assignments for this template on the selected client yet.</p>}
+                        {selectedClientId && filteredAssignments.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No assignments for this tool on the selected client yet.</p>}
                       </div>
                     </GlassCard>
                   </div>
@@ -492,40 +492,40 @@ export const ReportTemplatesAdmin: React.FC = () => {
               </>
             ) : (
               <GlassCard>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Create an accessibility template to begin the simplified report flow.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Create the accessibility tool to begin the simplified audit flow.</p>
               </GlassCard>
             )}
           </div>
         </div>
       )}
 
-      <Modal isOpen={samplePreviewOpen} onClose={() => setSamplePreviewOpen(false)} title="Template Export Preview" maxWidth="max-w-6xl">
+      <Modal isOpen={samplePreviewOpen} onClose={() => setSamplePreviewOpen(false)} title="Accessibility Tool Preview" maxWidth="max-w-6xl">
         <div className="space-y-4">
           <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-sm text-slate-600 dark:text-slate-300">
-            This mock preview uses sample data from the selected template version so admin users can review the final export layout before assignment.
+            This mock preview uses sample data from the selected tool version so admin users can review the final export layout before client assignment.
           </div>
-          <iframe title="Template Export Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={samplePreviewHtml} />
+          <iframe title="Accessibility Tool Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={samplePreviewHtml} />
         </div>
       </Modal>
 
-      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="Create Accessibility Report Type" maxWidth="max-w-2xl">
+      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="Create Accessibility Tool" maxWidth="max-w-2xl">
         <form className="space-y-4" onSubmit={handleCreateTemplate}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Report type name" value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
-            <Input label="Report type code" value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required disabled />
+            <Input label="Tool name" value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
+            <Input label="Tool code" value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required disabled />
           </div>
           <TextArea label="Description" value={templateForm.description} onChange={(event) => setTemplateForm((current) => ({ ...current, description: event.target.value }))} />
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-            This creates the master accessibility template only. The fixed finding structure, export settings, AI behavior, and category taxonomy live in the template versions.
+            This creates the master accessibility tool only. The fixed finding structure, export settings, AI behavior, and category taxonomy live in the tool versions.
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setTemplateModalOpen(false)}>Cancel</Button>
-            <Button type="submit">Create Template</Button>
+            <Button type="submit">Create Tool</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} title="Create Accessibility Template Version" maxWidth="max-w-3xl">
+      <Modal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} title="Create Accessibility Tool Version" maxWidth="max-w-3xl">
         <form className="space-y-4" onSubmit={handleCreateVersion}>
           <div className="rounded-2xl border border-cyan-200/60 bg-cyan-50 p-4 text-sm text-slate-700 dark:border-cyan-500/20 dark:bg-cyan-500/5 dark:text-slate-300">
             This creates the fixed Accessibility Audit version defined by the product spec. Categories and subcategories stay static, and admins do not edit raw schema JSON here.

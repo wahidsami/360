@@ -141,7 +141,7 @@ export class ReportBuilderService {
     const template = await this.prisma.reportBuilderTemplate.findFirst({
       where: { id: templateId, orgId },
     });
-    if (!template) throw new NotFoundException('Report builder template not found');
+    if (!template) throw new NotFoundException('Accessibility tool not found');
     return template;
   }
 
@@ -318,7 +318,7 @@ export class ReportBuilderService {
           'This report is generated from structured project findings and evidence. Share it with the client only after final review and approval.',
         client: 'Client',
         project: 'Project',
-        template: 'Template',
+        template: 'Tool',
         performedBy: 'Performed by',
         totalIssues: 'Total issues',
         clickHere: 'Click here',
@@ -326,7 +326,7 @@ export class ReportBuilderService {
         viewVideo: 'View Video',
         viewEvidence: 'View Evidence',
         sampleDescription:
-          'This sample shows how the assigned template will render once a project report is filled with findings, evidence, and AI-assisted summaries.',
+          'This sample shows how the assigned accessibility tool will render once a project report is filled with findings, evidence, and AI-assisted summaries.',
       };
     }
 
@@ -347,7 +347,7 @@ export class ReportBuilderService {
         '\u062A\u0645 \u0625\u0639\u062F\u0627\u062F \u0647\u0630\u0627 \u0627\u0644\u062A\u0642\u0631\u064A\u0631 \u0627\u0639\u062A\u0645\u0627\u062F\u0627\u064B \u0639\u0644\u0649 \u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0645\u0646\u0638\u0645\u0629 \u0648\u0623\u062F\u0644\u0629 \u0645\u0631\u0641\u0642\u0629. \u064A\u0646\u0628\u063A\u064A \u0645\u0631\u0627\u062C\u0639\u062A\u0647 \u0648\u0627\u0639\u062A\u0645\u0627\u062F\u0647 \u0642\u0628\u0644 \u0645\u0634\u0627\u0631\u0643\u062A\u0647 \u0645\u0639 \u0627\u0644\u0639\u0645\u064A\u0644.',
       client: '\u0627\u0644\u0639\u0645\u064A\u0644',
       project: '\u0627\u0644\u0645\u0634\u0631\u0648\u0639',
-      template: '\u0627\u0644\u0642\u0627\u0644\u0628',
+      template: '\u0627\u0644\u0623\u062F\u0627\u0629',
       performedBy: '\u062A\u0645 \u0627\u0644\u062A\u0646\u0641\u064A\u0630 \u0628\u0648\u0627\u0633\u0637\u0629',
       totalIssues: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0645\u0644\u0627\u062D\u0638\u0627\u062A',
       clickHere: '\u0627\u0636\u063A\u0637 \u0647\u0646\u0627',
@@ -414,11 +414,11 @@ export class ReportBuilderService {
           introduction:
             locale === 'ar'
               ? '\u064A\u0642\u062F\u0645 \u0647\u0630\u0627 \u0627\u0644\u0642\u0627\u0644\u0628 \u0645\u0644\u062E\u0635\u0627\u064B \u0648\u0627\u0636\u062D\u0627\u064B \u0644\u0644\u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0648\u064A\u0631\u0627\u0639\u064A \u0627\u0644\u0625\u062E\u0631\u0627\u062C \u0627\u0644\u0639\u0631\u0628\u064A \u0628\u0627\u062A\u062C\u0627\u0647 RTL.'
-              : 'This template preview demonstrates the final report layout with a polished cover, evidence handling, and structured findings.',
+              : 'This tool preview demonstrates the final report layout with a polished cover, evidence handling, and structured findings.',
           executiveSummary:
             locale === 'ar'
               ? '\u064A\u0645\u0643\u0646 \u0644\u0644\u0625\u062F\u0627\u0631\u0629 \u0645\u0639\u0627\u064A\u0646\u0629 \u0627\u0644\u0642\u0627\u0644\u0628 \u0642\u0628\u0644 \u062A\u0639\u064A\u064A\u0646\u0647 \u0644\u0644\u0639\u0645\u064A\u0644 \u0644\u0636\u0645\u0627\u0646 \u0623\u0646 \u0634\u0643\u0644 \u0627\u0644\u062A\u0635\u062F\u064A\u0631 \u064A\u0637\u0627\u0628\u0642 \u0627\u0644\u062A\u0648\u0642\u0639\u0627\u062A.'
-              : 'Admins can review the output here before assigning the template to a client, so the exported PDF style is predictable.',
+              : 'Admins can review the output here before assigning the tool to a client, so the exported PDF style is predictable.',
           recommendationsSummary:
             locale === 'ar'
               ? '\u064A\u0633\u062A\u0639\u0645\u0644 \u0647\u0630\u0627 \u0627\u0644\u0645\u062E\u0631\u062C \u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0628\u064A\u0627\u0646\u0627\u062A \u062A\u062C\u0631\u064A\u0628\u064A\u0629\u060C \u0623\u0645\u0627 \u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631 \u0627\u0644\u0641\u0639\u0644\u064A\u0629 \u0641\u062A\u0623\u062E\u0630 \u0645\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0634\u0631\u0648\u0639 \u0627\u0644\u062D\u0642\u064A\u0642\u064A\u0629.'
@@ -724,7 +724,7 @@ export class ReportBuilderService {
     const version = await this.prisma.reportBuilderTemplateVersion.findFirst({
       where: { id: versionId, templateId },
     });
-    if (!version) throw new NotFoundException('Template version not found');
+    if (!version) throw new NotFoundException('Tool version not found');
 
     const samplePreview = this.buildSampleTemplatePreviewData(template, version);
     return { html: this.renderReportHtml(samplePreview) };
@@ -754,7 +754,7 @@ export class ReportBuilderService {
       select: { id: true },
     });
     if (existing) {
-      throw new BadRequestException('The accessibility report type already exists. Create a new version instead.');
+      throw new BadRequestException('The accessibility tool already exists. Create a new version instead.');
     }
     const template = await this.prisma.reportBuilderTemplate.create({
       data: {
@@ -773,7 +773,7 @@ export class ReportBuilderService {
       action: 'report-template.created',
       entityType: 'report_template',
       entityId: template.id,
-      description: `Report template "${template.name}" created.`,
+      description: `Accessibility tool "${template.name}" created.`,
       metadata: { templateId: template.id, code: template.code, category: template.category },
     });
     return template;
@@ -782,7 +782,7 @@ export class ReportBuilderService {
   async updateTemplate(orgId: string, id: string, dto: UpdateReportBuilderTemplateDto, user?: UserWithRoles) {
     const current = await this.ensureTemplateInOrg(id, orgId);
     if (current.code !== this.canonicalAccessibilityTemplateCode) {
-      throw new BadRequestException('Only the canonical accessibility report type is available in this flow.');
+      throw new BadRequestException('Only the canonical accessibility tool is available in this flow.');
     }
     const template = await this.prisma.reportBuilderTemplate.update({
       where: { id },
@@ -799,7 +799,7 @@ export class ReportBuilderService {
       action: 'report-template.updated',
       entityType: 'report_template',
       entityId: template.id,
-      description: `Report template "${template.name}" updated.`,
+      description: `Accessibility tool "${template.name}" updated.`,
       metadata: { templateId: template.id, previousStatus: current.status, nextStatus: template.status },
     });
     return template;
@@ -813,7 +813,7 @@ export class ReportBuilderService {
   ) {
     const template = await this.ensureTemplateInOrg(templateId, orgId);
     if (template.category !== 'ACCESSIBILITY') {
-      throw new BadRequestException('Only accessibility templates are supported in the simplified report flow.');
+      throw new BadRequestException('Only accessibility tools are supported in the simplified audit flow.');
     }
     const latest = await this.prisma.reportBuilderTemplateVersion.findFirst({
       where: { templateId },
@@ -836,7 +836,7 @@ export class ReportBuilderService {
       action: 'report-template.version-created',
       entityType: 'report_template_version',
       entityId: version.id,
-      description: `Version ${version.versionNumber} created for template "${template.name}".`,
+      description: `Version ${version.versionNumber} created for tool "${template.name}".`,
       metadata: { templateId, versionNumber: version.versionNumber },
     });
     return version;
@@ -847,7 +847,7 @@ export class ReportBuilderService {
     const version = await this.prisma.reportBuilderTemplateVersion.findFirst({
       where: { id: versionId, templateId },
     });
-    if (!version) throw new NotFoundException('Template version not found');
+    if (!version) throw new NotFoundException('Tool version not found');
 
     const [, publishedVersion] = await this.prisma.$transaction([
       this.prisma.reportBuilderTemplateVersion.updateMany({
@@ -874,7 +874,7 @@ export class ReportBuilderService {
       action: 'report-template.version-published',
       entityType: 'report_template_version',
       entityId: versionId,
-      description: `Version ${version.versionNumber} published for report template.`,
+      description: `Version ${version.versionNumber} published for the accessibility tool.`,
       metadata: { templateId, versionId, versionNumber: version.versionNumber },
     });
 
@@ -915,7 +915,7 @@ export class ReportBuilderService {
         isPublished: true,
       },
     });
-    if (!version) throw new NotFoundException('Published template version not found');
+    if (!version) throw new NotFoundException('Published tool version not found');
 
     if (dto.isDefault) {
       await this.prisma.clientReportTemplateAssignment.updateMany({
@@ -945,7 +945,7 @@ export class ReportBuilderService {
       action: 'report-template.assigned',
       entityType: 'client_report_template_assignment',
       entityId: assignment.id,
-      description: `Template "${assignment.template.name}" assigned to client.`,
+      description: `Accessibility tool "${assignment.template.name}" assigned to client.`,
       metadata: {
         clientId,
         templateId: assignment.templateId,
@@ -965,7 +965,7 @@ export class ReportBuilderService {
     const assignment = await this.prisma.clientReportTemplateAssignment.findFirst({
       where: { id: assignmentId, orgId },
     });
-    if (!assignment) throw new NotFoundException('Client template assignment not found');
+    if (!assignment) throw new NotFoundException('Client tool assignment not found');
 
     if (dto.isDefault) {
       await this.prisma.clientReportTemplateAssignment.updateMany({
@@ -996,7 +996,7 @@ export class ReportBuilderService {
         action: 'report-template.assignment-updated',
         entityType: 'client_report_template_assignment',
         entityId: updated.id,
-        description: `Client template assignment updated for "${updated.template.name}".`,
+        description: `Client tool assignment updated for "${updated.template.name}".`,
         metadata: { assignmentId: updated.id, isDefault: updated.isDefault, isActive: updated.isActive },
       });
     }
@@ -1062,7 +1062,7 @@ export class ReportBuilderService {
       },
     });
     if (!assignment) {
-      throw new ForbiddenException('Template version is not assigned to this project client');
+      throw new ForbiddenException('Tool version is not assigned to this project client');
     }
 
     const performedById = dto.performedById ?? user.id;
@@ -1097,7 +1097,7 @@ export class ReportBuilderService {
       action: 'project-report.created',
       entityType: 'project_report',
       entityId: report.id,
-      description: `Project report "${report.title}" created from template "${report.template.name}".`,
+      description: `Project report "${report.title}" created from tool "${report.template.name}".`,
       metadata: { reportId: report.id, templateVersionId: report.templateVersionId, visibility: report.visibility },
     });
     return report;

@@ -71,7 +71,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
 
     const selectedAssignment = activeAssignments.find((assignment) => assignment.id === draft.assignmentId);
     if (!selectedAssignment) {
-      toast.error('Assign the accessibility report type to this client first.');
+      toast.error('Assign the accessibility tool to this client first.');
       return;
     }
 
@@ -117,18 +117,18 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
               <h4 className="text-lg font-bold text-white">Accessibility Audit Tool</h4>
             </div>
             <p className="mt-2 max-w-3xl text-sm text-slate-400">
-              This project uses one fixed accessibility report type. The assigned client template controls report creation, while the findings workspace handles evidence, AI summaries, preview, and PDF export.
+              This project uses one fixed accessibility tool. The assigned client tool controls audit creation, while the findings workspace handles evidence, AI summaries, preview, and PDF export.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="info">{activeAssignments.length} assigned report type</Badge>
+            <Badge variant="info">{activeAssignments.length} assigned tool</Badge>
             <Badge variant="neutral">{reports.length} reports</Badge>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assigned Report Type</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assigned Tool</p>
             <div className="mt-3 space-y-3">
               {activeAssignments.map((assignment) => (
                 <button
@@ -156,7 +156,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
               ))}
               {!activeAssignments.length && (
                 <p className="text-sm text-slate-500">
-                  No accessibility report type is assigned to this client yet. Assign it from the admin Accessibility Templates screen first.
+                  No accessibility tool is assigned to this client yet. Assign it from the admin Accessibility Tool screen first.
                 </p>
               )}
             </div>
@@ -203,7 +203,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
       <Modal isOpen={isCreateOpen} onClose={() => setCreateOpen(false)} title="Create Accessibility Report">
         <form onSubmit={handleCreateReport} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">Assigned report type</label>
+            <label className="mb-1 block text-sm font-medium text-slate-300">Assigned tool</label>
             <select
               value={draft.assignmentId}
               onChange={(event) => {
@@ -217,7 +217,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
               className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2.5 text-white"
               required
             >
-              <option value="">Select report type</option>
+              <option value="">Select tool</option>
               {activeAssignments.map((assignment) => (
                 <option key={assignment.id} value={assignment.id}>
                   {assignment.template.name} / v{assignment.templateVersion.versionNumber}
@@ -244,7 +244,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh }) => {
             />
           </div>
           <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-sm text-slate-400">
-            This project only uses the new accessibility report workflow. Older generic report creation paths are removed from this screen.
+            This project only uses the new accessibility audit tool workflow. Older generic report creation paths are removed from this screen.
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
