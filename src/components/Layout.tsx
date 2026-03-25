@@ -181,7 +181,7 @@ export const Layout: React.FC = () => {
   }
 
   if (user?.role === Role.SUPER_ADMIN) {
-    menuItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'Report Templates' });
+    menuItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'TOOLS BUILDER' });
     menuItems.push({ to: '/app/admin/users', icon: ShieldCheck, label: t('admin') });
   }
 
