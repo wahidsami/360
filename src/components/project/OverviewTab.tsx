@@ -189,19 +189,6 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
             });
         }
 
-        // Team overallocation
-        const overallocated = metrics?.capacity?.overallocated || [];
-        if (overallocated.length > 0) {
-            const totalOverallocation = overallocated.reduce((sum: number, m: any) => sum + (m.allocationPercent - 100), 0);
-            predictions.push({
-                type: 'capacity_risk',
-                severity: totalOverallocation > 50 ? 'high' : 'medium',
-                message: `Team overallocated by ${Math.round(totalOverallocation)}%`,
-                impact: `${overallocated.length} member(s) at risk of burnout`,
-                icon: '⚡'
-            });
-        }
-
         return predictions;
     }, [project, tasks, milestones, metrics]);
 
