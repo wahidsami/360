@@ -1,11 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Permission, Role } from '@/types';
-import { GlassCard, KpiCard, ProgressBar, Badge, Button } from '../ui/UIComponents';
-import { Activity, Calendar, Clock, DollarSign, Flag, ArrowRight, CheckCircle, XCircle, AlertCircle, Info, Sparkles, Lock } from 'lucide-react';
-import { formatSAR } from '../../utils/currency';
-import { format, formatDistanceToNow } from 'date-fns';
-import { CustomFieldsSection } from '../CustomFieldsSection';
+import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Role } from '@/types';
+import { GlassCard, Badge, Button } from '../ui/UIComponents';
+import { Activity, Flag, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface OverviewTabProps {
@@ -42,7 +40,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
     const [isExpanded, setIsExpanded] = React.useState(!isComplete);
 
     return (
-        <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-3 last:mb-0 shadow-sm hover:shadow-md transition-all">
             <div
                 className="flex items-center justify-between cursor-pointer mb-2"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -80,8 +78,29 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
     );
 }
 
-function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigate?: any }) {
-    const { t } = useTranslation();
+function ActivityFeed({ activities }: { activities: any[] }) {
+    const condensedActivities = React.useMemo(() => {
+        const grouped: Array<any & { count: number; groupKey: string }> = [];
+
+        for (const activity of activities) {
+            const groupKey = [
+                activity.entityId || '',
+                activity.type || '',
+                activity.action || '',
+                activity.description || ''
+            ].join('::');
+            const previous = grouped[grouped.length - 1];
+
+            if (previous && previous.groupKey === groupKey) {
+                previous.count += 1;
+                continue;
+            }
+
+            grouped.push({ ...activity, count: 1, groupKey });
+        }
+
+        return grouped.slice(0, 5);
+    }, [activities]);
     const getActivityIcon = (type: string) => {
         const icons: Record<string, string> = { task_overdue: '⏰', task_completed: '✅', finding_created: '📝', milestone_completed: '🎯', milestone_missed: '⚠️', budget_alert: '💰', member_added: '👤', file_uploaded: '📄', update_posted: '📢', blocker_created: '🚧' };
         return icons[type] || '•';
@@ -91,18 +110,25 @@ function ActivityFeed({ activities, onNavigate }: { activities: any[], onNavigat
         <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white">
             <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">RECENT ACTIVITY</h4>
             <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pr-2">
-                {activities.map(activity => (
+                {condensedActivities.map(activity => (
                     <div key={activity.id} className="flex gap-3 text-sm">
                         <div className="shrink-0 w-6 h-6 flex justify-center items-center bg-slate-50 dark:bg-slate-800/50 rounded-full text-[10px] border border-slate-200 dark:border-slate-700">
                             {getActivityIcon(activity.action || activity.type)}
                         </div>
                         <div className="flex-grow">
-                            <p className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase tracking-tighter">{formatDistanceToNow(new Date(activity.createdAt || activity.timestamp || Date.now()), { addSuffix: true })}</p>
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase tracking-tighter">{formatDistanceToNow(new Date(activity.createdAt || activity.timestamp || Date.now()), { addSuffix: true })}</p>
+                                {activity.count > 1 && (
+                                    <Badge variant="neutral" className="text-[9px] px-1.5 py-0.5 font-black uppercase tracking-widest">
+                                        x{activity.count}
+                                    </Badge>
+                                )}
+                            </div>
                             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-normal">{activity.description || 'Action performed'}</p>
                         </div>
                     </div>
                 ))}
-                {activities.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">No recent activity.</p>}
+                {condensedActivities.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">No recent activity.</p>}
             </div>
         </GlassCard>
     );
@@ -202,83 +228,6 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
     );
 }
 
-function PrimaryActionCard({ action, onNavigate, allowedTabs = [] }: { action: any, onNavigate?: any, allowedTabs?: string[] }) {
-    const { t } = useTranslation();
-    if (!action) return null;
-
-    // Map severity to colors
-    const severityColors: Record<string, string> = {
-        critical_findings: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
-        overdue_tasks: 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20',
-        at_risk_milestones: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
-        stale_communication: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20',
-        setup_required: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20',
-        planning_required: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
-        on_track: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20'
-    };
-
-    const iconColors: Record<string, string> = {
-        critical_findings: 'text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/20',
-        overdue_tasks: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-500/20',
-        at_risk_milestones: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/20',
-        stale_communication: 'text-indigo-600 bg-indigo-100 dark:text-indigo-400 dark:bg-indigo-500/20',
-        setup_required: 'text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-500/20',
-        planning_required: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-500/20',
-        on_track: 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/20'
-    };
-
-    return (
-        <div className={`${severityColors[action.type] || 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'} border rounded-2xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-xl transition-all duration-300`}>
-            <div className="flex items-start gap-4">
-                <div className={`shrink-0 p-2 rounded-lg ${iconColors[action.type] || 'text-slate-400 bg-slate-800'}`}>
-                    <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="flex-grow">
-                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60 text-slate-500 dark:text-slate-400">{t('primary_action')}</p>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{t(action.title, { defaultValue: action.title })}</h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{t(action.description, { defaultValue: action.description })}</p>
-
-                    {action.details && (
-                        <div className="mt-3 space-y-2">
-                            {action.details.recommendation && (
-                                <p className="text-[11px] font-bold italic text-slate-700 dark:text-white/90 border-l-2 pl-2 border-current">{action.details.recommendation}</p>
-                            )}
-                            {action.details.findings && (
-                                <div className="text-[10px] bg-white/40 dark:bg-black/20 rounded p-2 mt-2 border border-black/5 dark:border-white/5">
-                                    <strong className="text-slate-900 dark:text-white/90">Critical findings:</strong>
-                                    <ul className="list-disc list-inside mt-1 text-slate-700 dark:text-slate-300 space-y-0.5">
-                                        {action.details.findings.slice(0, 2).map((f: any, i: number) => (
-                                            <li key={i} className="truncate">{f}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 mt-auto">
-                {action.actions?.map((btn: any, idx: number) => {
-                    if (btn.route && allowedTabs.length && !allowedTabs.includes(btn.route)) return null;
-                    return (
-                        <React.Fragment key={idx}>
-                            <Button
-                                size="sm"
-                                variant={btn.primary ? 'primary' : 'outline'}
-                                className={`w-full sm:w-auto font-black uppercase tracking-widest text-[10px] px-4 ${btn.primary ? '' : 'text-slate-600 dark:text-slate-300 border-slate-300/50 hover:bg-white'}`}
-                                onClick={() => onNavigate?.(btn.route)}
-                            >
-                                {btn.label} <ArrowRight className="ml-1.5 w-3 h-3" />
-                            </Button>
-                        </React.Fragment>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
 function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = [] }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = React.useState(false);
@@ -344,7 +293,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
     );
 }
 
-export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, clientName, stats, tasks = [], findings = [], milestones = [], recentUpdates = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [] }) => {
+export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, stats, tasks = [], findings = [], milestones = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [] }) => {
     const { t } = useTranslation();
     // Derived operational metrics
     const taskCount = stats?.taskCount || 0;
@@ -396,11 +345,11 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
     const milestoneCount = stats?.milestoneCount || 0;
     const completedMilestones = stats?.completedMilestones || 0;
     const atRiskMilestones = stats?.atRiskMilestones || 0;
-    const missedMilestonesList = (milestones || []).filter(m => m.status?.toUpperCase() !== 'COMPLETED' && m.dueDate && new Date(m.dueDate) < new Date());
-
-    const daysUntilDeadline = project.deadline || (project as any).endDate
-        ? Math.ceil((new Date(project.deadline || (project as any).endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : null;
+    const milestoneRiskLabel = atRiskMilestones > 0
+        ? `${atRiskMilestones} at risk`
+        : milestoneCount > 0
+            ? `${completedMilestones}/${milestoneCount} done`
+            : 'No milestones';
 
     const findingCount = stats?.findingCount || 0;
     const unresolvedFindings = stats?.unresolvedFindings || 0;
@@ -421,18 +370,13 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
         return (severityOrder[a.severity?.toUpperCase()] ?? 4) - (severityOrder[b.severity?.toUpperCase()] ?? 4);
     })[0];
 
-    const nextMilestone = (milestones || [])
-        .filter(m => m.status?.toUpperCase() !== 'COMPLETED')
-        .sort((a, b) => {
-            const timeA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-            const timeB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
-            return timeA - timeB;
-        })[0];
-
-    const lastUpdateAge = recentUpdates[0] ? formatDistanceToNow(new Date(recentUpdates[0].timestamp), { addSuffix: true }) : 'No update posted yet';
-    const isStale = recentUpdates[0] ? (Date.now() - new Date(recentUpdates[0].timestamp).getTime()) > 7 * 24 * 60 * 60 * 1000 : true;
-
     const canSee = (tabId: string) => allowedTabs.includes(tabId);
+    const criticalFindingCount = findingsBySeverity.CRITICAL || 0;
+    const criticalFindingAlert = (readiness?.nextAction as any)?.type === 'critical_findings' ? readiness?.nextAction as any : null;
+    const activeBlockerCount = metrics?.blockers?.active?.length || 0;
+    const capacityMembers = metrics?.capacity?.members || [];
+    const highLoadMembers = metrics?.capacity?.highLoad || [];
+    const availableMembers = metrics?.capacity?.available || [];
 
     return (
         <div className="space-y-8 pb-12">
@@ -494,33 +438,59 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                             {/* Predictive Insights */}
                             <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
-
-                            {/* Primary Alert / Action Card */}
-                            <PrimaryActionCard action={readiness?.nextAction} onNavigate={onNavigate} allowedTabs={allowedTabs} />
                         </div>
                     </div>
                 </GlassCard>
 
-                {/* Readiness Score (Compressed) */}
-                <GlassCard className="p-6 flex flex-col items-center justify-center gap-3 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-                    <div className="relative w-24 h-24">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
+                <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="relative w-24 h-24 shrink-0">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
+                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
+                            <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
+                            <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
+                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
+                            </p>
                         </div>
                     </div>
-                    <div className="text-center">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
-                        <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
+
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
+                        <ChecklistSection
+                            title={t('core_setup')}
+                            items={readiness?.sections.core.items || []}
+                            isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
+                            onAction={onAction}
+                            onNavigate={onNavigate}
+                        />
+                        <ChecklistSection
+                            title={t('planning')}
+                            items={readiness?.sections.planning.items || []}
+                            isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
+                            onAction={onAction}
+                            onNavigate={onNavigate}
+                        />
+                        <ChecklistSection
+                            title={t('resources')}
+                            items={readiness?.sections.resources.items || []}
+                            isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
+                            onAction={onAction}
+                            onNavigate={onNavigate}
+                        />
                     </div>
                 </GlassCard>
             </div>
 
-            {/* MIDDLE ROW: Operational Health Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* Task Health */}
                 <GlassCard className={`p-6 border-t-4 border-t-blue-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('tasks') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
                     <div className="flex justify-between items-start mb-4">
@@ -549,6 +519,26 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </div>
                     </div>
 
+                    <div className="mb-5 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/30 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <Flag className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Milestones</p>
+                                    <p className="text-sm font-black text-slate-900 dark:text-white">{milestoneCount}</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className={`text-[10px] font-black uppercase tracking-widest ${atRiskMilestones > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                    {milestoneRiskLabel}
+                                </p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{completedMilestones} completed</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex-grow space-y-2 mt-auto">
                         {taskPreviews.slice(0, 3).map((task) => (
                             <div key={task.id} className={`flex flex-col gap-1 text-xs p-2.5 rounded-xl border transition-all ${task.isOverdue ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/10' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-700/50 hover:border-slate-200'}`}>
@@ -570,75 +560,6 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     )}
                 </GlassCard>
 
-                {/* Milestones Summary */}
-                <GlassCard className={`p-6 border-t-4 border-t-amber-500 dark:border-slate-800 bg-white transition-all duration-300 flex flex-col h-full ${canSee('milestones') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group shadow-sm hover:shadow-xl' : ''}`} onClick={() => canSee('milestones') && onNavigate?.('milestones')}>
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400 shadow-sm transition-transform group-hover:scale-110">
-                                <Flag className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t('milestones_summary')}</h3>
-                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{completedMilestones}/{milestoneCount} <span className="text-[10px] text-slate-400 uppercase font-bold tracking-normal ml-1">Done</span></p>
-                            </div>
-                        </div>
-                        {atRiskMilestones > 0 && <Badge variant="danger" className="text-[9px] px-2 py-1 font-black uppercase tracking-widest shadow-sm animate-pulse">{atRiskMilestones} {t('at_risk')}</Badge>}
-                    </div>
-
-                    <div className="space-y-5 flex-grow">
-                        {milestones.slice(0, 3).map((m: any) => {
-                            const mStats = m.stats || {
-                                progress: m.percentComplete || 0,
-                                statusText: 'On Track',
-                                total: 0,
-                                completed: 0
-                            };
-                            const isOverdue = mStats.statusText === 'Overdue';
-                            const isAtRisk = mStats.statusText === 'At Risk';
-
-                            return (
-                                <div key={m.id} className="space-y-2 group/item">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate group-hover/item:text-cyan-500 transition-colors uppercase tracking-tight">{m.title}</span>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                                {m.dueDate ? format(new Date(m.dueDate), 'MMM dd') : 'No Date'}
-                                            </span>
-                                        </div>
-                                        <Badge 
-                                            variant={isOverdue ? 'danger' : isAtRisk ? 'warning' : 'success'} 
-                                            size="sm" 
-                                            className="text-[8px] px-1 py-0 font-black uppercase tracking-tighter shrink-0"
-                                        >
-                                            {mStats.statusText}
-                                        </Badge>
-                                    </div>
-                                    <div className="relative pt-1">
-                                        <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                                            <span>{mStats.completed}/{mStats.total} Tasks</span>
-                                            <span>{mStats.progress}%</span>
-                                        </div>
-                                        <ProgressBar progress={mStats.progress} className="h-1 bg-slate-100 dark:bg-slate-800" />
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {milestones.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-8 opacity-40 grayscale">
-                                <Flag className="w-8 h-8 text-slate-300 mb-2" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">No milestones yet</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {milestones.length > 3 && (
-                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-                            <span className="text-[10px] text-cyan-500 font-black uppercase tracking-widest group-hover:underline">View all {milestoneCount} milestones &rarr;</span>
-                        </div>
-                    )}
-                </GlassCard>
-
                 {/* Findings Summary */}
                 <GlassCard className={`p-6 border-t-4 border-t-rose-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('findings') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
                     <div className="flex justify-between items-start mb-4">
@@ -652,6 +573,26 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             {unresolvedFindings} {t('open')}
                         </Badge>
                     </div>
+
+                    {criticalFindingCount > 0 && (
+                        <div className="mb-4 rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-rose-500 dark:text-rose-400 mb-1">Critical Alert</p>
+                                    <p className="text-sm font-black text-rose-700 dark:text-rose-300">{criticalFindingCount} critical finding{criticalFindingCount === 1 ? '' : 's'} need attention</p>
+                                    <p className="text-xs text-rose-700/80 dark:text-rose-300/80 truncate mt-1">
+                                        {mostCriticalFinding?.title || criticalFindingAlert?.description || 'Review critical findings and unblock the team.'}
+                                    </p>
+                                    {criticalFindingAlert?.details?.recommendation && (
+                                        <p className="text-[10px] font-bold text-rose-700 dark:text-rose-300 mt-2">{criticalFindingAlert.details.recommendation}</p>
+                                    )}
+                                </div>
+                                <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 font-black uppercase tracking-widest">
+                                    Act now
+                                </Badge>
+                            </div>
+                        </div>
+                    )}
 
                     {unresolvedFindings === 0 ? (
                         <div className="flex-grow flex flex-col items-center justify-center py-6 text-center">
@@ -713,50 +654,21 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </>
                     )}
                 </GlassCard>
-
-                {/* Updates / Review Health */}
-                <GlassCard className="p-6 border-t-4 border-t-cyan-500 dark:border-slate-800 bg-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors h-full flex flex-col group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 rounded-xl text-cyan-600 dark:text-cyan-400 shadow-sm transition-transform group-hover:scale-110">
-                            <Clock className="w-5 h-5" />
-                        </div>
-                        <Badge variant={isStale ? 'warning' : 'success'} className="text-[9px] px-1.5 py-0.5 font-black uppercase tracking-widest shadow-sm">
-                            {isStale ? 'STALE' : 'UP TO DATE'}
-                        </Badge>
-                    </div>
-                    <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 mb-4">{t('communication')}</h3>
-                    <div className="space-y-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50">
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 opacity-60">{t('last_weekly_update')}</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white truncate tracking-tighter">{lastUpdateAge}</p>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 dark:text-white leading-none">{recentUpdates.length}</span>
-                                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest mt-1">{t('total_posts')}</span>
-                            </div>
-                            {canSee('updates') && (
-                                <Button variant="ghost" size="sm" className="h-8 text-[9px] uppercase font-black text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800" onClick={() => onNavigate?.('updates')}>{t('post_update')} &rarr;</Button>
-                            )}
-                        </div>
-                    </div>
-                </GlassCard>
             </div>
 
-            {/* PM METRICS ROW */}
-            {metrics && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
 
-                    {metrics.capacity.members && (
-                        <GlassCard className={`p-6 border-t-4 border-t-indigo-500 dark:border-slate-800 relative transition-colors h-full ${canSee('team') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
+                    <GlassCard className={`p-6 border-t-4 border-t-indigo-500 dark:border-slate-800 relative transition-colors h-full ${canSee('team') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-blue-500" /> {t('team_capacity')}
                                 </h3>
-                                {metrics.capacity.highLoad?.length > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 shadow-sm">{metrics.capacity.highLoad.length} High Load</Badge>}
+                                {highLoadMembers.length > 0 && <Badge variant="danger" className="text-[9px] px-1.5 py-0.5 shadow-sm">{highLoadMembers.length} High Load</Badge>}
                             </div>
 
+                            {capacityMembers.length > 0 ? (
+                            <>
                             <table className="w-full text-left border-collapse mb-1">
                                 <thead>
                                     <tr className="border-b border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -766,7 +678,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {metrics.capacity.members.map((member: any) => {
+                                    {capacityMembers.map((member: any) => {
                                         const getStatusColor = (status: string) => {
                                             switch (status) {
                                                 case 'high': return '#ef4444';
@@ -812,10 +724,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </tbody>
                             </table>
 
-                            {metrics.capacity.available?.length > 0 && (
+                            {availableMembers.length > 0 && (
                                 <div className="mt-4 p-2 bg-emerald-500/10 rounded border border-emerald-500/20 text-center">
                                     <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
-                                        {metrics.capacity.available.length} {t('members_available')}
+                                        {availableMembers.length} {t('members_available')}
                                     </span>
                                 </div>
                             )}
@@ -825,98 +737,16 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                     <span className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-wider">{t('view_team_details')} &rarr;</span>
                                 </div>
                             )}
+                            </>
+                            ) : (
+                                <div className="flex items-center justify-center min-h-[220px] text-center text-slate-500 text-sm font-medium">
+                                    No team capacity data yet.
+                                </div>
+                            )}
                         </GlassCard>
-                    )}
 
-                    <GlassCard className="p-6 border-t-4 border-t-rose-600 dark:border-slate-800 text-center flex flex-col items-center justify-center relative min-h-[200px]">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest w-full text-left flex items-center gap-2 absolute top-6 left-6">
-                            <Lock className="w-4 h-4 text-rose-500" /> {t('blockers')}
-                        </h3>
-                        {metrics.blockers.active.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center pt-6">
-                                <div className="p-2 bg-emerald-500/10 rounded-full mb-2"><CheckCircle className="w-6 h-6 text-emerald-500" /></div>
-                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">{t('work_unblocked')}</span>
-                            </div>
-                        ) : (
-                            <div className="pt-6 w-full text-left">
-                                <div className="space-y-2 mb-2">
-                                    {metrics.blockers.active.slice(0, 2).map((blk: any) => (
-                                        <div key={blk.id} className="text-xs text-rose-300 p-2 bg-rose-500/10 rounded border border-rose-500/20">{blk.title}</div>
-                                    ))}
-                                </div>
-                                <Button variant="ghost" size="sm" className="w-full text-[9px] uppercase tracking-widest text-cyan-400" onClick={() => onNavigate?.('tasks')}>{t('manage_blockers')}</Button>
-                            </div>
-                        )}
-                    </GlassCard>
-                </div>
-            )}
-
-            {/* LOWER SECTION: Setup & Checklists vs Sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Adaptive Checklists */}
-                        <div className="space-y-2">
-                            <ChecklistSection
-                                title={t('core_setup')}
-                                items={readiness?.sections.core.items || []}
-                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
-                                onAction={onAction} onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('planning')}
-                                items={readiness?.sections.planning.items || []}
-                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction} onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('resources')}
-                                items={readiness?.sections.resources.items || []}
-                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction} onNavigate={onNavigate}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Sidebar Workspace Context & Activity Feed */}
-                <div className="space-y-6">
-                    <ActivityFeed activities={activity} onNavigate={onNavigate} />
-
-                    <GlassCard className="p-5 border-slate-800">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">{t('project_context_title')}</h4>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-[9px] text-slate-500 uppercase font-black">{t('client_account')}</label>
-                                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{clientName || t('unassigned')}</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-800/50">
-                                <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('discussions')}>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">{t('team_discussions')}</span>
-                                    <ArrowRight className="w-3 h-3 text-slate-600" />
-                                </div>
-                            </div>
-                            <div className="pt-3 border-t border-slate-800/50">
-                                <div className="flex justify-between items-center group cursor-pointer" onClick={() => onNavigate?.('files')}>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold group-hover:text-cyan-400 transition-colors">{t('project_files')}</span>
-                                    <ArrowRight className="w-3 h-3 text-slate-600" />
-                                </div>
-                            </div>
-                        </div>
-                    </GlassCard>
-                </div>
+                <ActivityFeed activities={activity} />
             </div>
-
-            {/* Project Overview / Description Section - Full Width */}
-            <GlassCard className="p-6 border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900/30">
-                <div className="flex items-center gap-3 mb-4">
-                    <Info className="w-5 h-5 text-slate-400" />
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('project_brief_scope')}</h3>
-                </div>
-                <div className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
-                    {project.description || t('no_project_description_overview')}
-                </div>
-            </GlassCard>
         </div>
     );
 };
