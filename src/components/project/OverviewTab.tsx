@@ -403,95 +403,97 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                         {/* Stage Progress */}
                         <div className="flex-grow p-6 flex flex-col justify-center gap-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                        {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{t(`stage_${(readiness?.stage || 'SETUP').toLowerCase()}`).toUpperCase()}</span>
-                                    </h2>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                        {t(`stage_desc_${(readiness?.stage || 'SETUP').toLowerCase()}`, { defaultValue: readiness?.stageExplanation || 'Initial project parameters and team setup required.' })}
-                                    </p>
+                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+                                <div className="space-y-6">
+                                    <div className="space-y-1">
+                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                            {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{t(`stage_${(readiness?.stage || 'SETUP').toLowerCase()}`).toUpperCase()}</span>
+                                        </h2>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                            {t(`stage_desc_${(readiness?.stage || 'SETUP').toLowerCase()}`, { defaultValue: readiness?.stageExplanation || 'Initial project parameters and team setup required.' })}
+                                        </p>
+                                    </div>
+
+                                    {/* Predictive Insights */}
+                                    <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
                                 </div>
 
-                                <div className="flex items-center gap-0 pt-2 pb-6 mr-4 sm:mr-8 md:mr-10">
-                                    {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
-                                        const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
-                                        const isCurrent = (readiness?.stage || 'SETUP') === s;
-                                        const isPassed = stages.indexOf(readiness?.stage || 'SETUP') > idx;
-                                        return (
-                                            <div key={s} className="flex items-center">
-                                                <div className="flex flex-col items-center relative">
-                                                    <div
-                                                        className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
-                                                        title={t(`stage_${s.toLowerCase()}`)}
-                                                    />
-                                                    <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
-                                                        {t(`stage_${s.toLowerCase()}`)}
-                                                    </span>
-                                                </div>
-                                                {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
+                                <div className="rounded-2xl border border-cyan-200/70 dark:border-cyan-500/20 bg-white/80 dark:bg-slate-900/60 p-5 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-20 h-20 shrink-0">
+                                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
+                                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
+                                            </svg>
+                                            <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                                <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
+                                            <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
+                                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                                {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Predictive Insights */}
-                            <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
+                            <div className="flex items-center justify-end gap-0 pt-2 pb-6 mr-4 sm:mr-8 md:mr-10">
+                                {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
+                                    const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
+                                    const isCurrent = (readiness?.stage || 'SETUP') === s;
+                                    const isPassed = stages.indexOf(readiness?.stage || 'SETUP') > idx;
+                                    return (
+                                        <div key={s} className="flex items-center">
+                                            <div className="flex flex-col items-center relative">
+                                                <div
+                                                    className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
+                                                    title={t(`stage_${s.toLowerCase()}`)}
+                                                />
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
+                                                    {t(`stage_${s.toLowerCase()}`)}
+                                                </span>
+                                            </div>
+                                            {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </GlassCard>
 
-                <div className="max-w-3xl">
-                    <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 shrink-0">
-                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                    <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
-                                </div>
-                            </div>
-                            <div className="min-w-0">
-                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
-                                <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
-                                <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
-                                <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                    {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
-                                </p>
-                            </div>
+                <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-4">
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <ChecklistSection
+                                title={t('core_setup')}
+                                items={readiness?.sections.core.items || []}
+                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title={t('planning')}
+                                items={readiness?.sections.planning.items || []}
+                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title={t('resources')}
+                                items={readiness?.sections.resources.items || []}
+                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
                         </div>
-
-                        <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
-                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                                <ChecklistSection
-                                    title={t('core_setup')}
-                                    items={readiness?.sections.core.items || []}
-                                    isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
-                                    onAction={onAction}
-                                    onNavigate={onNavigate}
-                                />
-                                <ChecklistSection
-                                    title={t('planning')}
-                                    items={readiness?.sections.planning.items || []}
-                                    isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
-                                    onAction={onAction}
-                                    onNavigate={onNavigate}
-                                />
-                                <ChecklistSection
-                                    title={t('resources')}
-                                    items={readiness?.sections.resources.items || []}
-                                    isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
-                                    onAction={onAction}
-                                    onNavigate={onNavigate}
-                                />
-                            </div>
-                        </div>
-                    </GlassCard>
-                </div>
+                    </div>
+                </GlassCard>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
