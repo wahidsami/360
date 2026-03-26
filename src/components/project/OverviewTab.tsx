@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Project, ProjectUpdate, Milestone, Task, ProjectReadiness, ReadinessAction, Role } from '@/types';
+import { Project, Milestone, Task, ProjectReadiness, ReadinessAction, Role } from '@/types';
 import { GlassCard, Badge, Button } from '../ui/UIComponents';
 import { Activity, Flag, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface OverviewTabProps {
     project: Project;
-    clientName?: string;
     stats?: {
         taskCount: number;
         completedTasks: number;
@@ -16,17 +15,12 @@ interface OverviewTabProps {
         milestoneCount: number;
         completedMilestones: number;
         atRiskMilestones: number;
-        upcomingMilestones: number;
         findingCount: number;
         unresolvedFindings: number;
-        pendingReports: number;
-        budget: number;
-        spent: number;
     };
     tasks?: any[]; // Full Task objects for inline previews
     findings?: any[]; // For severity analysis inside component
     milestones?: any[]; // For next milestone logic
-    recentUpdates?: ProjectUpdate[];
     onAction?: (action: ReadinessAction) => void;
     onNavigate?: (tab: string) => void; // Keep for backward compatibility/quick links
     allowedTabs?: string[];

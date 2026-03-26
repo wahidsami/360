@@ -534,7 +534,6 @@ export const ProjectDetails: React.FC = () => {
               <div className="relative">
                 <OverviewTab
                   project={project}
-                  clientName={client?.name}
                   stats={{
                     taskCount: tasks.length,
                     completedTasks: tasks.filter(t => t.status?.toLowerCase() === 'done').length,
@@ -542,17 +541,12 @@ export const ProjectDetails: React.FC = () => {
                     milestoneCount: milestones.length,
                     completedMilestones: milestones.filter(m => m.status?.toLowerCase() === 'completed').length,
                     atRiskMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) < new Date()).length,
-                    upcomingMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) > new Date() && new Date(m.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length,
                     findingCount: findings.length,
-                    unresolvedFindings: findings.filter(f => !['closed', 'dismissed'].includes(f.status.toLowerCase())).length,
-                    pendingReports: reports.filter(r => r.status === 'DRAFT').length,
-                    budget: project.budget || financials.contract?.amount || 0,
-                    spent: financials.invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((sum, i) => sum + i.amount, 0)
+                    unresolvedFindings: findings.filter(f => !['closed', 'dismissed'].includes(f.status.toLowerCase())).length
                   }}
                   tasks={tasks}
                   findings={findings}
                   milestones={milestones}
-                  recentUpdates={updates.slice(0, 5)}
                   onNavigate={(tab) => {
                     if (visibleTabs.some(t => t.id === tab)) {
                       setActiveTab(tab);
