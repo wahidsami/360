@@ -441,7 +441,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-0 pt-2 pb-6 mr-4 sm:mr-8 md:mr-10">
+                            <div className="flex w-full items-center justify-center gap-0 pt-2 pb-6">
                                 {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
                                     const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
                                     const isCurrent = (readiness?.stage || 'SETUP') === s;
