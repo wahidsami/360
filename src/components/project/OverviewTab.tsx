@@ -385,10 +385,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                 <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 
-            {/* TOP ROW: Stage, Status & Next Best Action */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            {/* TOP SECTION */}
+            <div className="space-y-6">
                 {/* Stage & Status Banner */}
-                <GlassCard className="xl:col-span-3 p-0 overflow-hidden border-cyan-200 dark:border-cyan-500/20 bg-gradient-to-br from-white via-white to-cyan-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-cyan-500/5 shadow-md border-l-4 border-l-cyan-400 dark:border-l-cyan-500">
+                <GlassCard className="p-0 overflow-hidden border-cyan-200 dark:border-cyan-500/20 bg-gradient-to-br from-white via-white to-cyan-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-cyan-500/5 shadow-md border-l-4 border-l-cyan-400 dark:border-l-cyan-500">
                     <div className="flex flex-col md:flex-row h-full">
                         {/* Status Sidebar */}
                         <div className="w-full md:w-48 bg-cyan-500/10 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-cyan-500/20">
@@ -442,52 +442,54 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     </div>
                 </GlassCard>
 
-                <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-24 h-24 shrink-0">
-                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
+                <div className="max-w-3xl">
+                    <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-24 h-24 shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800" />
+                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - (readiness?.completeness || 0) / 100)} className="text-cyan-500 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]" strokeLinecap="round" />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span className="text-xl font-black text-slate-900 dark:text-white">{readiness?.completeness || 0}%</span>
+                                </div>
+                            </div>
+                            <div className="min-w-0">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
+                                <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
+                                <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
+                                <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                    {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
+                                </p>
                             </div>
                         </div>
-                        <div className="min-w-0">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
-                            <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
-                            <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
-                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
-                        <ChecklistSection
-                            title={t('core_setup')}
-                            items={readiness?.sections.core.items || []}
-                            isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
-                            onAction={onAction}
-                            onNavigate={onNavigate}
-                        />
-                        <ChecklistSection
-                            title={t('planning')}
-                            items={readiness?.sections.planning.items || []}
-                            isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
-                            onAction={onAction}
-                            onNavigate={onNavigate}
-                        />
-                        <ChecklistSection
-                            title={t('resources')}
-                            items={readiness?.sections.resources.items || []}
-                            isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
-                            onAction={onAction}
-                            onNavigate={onNavigate}
-                        />
-                    </div>
-                </GlassCard>
+                        <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
+                            <ChecklistSection
+                                title={t('core_setup')}
+                                items={readiness?.sections.core.items || []}
+                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title={t('planning')}
+                                items={readiness?.sections.planning.items || []}
+                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
+                            <ChecklistSection
+                                title={t('resources')}
+                                items={readiness?.sections.resources.items || []}
+                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
+                                onAction={onAction}
+                                onNavigate={onNavigate}
+                            />
+                        </div>
+                    </GlassCard>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
