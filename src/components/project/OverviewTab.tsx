@@ -403,22 +403,39 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                         {/* Stage Progress */}
                         <div className="flex-grow p-6 flex flex-col justify-center gap-6">
-                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
-                                <div className="space-y-6">
-                                    <div className="space-y-1">
-                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                            {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{t(`stage_${(readiness?.stage || 'SETUP').toLowerCase()}`).toUpperCase()}</span>
-                                        </h2>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                            {t(`stage_desc_${(readiness?.stage || 'SETUP').toLowerCase()}`, { defaultValue: readiness?.stageExplanation || 'Initial project parameters and team setup required.' })}
-                                        </p>
-                                    </div>
-
-                                    {/* Predictive Insights */}
-                                    <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
+                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,1fr)_auto_320px] gap-6 items-center">
+                                <div className="space-y-1 xl:self-start">
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                        {t('stage')}: <span className="text-cyan-600 dark:text-cyan-400">{t(`stage_${(readiness?.stage || 'SETUP').toLowerCase()}`).toUpperCase()}</span>
+                                    </h2>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                        {t(`stage_desc_${(readiness?.stage || 'SETUP').toLowerCase()}`, { defaultValue: readiness?.stageExplanation || 'Initial project parameters and team setup required.' })}
+                                    </p>
                                 </div>
 
-                                <div className="rounded-2xl border border-cyan-200/70 dark:border-cyan-500/20 bg-white/80 dark:bg-slate-900/60 p-5 shadow-sm">
+                                <div className="order-3 xl:order-none flex w-full items-center justify-center gap-0 pt-2 pb-6 xl:py-0 xl:self-center">
+                                    {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
+                                        const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
+                                        const isCurrent = (readiness?.stage || 'SETUP') === s;
+                                        const isPassed = stages.indexOf(readiness?.stage || 'SETUP') > idx;
+                                        return (
+                                            <div key={s} className="flex items-center">
+                                                <div className="flex flex-col items-center relative">
+                                                    <div
+                                                        className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
+                                                        title={t(`stage_${s.toLowerCase()}`)}
+                                                    />
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
+                                                        {t(`stage_${s.toLowerCase()}`)}
+                                                    </span>
+                                                </div>
+                                                {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="rounded-2xl border border-cyan-200/70 dark:border-cyan-500/20 bg-white/80 dark:bg-slate-900/60 p-5 shadow-sm xl:self-start">
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-20 h-20 shrink-0">
                                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -441,27 +458,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </div>
                             </div>
 
-                            <div className="flex w-full items-center justify-center gap-0 pt-2 pb-6">
-                                {['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE'].map((s, idx) => {
-                                    const stages = ['SETUP', 'PLANNING', 'ACTIVE', 'REVIEW', 'DONE', 'READY_FOR_BILLING'];
-                                    const isCurrent = (readiness?.stage || 'SETUP') === s;
-                                    const isPassed = stages.indexOf(readiness?.stage || 'SETUP') > idx;
-                                    return (
-                                        <div key={s} className="flex items-center">
-                                            <div className="flex flex-col items-center relative">
-                                                <div
-                                                    className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
-                                                    title={t(`stage_${s.toLowerCase()}`)}
-                                                />
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
-                                                    {t(`stage_${s.toLowerCase()}`)}
-                                                </span>
-                                            </div>
-                                            {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            {/* Predictive Insights */}
+                            <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
                         </div>
                     </div>
                 </GlassCard>
