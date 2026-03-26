@@ -67,6 +67,9 @@ export const ProjectDetails: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [readiness, setReadiness] = useState<ProjectReadiness | null>(null);
   const [metrics, setMetrics] = useState<any>(null);
+  const [isOverviewMetaLoading, setIsOverviewMetaLoading] = useState(false);
+  const [hasLoadedOverviewMeta, setHasLoadedOverviewMeta] = useState(false);
+  const [isOverviewMetaStale, setIsOverviewMetaStale] = useState(false);
 
   // --- Role-Based Tab Selection ---
   const visibleTabs = user
@@ -94,10 +97,41 @@ export const ProjectDetails: React.FC = () => {
   useEffect(() => {
     if (projectId) {
       setContext({ projectId });
+      setReadiness(null);
+      setMetrics(null);
+      setHasLoadedOverviewMeta(false);
+      setIsOverviewMetaStale(false);
       loadData();
     }
     return () => setContext({});
   }, [projectId, setContext]);
+
+  const loadOverviewMeta = useCallback(async () => {
+    if (!projectId) return;
+
+    setIsOverviewMetaLoading(true);
+    try {
+      const [rd, met] = await Promise.all([
+        api.projects.getReadiness(projectId).catch(e => { console.error('Readiness failed', e); return null; }),
+        api.projects.getMetrics(projectId).catch(e => { console.error('Metrics failed', e); return null; })
+      ]);
+
+      startTransition(() => {
+        setReadiness(rd as any);
+        setMetrics(met);
+        setHasLoadedOverviewMeta(true);
+        setIsOverviewMetaStale(false);
+      });
+    } finally {
+      setIsOverviewMetaLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId || activeTab !== 'overview') return;
+    if (hasLoadedOverviewMeta && !isOverviewMetaStale) return;
+    loadOverviewMeta();
+  }, [projectId, activeTab, hasLoadedOverviewMeta, isOverviewMetaStale, loadOverviewMeta]);
 
   // --- Real-time milestone refresh ---
   // Refreshes milestones in the background without disturbing the rest of the page.
@@ -129,13 +163,13 @@ export const ProjectDetails: React.FC = () => {
     // Small delay to ensure backend state is committed and processed
     setTimeout(async () => {
       try {
-        const [rd, met] = await Promise.all([
-          api.projects.getReadiness(projectId),
-          api.projects.getMetrics(projectId)
-        ]);
-        setReadiness(rd as any);
-        setMetrics(met);
-        console.log("Readiness and metrics refreshed");
+        if (activeTab === 'overview') {
+          await loadOverviewMeta();
+          console.log("Readiness and metrics refreshed");
+        } else {
+          setIsOverviewMetaStale(true);
+          console.log("Readiness and metrics marked stale for next overview visit");
+        }
       } catch (e) {
         console.error('Readiness refresh failed', e);
       }
@@ -156,7 +190,7 @@ export const ProjectDetails: React.FC = () => {
 
       // Parallel fetch with error handling
       try {
-        const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk, rd, met] = await Promise.all([
+        const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
           api.projects.getMilestones(projectId).catch(e => { console.error('Milestones failed', e); return []; }),
           api.projects.getUpdates(projectId).catch(e => { console.error('Updates failed', e); return []; }),
           api.projects.getEnvironments(projectId).catch(e => { console.error('Environments failed', e); return []; }),
@@ -167,9 +201,7 @@ export const ProjectDetails: React.FC = () => {
           api.projects.getMembers(projectId).catch(e => { console.error('Members failed', e); return []; }),
           api.projects.getFindings(projectId).catch(e => { console.error('Findings failed', e); return []; }),
           api.projects.getReports(projectId).catch(e => { console.error('Reports failed', e); return []; }),
-          api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; }),
-          api.projects.getReadiness(projectId).catch(e => { console.error('Readiness failed', e); return null; }),
-          api.projects.getMetrics(projectId).catch(e => { console.error('Metrics failed', e); return null; })
+          api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; })
         ]);
 
         startTransition(() => {
@@ -184,8 +216,6 @@ export const ProjectDetails: React.FC = () => {
           setFindings(fnd);
           setReports(rep);
           setTasks(tsk);
-          setReadiness(rd as any);
-          setMetrics(met);
         });
 
       } catch (error) {
@@ -501,41 +531,56 @@ export const ProjectDetails: React.FC = () => {
             Loading {activeTab}...
           </div>}>
             {activeTab === 'overview' && (
-              <OverviewTab
-                project={project}
-                clientName={client?.name}
-                stats={{
-                  taskCount: tasks.length,
-                  completedTasks: tasks.filter(t => t.status?.toLowerCase() === 'done').length,
-                  overdueTasks: tasks.filter(t => t.status?.toLowerCase() !== 'done' && t.dueDate && new Date(t.dueDate) < new Date()).length,
-                  milestoneCount: milestones.length,
-                  completedMilestones: milestones.filter(m => m.status?.toLowerCase() === 'completed').length,
-                  atRiskMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) < new Date()).length,
-                  upcomingMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) > new Date() && new Date(m.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length,
-                  findingCount: findings.length,
-                  unresolvedFindings: findings.filter(f => !['closed', 'dismissed'].includes(f.status.toLowerCase())).length,
-                  pendingReports: reports.filter(r => r.status === 'DRAFT').length,
-                  budget: project.budget || financials.contract?.amount || 0,
-                  spent: financials.invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((sum, i) => sum + i.amount, 0)
-                }}
-                tasks={tasks}
-                findings={findings}
-                milestones={milestones}
-                recentUpdates={updates.slice(0, 5)}
-                onNavigate={(tab) => {
-                  if (visibleTabs.some(t => t.id === tab)) {
-                    setActiveTab(tab);
-                  } else {
-                    toast.error('You do not have permission to view this tab.');
-                  }
-                }}
-                onAction={handleReadinessAction}
-                onRefresh={loadData}
-                allowedTabs={visibleTabs.map(t => t.id)}
-                readiness={readiness}
-                metrics={metrics}
-                activity={activity}
-              />
+              <div className="relative">
+                <OverviewTab
+                  project={project}
+                  clientName={client?.name}
+                  stats={{
+                    taskCount: tasks.length,
+                    completedTasks: tasks.filter(t => t.status?.toLowerCase() === 'done').length,
+                    overdueTasks: tasks.filter(t => t.status?.toLowerCase() !== 'done' && t.dueDate && new Date(t.dueDate) < new Date()).length,
+                    milestoneCount: milestones.length,
+                    completedMilestones: milestones.filter(m => m.status?.toLowerCase() === 'completed').length,
+                    atRiskMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) < new Date()).length,
+                    upcomingMilestones: milestones.filter(m => m.status?.toLowerCase() !== 'completed' && m.dueDate && new Date(m.dueDate) > new Date() && new Date(m.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length,
+                    findingCount: findings.length,
+                    unresolvedFindings: findings.filter(f => !['closed', 'dismissed'].includes(f.status.toLowerCase())).length,
+                    pendingReports: reports.filter(r => r.status === 'DRAFT').length,
+                    budget: project.budget || financials.contract?.amount || 0,
+                    spent: financials.invoices.filter(i => i.status?.toLowerCase() === 'paid').reduce((sum, i) => sum + i.amount, 0)
+                  }}
+                  tasks={tasks}
+                  findings={findings}
+                  milestones={milestones}
+                  recentUpdates={updates.slice(0, 5)}
+                  onNavigate={(tab) => {
+                    if (visibleTabs.some(t => t.id === tab)) {
+                      setActiveTab(tab);
+                    } else {
+                      toast.error('You do not have permission to view this tab.');
+                    }
+                  }}
+                  onAction={handleReadinessAction}
+                  onRefresh={loadData}
+                  allowedTabs={visibleTabs.map(t => t.id)}
+                  readiness={readiness}
+                  metrics={metrics}
+                  activity={activity}
+                />
+                {isOverviewMetaLoading && (
+                  <div className="pointer-events-none absolute right-6 top-10 z-10 w-[320px] max-w-[calc(100%-3rem)]">
+                    <div className="rounded-2xl border border-cyan-200/70 bg-white/90 p-4 shadow-lg backdrop-blur-sm dark:border-cyan-500/20 dark:bg-slate-900/90">
+                      <div className="flex items-center gap-3">
+                        <Sparkles className="h-5 w-5 animate-spin text-cyan-500" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">Loading workflow readiness...</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Overview insights are loading in the background.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
             {activeTab === 'tasks' && <TasksTab
               projectId={projectId!}
