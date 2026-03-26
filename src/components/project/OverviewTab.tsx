@@ -40,7 +40,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
     const [isExpanded, setIsExpanded] = React.useState(!isComplete);
 
     return (
-        <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-6 flex flex-col mb-3 last:mb-0 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60 p-5 flex h-full flex-col shadow-sm hover:shadow-md transition-all">
             <div
                 className="flex items-center justify-between cursor-pointer mb-2"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -466,27 +466,29 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                         <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
                             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
-                            <ChecklistSection
-                                title={t('core_setup')}
-                                items={readiness?.sections.core.items || []}
-                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('planning')}
-                                items={readiness?.sections.planning.items || []}
-                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('resources')}
-                                items={readiness?.sections.resources.items || []}
-                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                                <ChecklistSection
+                                    title={t('core_setup')}
+                                    items={readiness?.sections.core.items || []}
+                                    isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
+                                    onAction={onAction}
+                                    onNavigate={onNavigate}
+                                />
+                                <ChecklistSection
+                                    title={t('planning')}
+                                    items={readiness?.sections.planning.items || []}
+                                    isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
+                                    onAction={onAction}
+                                    onNavigate={onNavigate}
+                                />
+                                <ChecklistSection
+                                    title={t('resources')}
+                                    items={readiness?.sections.resources.items || []}
+                                    isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
+                                    onAction={onAction}
+                                    onNavigate={onNavigate}
+                                />
+                            </div>
                         </div>
                     </GlassCard>
                 </div>
