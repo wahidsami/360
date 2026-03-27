@@ -167,13 +167,16 @@ export class ReportBuilderService {
 
     categories.forEach((category: string) => {
       const rawItems = Array.isArray(subcategorySource?.[category]) ? subcategorySource[category] : [];
-      const selected: string[] = rawItems
-        .map((item: any) =>
-          this.normalizeAccessibilitySubcategory(category, typeof item === 'string' ? item : item?.value),
-        )
-        .filter(
-          (value: any): value is string => typeof value === 'string' && value.trim().length > 0,
+      const selected = rawItems.reduce<string[]>((acc, item: any) => {
+        const normalized = this.normalizeAccessibilitySubcategory(
+          category,
+          typeof item === 'string' ? item : item?.value,
         );
+        if (typeof normalized === 'string' && normalized.trim().length > 0) {
+          acc.push(normalized);
+        }
+        return acc;
+      }, []);
       const categoryOptions = [
         ...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []),
       ] as string[];
