@@ -235,20 +235,20 @@ async function main() {
                     },
                     taxonomyJson: {
                         accessibilityCategories: [
-                            { value: 'content', label: 'المحتوى النصي' },
-                            { value: 'images', label: 'الصور' },
-                            { value: 'navigation', label: 'عناصر التنقل' },
+                            { value: 'Content', label: 'المحتوى النصي' },
+                            { value: 'Images', label: 'الصور' },
+                            { value: 'Keyboard & Navigation', label: 'عناصر التنقل' },
                         ],
                         accessibilitySubcategories: {
-                            content: [
-                                { value: 'screen-reader', label: 'قارئ الشاشة' },
-                                { value: 'language', label: 'لغة المحتوى' },
+                            Content: [
+                                { value: 'Missing or incorrect headings structure (H1-H6)', label: 'قارئ الشاشة' },
+                                { value: 'Incorrect language declaration', label: 'لغة المحتوى' },
                             ],
-                            images: [
-                                { value: 'alt-text', label: 'النص البديل' },
+                            Images: [
+                                { value: 'Missing alt text', label: 'النص البديل' },
                             ],
-                            navigation: [
-                                { value: 'focus-order', label: 'ترتيب التنقل' },
+                            'Keyboard & Navigation': [
+                                { value: 'Incorrect tab order', label: 'ترتيب التنقل' },
                             ],
                         },
                     },
@@ -333,8 +333,8 @@ async function main() {
                         issueTitle: seededEntryTitles[0],
                         issueDescription: 'عند قراءة الحقول التفاعلية لا يعلن قارئ الشاشة الوصف الكامل للعناصر، مما يسبب غموضاً في فهم الوظيفة.',
                         severity: ProjectReportEntrySeverity.HIGH,
-                        category: 'content',
-                        subcategory: 'screen-reader',
+                        category: 'Content',
+                        subcategory: 'Missing or incorrect headings structure (H1-H6)',
                         pageUrl: 'https://example.com/login',
                         recommendation: 'إضافة أوصاف دقيقة للعناصر التفاعلية وتحديث خصائص الوصول لتتوافق مع قارئات الشاشة.',
                         status: ProjectReportEntryStatus.OPEN,
@@ -351,8 +351,8 @@ async function main() {
                         issueTitle: seededEntryTitles[1],
                         issueDescription: 'عدد من الصور الجوهرية داخل الصفحة يظهر بدون نص بديل واضح، وهو ما يمنع المستخدم من فهم المحتوى أو الغرض منها.',
                         severity: ProjectReportEntrySeverity.HIGH,
-                        category: 'images',
-                        subcategory: 'alt-text',
+                        category: 'Images',
+                        subcategory: 'Missing alt text',
                         pageUrl: 'https://example.com/gallery',
                         recommendation: 'إضافة نص بديل وصفي لكل صورة مرتبطة بالمحتوى أو بالإجراء المطلوب من المستخدم.',
                         status: ProjectReportEntryStatus.OPEN,
@@ -369,8 +369,8 @@ async function main() {
                         issueTitle: seededEntryTitles[2],
                         issueDescription: 'التنقل عبر لوحة المفاتيح ينتقل بين العناصر بترتيب غير متوقع، مما يربك المستخدم ويطيل وقت تنفيذ المهمة.',
                         severity: ProjectReportEntrySeverity.MEDIUM,
-                        category: 'navigation',
-                        subcategory: 'focus-order',
+                        category: 'Keyboard & Navigation',
+                        subcategory: 'Incorrect tab order',
                         pageUrl: 'https://example.com/booking',
                         recommendation: 'مراجعة ترتيب التركيز وربط العناصر التفاعلية بتسلسل منطقي يتماشى مع تدفق الصفحة.',
                         status: ProjectReportEntryStatus.OPEN,

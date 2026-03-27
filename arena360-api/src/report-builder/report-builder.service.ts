@@ -77,7 +77,12 @@ export class ReportBuilderService {
       : [];
     const selectedCategories = rawCategories
       .map((item: any) => (typeof item === 'string' ? item : item?.value))
-      .filter((value: any): value is string => typeof value === 'string' && value.trim().length > 0);
+      .filter(
+        (value: any): value is string =>
+          typeof value === 'string' &&
+          value.trim().length > 0 &&
+          ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(value.trim()),
+      );
 
     const categories: string[] = selectedCategories.length > 0 ? selectedCategories : [...ACCESSIBILITY_AUDIT_MAIN_CATEGORIES];
 
@@ -88,7 +93,14 @@ export class ReportBuilderService {
       const rawItems = Array.isArray(subcategorySource?.[category]) ? subcategorySource[category] : [];
       const selected = rawItems
         .map((item: any) => (typeof item === 'string' ? item : item?.value))
-        .filter((value: any): value is string => typeof value === 'string' && value.trim().length > 0);
+        .filter(
+          (value: any): value is string =>
+            typeof value === 'string' &&
+            value.trim().length > 0 &&
+            (ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []).includes(
+              value.trim(),
+            ),
+        );
 
       subcategories[category] =
         selected.length > 0
