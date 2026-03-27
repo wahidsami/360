@@ -167,18 +167,21 @@ export class ReportBuilderService {
 
     categories.forEach((category: string) => {
       const rawItems = Array.isArray(subcategorySource?.[category]) ? subcategorySource[category] : [];
-      const selected = rawItems
+      const selected: string[] = rawItems
         .map((item: any) =>
           this.normalizeAccessibilitySubcategory(category, typeof item === 'string' ? item : item?.value),
         )
         .filter(
           (value: any): value is string => typeof value === 'string' && value.trim().length > 0,
         );
+      const categoryOptions = [
+        ...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []),
+      ] as string[];
 
       subcategories[category] =
         selected.length > 0
           ? Array.from(new Set(selected))
-          : [...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || [])];
+          : categoryOptions;
     });
 
     return { categories, subcategories };
@@ -245,10 +248,13 @@ export class ReportBuilderService {
 
     if (subcategory) {
       const allowedSubcategories: string[] = category ? [...(allowedTaxonomy.subcategories[category] || [])] : [];
+      const categoryOptions: string[] = category
+        ? ([...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || [])] as string[])
+        : [];
 
       if (
         !allowedSubcategories.includes(subcategory) &&
-        !(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []).includes(subcategory)
+        !categoryOptions.includes(subcategory)
       ) {
         throw new BadRequestException('Subcategory must match the selected accessibility audit category.');
       }
