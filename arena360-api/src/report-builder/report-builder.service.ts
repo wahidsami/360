@@ -71,20 +71,96 @@ export class ReportBuilderService {
     return locale === 'ar' ? 'rtl' : 'ltr';
   }
 
+  private normalizeAccessibilityToken(value?: string | null) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private normalizeAccessibilityCategory(value?: string | null) {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    const directMatch = ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.find((category) => category === trimmed);
+    if (directMatch) return directMatch;
+
+    const normalized = this.normalizeAccessibilityToken(trimmed);
+    const aliasMap: Record<string, string> = {
+      content: 'Content',
+      images: 'Images',
+      color: 'Color & Contrast',
+      contrast: 'Color & Contrast',
+      'color-contrast': 'Color & Contrast',
+      'colour-contrast': 'Color & Contrast',
+      navigation: 'Keyboard & Navigation',
+      keyboard: 'Keyboard & Navigation',
+      'keyboard-navigation': 'Keyboard & Navigation',
+      'keyboard-and-navigation': 'Keyboard & Navigation',
+      forms: 'Forms & Inputs',
+      inputs: 'Forms & Inputs',
+      'forms-inputs': 'Forms & Inputs',
+      'forms-and-inputs': 'Forms & Inputs',
+      multimedia: 'Multimedia',
+      touch: 'Touch & Mobile',
+      mobile: 'Touch & Mobile',
+      'touch-mobile': 'Touch & Mobile',
+      'touch-and-mobile': 'Touch & Mobile',
+      structure: 'Structure & Semantics',
+      semantics: 'Structure & Semantics',
+      'structure-semantics': 'Structure & Semantics',
+      'structure-and-semantics': 'Structure & Semantics',
+      timing: 'Timing & Interaction',
+      interaction: 'Timing & Interaction',
+      'timing-interaction': 'Timing & Interaction',
+      'timing-and-interaction': 'Timing & Interaction',
+      assistive: 'Assistive Technology',
+      technology: 'Assistive Technology',
+      'assistive-technology': 'Assistive Technology',
+      authentication: 'Authentication & Security',
+      security: 'Authentication & Security',
+      'authentication-security': 'Authentication & Security',
+      'authentication-and-security': 'Authentication & Security',
+    };
+
+    if (aliasMap[normalized]) return aliasMap[normalized];
+
+    return (
+      ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.find(
+        (category) => this.normalizeAccessibilityToken(category) === normalized,
+      ) || null
+    );
+  }
+
+  private normalizeAccessibilitySubcategory(category: string, value?: string | null) {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    const options = ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || [];
+    const directMatch = options.find((option) => option === trimmed);
+    if (directMatch) return directMatch;
+
+    const normalized = this.normalizeAccessibilityToken(trimmed);
+    return options.find((option) => this.normalizeAccessibilityToken(option) === normalized) || null;
+  }
+
   private getAllowedAccessibilityTaxonomy(version?: { taxonomyJson?: any } | null) {
     const rawCategories = Array.isArray(version?.taxonomyJson?.accessibilityCategories)
       ? version?.taxonomyJson?.accessibilityCategories
       : [];
     const selectedCategories = rawCategories
-      .map((item: any) => (typeof item === 'string' ? item : item?.value))
+      .map((item: any) =>
+        this.normalizeAccessibilityCategory(typeof item === 'string' ? item : item?.value),
+      )
       .filter(
-        (value: any): value is string =>
-          typeof value === 'string' &&
-          value.trim().length > 0 &&
-          ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(value.trim()),
+        (value: any): value is string => typeof value === 'string' && value.trim().length > 0,
       );
 
-    const categories: string[] = selectedCategories.length > 0 ? selectedCategories : [...ACCESSIBILITY_AUDIT_MAIN_CATEGORIES];
+    const categories: string[] = Array.from(
+      new Set(selectedCategories.length > 0 ? selectedCategories : [...ACCESSIBILITY_AUDIT_MAIN_CATEGORIES]),
+    );
 
     const subcategorySource = version?.taxonomyJson?.accessibilitySubcategories || {};
     const subcategories: Record<string, string[]> = {};
@@ -92,19 +168,16 @@ export class ReportBuilderService {
     categories.forEach((category: string) => {
       const rawItems = Array.isArray(subcategorySource?.[category]) ? subcategorySource[category] : [];
       const selected = rawItems
-        .map((item: any) => (typeof item === 'string' ? item : item?.value))
+        .map((item: any) =>
+          this.normalizeAccessibilitySubcategory(category, typeof item === 'string' ? item : item?.value),
+        )
         .filter(
-          (value: any): value is string =>
-            typeof value === 'string' &&
-            value.trim().length > 0 &&
-            (ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []).includes(
-              value.trim(),
-            ),
+          (value: any): value is string => typeof value === 'string' && value.trim().length > 0,
         );
 
       subcategories[category] =
         selected.length > 0
-          ? selected
+          ? Array.from(new Set(selected))
           : [...(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || [])];
     });
 
@@ -155,8 +228,10 @@ export class ReportBuilderService {
       throw new BadRequestException('Accessibility findings support HIGH, MEDIUM, or LOW severity only.');
     }
 
-    const category = input.category?.trim();
-    const subcategory = input.subcategory?.trim();
+    const category = this.normalizeAccessibilityCategory(input.category);
+    const subcategory = category
+      ? this.normalizeAccessibilitySubcategory(category, input.subcategory)
+      : input.subcategory?.trim();
 
     if (!category && subcategory) {
       throw new BadRequestException('Select a main category before choosing a subcategory.');
@@ -164,14 +239,17 @@ export class ReportBuilderService {
 
     const allowedTaxonomy = this.getAllowedAccessibilityTaxonomy(report.templateVersion);
 
-    if (category && !allowedTaxonomy.categories.includes(category)) {
+    if (category && !allowedTaxonomy.categories.includes(category) && !ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(category)) {
       throw new BadRequestException('Category must match the accessibility audit category list.');
     }
 
     if (subcategory) {
       const allowedSubcategories: string[] = category ? [...(allowedTaxonomy.subcategories[category] || [])] : [];
 
-      if (!allowedSubcategories.includes(subcategory)) {
+      if (
+        !allowedSubcategories.includes(subcategory) &&
+        !(ACCESSIBILITY_AUDIT_CATEGORIES[category as keyof typeof ACCESSIBILITY_AUDIT_CATEGORIES] || []).includes(subcategory)
+      ) {
         throw new BadRequestException('Subcategory must match the selected accessibility audit category.');
       }
     }
@@ -1267,6 +1345,14 @@ export class ReportBuilderService {
   ) {
     const report = await this.ensureProjectReportAccess(reportId, user);
     this.validateAccessibilityEntryInput(report, dto);
+    const normalizedCategory =
+      report.template?.category === 'ACCESSIBILITY'
+        ? this.normalizeAccessibilityCategory(dto.category) || dto.category?.trim()
+        : dto.category?.trim();
+    const normalizedSubcategory =
+      normalizedCategory && report.template?.category === 'ACCESSIBILITY'
+        ? this.normalizeAccessibilitySubcategory(normalizedCategory, dto.subcategory) || dto.subcategory?.trim()
+        : dto.subcategory?.trim();
     const entry = await this.prisma.projectReportEntry.create({
       data: {
         orgId: user.orgId,
@@ -1276,8 +1362,8 @@ export class ReportBuilderService {
         issueTitle: dto.issueTitle.trim(),
         issueDescription: dto.issueDescription.trim(),
         severity: dto.severity,
-        category: dto.category?.trim(),
-        subcategory: dto.subcategory?.trim(),
+        category: normalizedCategory,
+        subcategory: normalizedSubcategory,
         pageUrl: dto.pageUrl?.trim(),
         recommendation: dto.recommendation?.trim(),
         status: dto.status ?? 'OPEN',
@@ -1325,6 +1411,16 @@ export class ReportBuilderService {
       pageUrl: dto.pageUrl ?? entry.pageUrl,
       recommendation: dto.recommendation ?? entry.recommendation,
     });
+    const nextCategoryInput = dto.category ?? entry.category;
+    const normalizedCategory =
+      report.template?.category === 'ACCESSIBILITY'
+        ? this.normalizeAccessibilityCategory(nextCategoryInput) || nextCategoryInput?.trim()
+        : nextCategoryInput?.trim();
+    const nextSubcategoryInput = dto.subcategory ?? entry.subcategory;
+    const normalizedSubcategory =
+      normalizedCategory && report.template?.category === 'ACCESSIBILITY'
+        ? this.normalizeAccessibilitySubcategory(normalizedCategory, nextSubcategoryInput) || nextSubcategoryInput?.trim()
+        : nextSubcategoryInput?.trim();
 
     const updated = await this.prisma.projectReportEntry.update({
       where: { id: entryId },
@@ -1336,8 +1432,8 @@ export class ReportBuilderService {
           issueDescription: dto.issueDescription?.trim() || entry.issueDescription,
         }),
         ...(dto.severity !== undefined && { severity: dto.severity }),
-        ...(dto.category !== undefined && { category: dto.category?.trim() || null }),
-        ...(dto.subcategory !== undefined && { subcategory: dto.subcategory?.trim() || null }),
+        ...(dto.category !== undefined && { category: normalizedCategory || null }),
+        ...(dto.subcategory !== undefined && { subcategory: normalizedSubcategory || null }),
         ...(dto.pageUrl !== undefined && { pageUrl: dto.pageUrl?.trim() || null }),
         ...(dto.recommendation !== undefined && {
           recommendation: dto.recommendation?.trim() || null,
