@@ -192,11 +192,11 @@ export const Layout: React.FC = () => {
 
   const adminToolItems: Array<{ to: string; icon: any; label: string }> = [];
   if (user?.role === Role.SUPER_ADMIN) {
-    adminToolItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'Report Builder' });
+    adminToolItems.push({ to: '/app/admin/report-templates', icon: FileText, label: t('report_builder') });
   }
 
   if (user && [Role.SUPER_ADMIN, Role.OPS].includes(user.role)) {
-    adminToolItems.push({ to: '/app/admin/workspace-templates', icon: PanelsTopLeft, label: 'Workspace Builder' });
+    adminToolItems.push({ to: '/app/admin/workspace-templates', icon: PanelsTopLeft, label: t('workspace_builder') });
   }
 
   const adminManagementItems: Array<{ to: string; icon: any; label: string }> = [];

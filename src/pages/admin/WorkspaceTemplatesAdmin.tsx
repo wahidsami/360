@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link2, Plus, Save, Layers3, Users, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { Badge, Button, GlassCard, Input, Label, Modal, Select, TextArea } from '@/components/ui/UIComponents';
 import {
   buildDefaultProjectWorkspaceConfigDraft,
@@ -49,9 +50,8 @@ const normalizeTemplateDefinition = (template?: ProjectWorkspaceTemplate | null)
   };
 };
 
-const prettyAudience = (value: WorkspaceAudienceType) => value.replace('_', ' ');
-
 export const WorkspaceTemplatesAdmin: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = React.useState(true);
   const [templates, setTemplates] = React.useState<ProjectWorkspaceTemplate[]>([]);
@@ -77,6 +77,41 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
     tabs: buildDefaultTemplateDefinition().tabs,
     overviewSections: [] as string[],
   });
+
+  const prettyAudience = React.useCallback(
+    (value: WorkspaceAudienceType) => t(`workspace_audience_${value}`),
+    [t],
+  );
+
+  const prettyStatus = React.useCallback(
+    (value: WorkspaceTemplateStatus) => t(`workspace_status_${value.toLowerCase()}`),
+    [t],
+  );
+
+  const getTabStateLabel = React.useCallback(
+    (value: typeof TAB_STATE_OPTIONS[number]['value']) => t(`workspace_tab_state_${value}`),
+    [t],
+  );
+
+  const getGroupLabel = React.useCallback(
+    (groupId: string) => t(`workspace_group_${groupId}`),
+    [t],
+  );
+
+  const getTabLabel = React.useCallback(
+    (tabId: string) => {
+      const keyMap: Record<string, string> = {
+        testing: 'testing_access',
+      };
+      return t(keyMap[tabId] || tabId);
+    },
+    [t],
+  );
+
+  const getTabNotes = React.useCallback(
+    (tabId: string) => t(`workspace_tab_note_${tabId}`),
+    [t],
+  );
 
   const selectedTemplate = React.useMemo(
     () => templates.find((template) => template.id === selectedTemplateId) ?? null,
@@ -146,7 +181,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         await loadData();
       } catch (error) {
         console.error(error);
-        toast.error('Failed to load workspace templates.');
+        toast.error(t('workspace_error_load_templates'));
       } finally {
         setIsLoading(false);
       }
@@ -159,7 +194,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
     if (!selectedClientId) return;
     loadAssignments(selectedClientId).catch((error) => {
       console.error(error);
-      toast.error('Failed to load workspace assignments.');
+      toast.error(t('workspace_error_load_assignments'));
     });
   }, [loadAssignments, selectedClientId]);
 
@@ -207,9 +242,10 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               : tab,
           );
           toast.success(
-            `Enabled ${missingParents
+            `${t('workspace_enabled_dependencies_prefix')} ${missingParents
               .map((dependency) => PROJECT_TABS_BY_ID[dependency]?.label || dependency)
-              .join(', ')} to support ${changedDefinition.label}.`,
+              .map((dependency) => getTabLabel(dependency))
+              .join(', ')} ${t('workspace_enabled_dependencies_suffix')} ${getTabLabel(changedDefinition.id)}.`,
           );
         }
       }
@@ -236,11 +272,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
           overviewSections: editorState.overviewSections,
         },
       });
-      toast.success('Workspace template saved.');
+      toast.success(t('workspace_success_saved'));
       await loadData(updated.id);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to save workspace template.');
+      toast.error(t('workspace_error_save_template'));
     } finally {
       setSavingTemplate(false);
     }
@@ -254,12 +290,12 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         ...createForm,
         definitionJson: buildDefaultTemplateDefinition(),
       });
-      toast.success('Workspace template created.');
+      toast.success(t('workspace_success_created'));
       setTemplateModalOpen(false);
       await loadData(created.id);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create workspace template.');
+      toast.error(t('workspace_error_create_template'));
     } finally {
       setSavingTemplate(false);
     }
@@ -273,11 +309,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         isDefault: true,
         isActive: true,
       });
-      toast.success('Workspace template assigned to client.');
+      toast.success(t('workspace_success_assigned'));
       await loadAssignments(selectedClientId);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to assign workspace template.');
+      toast.error(t('workspace_error_assign_template'));
     }
   };
 
@@ -290,37 +326,37 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
       await loadAssignments(selectedClientId);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update assignment.');
+      toast.error(t('workspace_error_update_assignment'));
     }
   };
 
   if (![Role.SUPER_ADMIN, Role.OPS].includes(user?.role as Role)) {
     return (
       <GlassCard className="max-w-3xl">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Workspace Builder</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('workspace_builder')}</h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          This area is limited to internal administrators who manage project workspace templates.
+          {t('workspace_builder_restricted')}
         </p>
       </GlassCard>
     );
   }
 
   if (isLoading) {
-    return <div className="p-10 text-center text-slate-500">Loading workspace templates...</div>;
+    return <div className="p-10 text-center text-slate-500">{t('workspace_loading_templates')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Workspace Builder</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t('workspace_builder')}</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Configure primary and dependent project tabs, then assign the template to clients for project creation.
+            {t('workspace_builder_subtitle')}
           </p>
         </div>
         <Button onClick={() => setTemplateModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Workspace Template
+          {t('workspace_new_template')}
         </Button>
       </div>
 
@@ -328,35 +364,39 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         <GlassCard className="p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Templates</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_templates')}</p>
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{templates.length}</p>
             </div>
             <Layers3 className="h-5 w-5 text-cyan-500" />
           </div>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Workspace blueprints available for assignment and project creation.</p>
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">{t('workspace_templates_caption')}</p>
         </GlassCard>
 
         <GlassCard className="p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Client Assignments</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_client_assignments')}</p>
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{activeAssignmentCount}</p>
             </div>
             <Users className="h-5 w-5 text-indigo-500" />
           </div>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Active assignments for the currently selected client.</p>
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">{t('workspace_client_assignments_caption')}</p>
         </GlassCard>
 
         <GlassCard className="p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Template Coverage</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_template_coverage')}</p>
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{templateSummary.interactiveCount + templateSummary.readOnlyCount}</p>
             </div>
             <ShieldCheck className="h-5 w-5 text-emerald-500" />
           </div>
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            {templateSummary.interactiveCount} interactive, {templateSummary.readOnlyCount} read only, {templateSummary.hiddenCount} hidden.
+            {t('workspace_coverage_summary', {
+              interactive: templateSummary.interactiveCount,
+              readOnly: templateSummary.readOnlyCount,
+              hidden: templateSummary.hiddenCount,
+            })}
           </p>
         </GlassCard>
       </div>
@@ -365,7 +405,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         <GlassCard className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <Layers3 className="h-4 w-4 text-cyan-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Templates</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('workspace_templates')}</h2>
           </div>
           <div className="space-y-3">
             {templates.map((template) => (
@@ -381,19 +421,19 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{template.name}</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{template.description || 'No description'}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{template.description || t('workspace_no_description')}</p>
                   </div>
-                  {template.isDefault && <Badge variant="info">Default</Badge>}
+                  {template.isDefault && <Badge variant="info">{t('workspace_default')}</Badge>}
                 </div>
                 <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                   <Badge variant="neutral">{prettyAudience(template.audienceType)}</Badge>
-                  <Badge variant="neutral">{template.status}</Badge>
+                  <Badge variant="neutral">{prettyStatus(template.status)}</Badge>
                 </div>
               </button>
             ))}
             {templates.length === 0 && (
               <div className="rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                No templates yet. Create the first workspace template to start defining client-facing project tabs.
+                {t('workspace_no_templates')}
               </div>
             )}
           </div>
@@ -403,14 +443,14 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
           <GlassCard className="p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Template Editor</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t('workspace_template_editor')}</h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Primary tabs can stand alone. Dependent tabs cannot remain visible when their parent tab is hidden.
+                  {t('workspace_template_editor_caption')}
                 </p>
               </div>
               <Button onClick={handleSaveTemplate} disabled={!selectedTemplate || savingTemplate}>
                 <Save className="mr-2 h-4 w-4" />
-                Save Template
+                {t('workspace_save_template')}
               </Button>
             </div>
 
@@ -418,11 +458,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               <div className="mt-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Name</Label>
+                    <Label>{t('workspace_name')}</Label>
                     <Input value={editorState.name} onChange={(event) => setEditorState((current) => ({ ...current, name: event.target.value }))} />
                   </div>
                   <div>
-                    <Label>Audience</Label>
+                    <Label>{t('workspace_audience')}</Label>
                     <Select value={editorState.audienceType} onChange={(event) => setEditorState((current) => ({ ...current, audienceType: event.target.value as WorkspaceAudienceType }))}>
                       {AUDIENCE_OPTIONS.map((option) => (
                         <option key={option} value={option}>
@@ -432,11 +472,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label>Status</Label>
+                    <Label>{t('workspace_status')}</Label>
                     <Select value={editorState.status} onChange={(event) => setEditorState((current) => ({ ...current, status: event.target.value as WorkspaceTemplateStatus }))}>
                       {STATUS_OPTIONS.map((option) => (
                         <option key={option} value={option}>
-                          {option}
+                          {prettyStatus(option)}
                         </option>
                       ))}
                     </Select>
@@ -447,38 +487,38 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                       checked={editorState.isDefault}
                       onChange={(event) => setEditorState((current) => ({ ...current, isDefault: event.target.checked }))}
                     />
-                    Default org template
+                    {t('workspace_default_org_template')}
                   </label>
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <Label>{t('workspace_description')}</Label>
                   <TextArea value={editorState.description} onChange={(event) => setEditorState((current) => ({ ...current, description: event.target.value }))} rows={3} />
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Interactive</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_interactive')}</p>
                     <p className="mt-2 text-2xl font-black text-emerald-600 dark:text-emerald-400">{templateSummary.interactiveCount}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Read only</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_read_only')}</p>
                     <p className="mt-2 text-2xl font-black text-amber-600 dark:text-amber-400">{templateSummary.readOnlyCount}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Hidden</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_hidden')}</p>
                     <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{templateSummary.hiddenCount}</p>
                   </div>
                 </div>
 
                 {dependencyWarnings.length > 0 && (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
-                    <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Dependency warnings</p>
+                    <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{t('workspace_dependency_warnings')}</p>
                     <div className="mt-2 space-y-2 text-sm text-amber-800 dark:text-amber-300">
                       {dependencyWarnings.map((warning) => (
                         <p key={warning.tabId}>
-                          <span className="font-semibold">{PROJECT_TABS_BY_ID[warning.tabId]?.label || warning.tabId}</span> depends on{' '}
-                          {warning.missingDependencies.map((dependency) => PROJECT_TABS_BY_ID[dependency]?.label || dependency).join(', ')}.
+                          <span className="font-semibold">{getTabLabel(warning.tabId)}</span> {t('workspace_depends_on')}{' '}
+                          {warning.missingDependencies.map((dependency) => getTabLabel(dependency)).join(', ')}.
                         </p>
                       ))}
                     </div>
@@ -486,7 +526,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 )}
 
                 <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-                  {[{ title: 'Primary Tabs', items: PRIMARY_TEMPLATE_TAB_DEFINITIONS }, { title: 'Dependent Tabs', items: SECONDARY_TEMPLATE_TAB_DEFINITIONS }].map((section) => (
+                  {[{ title: t('workspace_primary_tabs'), items: PRIMARY_TEMPLATE_TAB_DEFINITIONS }, { title: t('workspace_dependent_tabs'), items: SECONDARY_TEMPLATE_TAB_DEFINITIONS }].map((section) => (
                     <div key={section.title} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white">{section.title}</h3>
                       <div className="mt-4 space-y-4">
@@ -495,21 +535,21 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                           if (groupItems.length === 0) return null;
                           return (
                             <div key={group.id} className="space-y-3">
-                              <p className={`text-[11px] font-black uppercase tracking-widest ${group.color}`}>{group.label}</p>
+                              <p className={`text-[11px] font-black uppercase tracking-widest ${group.color}`}>{getGroupLabel(group.id)}</p>
                               {groupItems.map((tabDefinition) => {
                                 const tabState = editorState.tabs.find((tab) => tab.tabId === tabDefinition.id)?.state || 'hidden';
                                 return (
                                   <div key={tabDefinition.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
                                     <div className="flex items-start justify-between gap-3">
                                       <div>
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{tabDefinition.label}</p>
-                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{tabDefinition.notes}</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{getTabLabel(tabDefinition.id)}</p>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{getTabNotes(tabDefinition.id)}</p>
                                       </div>
                                       <div className="min-w-[170px]">
                                         <Select value={tabState} onChange={(event) => updateTabState(tabDefinition.id, event.target.value)}>
                                           {TAB_STATE_OPTIONS.map((option) => (
                                             <option key={option.value} value={option.value}>
-                                              {option.label}
+                                              {getTabStateLabel(option.value)}
                                             </option>
                                           ))}
                                         </Select>
@@ -517,7 +557,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                                     </div>
                                     {tabDefinition.dependsOn?.length ? (
                                       <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                                        Depends on {tabDefinition.dependsOn.map((dependency) => PROJECT_TABS_BY_ID[dependency]?.label || dependency).join(', ')}
+                                        {t('workspace_depends_on')} {tabDefinition.dependsOn.map((dependency) => getTabLabel(dependency)).join(', ')}
                                       </p>
                                     ) : null}
                                   </div>
@@ -532,27 +572,27 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="mt-6 text-sm text-slate-500">Create a workspace template to start configuring tabs.</p>
+              <p className="mt-6 text-sm text-slate-500">{t('workspace_create_template_prompt')}</p>
             )}
           </GlassCard>
 
           <GlassCard className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Client Assignment</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t('workspace_client_assignment')}</h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  The default active assignment is what project creation snapshots onto new projects for that client.
+                  {t('workspace_client_assignment_caption')}
                 </p>
               </div>
               <Button onClick={handleAssignTemplate} disabled={!selectedClientId || !selectedTemplate}>
                 <Link2 className="mr-2 h-4 w-4" />
-                Assign Selected Template
+                {t('workspace_assign_selected_template')}
               </Button>
             </div>
 
             {clients.length > 0 ? (
               <div className="mt-4 max-w-md">
-                <Label>Client</Label>
+                <Label>{t('label_client')}</Label>
                 <Select value={selectedClientId} onChange={(event) => setSelectedClientId(event.target.value)}>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
@@ -563,7 +603,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               </div>
             ) : (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                No clients are available yet. Create a client first, then assign a workspace template here.
+                {t('workspace_no_clients')}
               </div>
             )}
 
@@ -574,18 +614,21 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{assignment.template.name}</p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Audience: {prettyAudience(assignment.template.audienceType)}. Assigned {new Date(assignment.assignedAt).toLocaleString()}.
+                        {t('workspace_assignment_summary', {
+                          audience: prettyAudience(assignment.template.audienceType),
+                          assignedAt: new Date(assignment.assignedAt).toLocaleString(),
+                        })}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {assignment.isDefault && <Badge variant="info">Default</Badge>}
-                      <Badge variant={assignment.isActive ? 'success' : 'neutral'}>{assignment.isActive ? 'Active' : 'Inactive'}</Badge>
+                      {assignment.isDefault && <Badge variant="info">{t('workspace_default')}</Badge>}
+                      <Badge variant={assignment.isActive ? 'success' : 'neutral'}>{assignment.isActive ? t('workspace_active') : t('workspace_inactive')}</Badge>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {!assignment.isDefault && (
                       <Button variant="secondary" size="sm" onClick={() => handleToggleAssignment(assignment, { isDefault: true, isActive: true })}>
-                        Make Default
+                        {t('workspace_make_default')}
                       </Button>
                     )}
                     <Button
@@ -593,14 +636,14 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                       size="sm"
                       onClick={() => handleToggleAssignment(assignment, { isActive: !assignment.isActive })}
                     >
-                      {assignment.isActive ? 'Deactivate' : 'Activate'}
+                      {assignment.isActive ? t('workspace_deactivate') : t('workspace_activate')}
                     </Button>
                   </div>
                 </div>
               ))}
               {clients.length > 0 && assignments.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  No workspace template assignments for this client yet. Assign the selected template to make it available during project creation.
+                  {t('workspace_no_assignments')}
                 </div>
               )}
             </div>
@@ -608,19 +651,19 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="New Workspace Template">
+      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title={t('workspace_new_template')}>
         <form className="space-y-4" onSubmit={handleCreateTemplate}>
           <div>
-            <Label>Name</Label>
+            <Label>{t('workspace_name')}</Label>
             <Input value={createForm.name} onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))} />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{t('workspace_description')}</Label>
             <TextArea value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} rows={3} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Audience</Label>
+              <Label>{t('workspace_audience')}</Label>
               <Select value={createForm.audienceType} onChange={(event) => setCreateForm((current) => ({ ...current, audienceType: event.target.value as WorkspaceAudienceType }))}>
                 {AUDIENCE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -630,11 +673,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               </Select>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t('workspace_status')}</Label>
               <Select value={createForm.status} onChange={(event) => setCreateForm((current) => ({ ...current, status: event.target.value as WorkspaceTemplateStatus }))}>
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {prettyStatus(option)}
                   </option>
                 ))}
               </Select>
@@ -646,14 +689,14 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               checked={createForm.isDefault}
               onChange={(event) => setCreateForm((current) => ({ ...current, isDefault: event.target.checked }))}
             />
-            Set as default org template
+            {t('workspace_set_default_org_template')}
           </label>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={() => setTemplateModalOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={savingTemplate}>
-              Create Template
+              {t('workspace_create_template')}
             </Button>
           </div>
         </form>
