@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../services/api';
 import { GlassCard, Button, Input, Label, Select, TextArea } from '../components/ui/UIComponents';
-import { Client, ProjectStatus, ProjectHealth } from '../types';
+import { WorkspaceTemplateSelector } from '@/components/project/WorkspaceTemplateSelector';
+import { buildWorkspaceTemplateOptions, WorkspaceTemplateOption } from '@/features/project-workspace/helpers';
+import { Client, Project, ProjectStatus, ProjectHealth } from '../types';
 
 export const ProjectEdit: React.FC = () => {
     const { t } = useTranslation();
@@ -12,8 +14,13 @@ export const ProjectEdit: React.FC = () => {
     const { projectId } = useParams();
 
     const [clients, setClients] = useState<Client[]>([]);
+    const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [workspaceLoading, setWorkspaceLoading] = useState(false);
+    const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+    const [workspaceOptions, setWorkspaceOptions] = useState<WorkspaceTemplateOption[]>([]);
+    const [selectedWorkspaceOptionId, setSelectedWorkspaceOptionId] = useState('');
     const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
@@ -38,6 +45,7 @@ export const ProjectEdit: React.FC = () => {
                 ]);
 
                 if (p) {
+                    setProject(p);
                     setFormData({
                         name: p.name,
                         clientId: p.clientId,
@@ -62,6 +70,60 @@ export const ProjectEdit: React.FC = () => {
         if (projectId) load();
     }, [projectId]);
 
+    useEffect(() => {
+        const loadWorkspaceOptions = async () => {
+            if (!formData.clientId) {
+                setWorkspaceOptions([]);
+                setSelectedWorkspaceOptionId('');
+                setWorkspaceError(null);
+                return;
+            }
+
+            setWorkspaceLoading(true);
+            setWorkspaceError(null);
+            try {
+                const [assignments, defaultDraft] = await Promise.all([
+                    api.workspaceTemplatesAdmin.listClientAssignments(formData.clientId).catch(() => []),
+                    api.workspaceTemplatesAdmin.getDefaultDraft(formData.clientId).catch(() => null),
+                ]);
+
+                const options = buildWorkspaceTemplateOptions({
+                    clientId: formData.clientId,
+                    assignments,
+                    defaultDraft,
+                    currentConfig: project?.workspaceConfig || null,
+                });
+
+                setWorkspaceOptions(options);
+                setSelectedWorkspaceOptionId((current) => {
+                    if (current && options.some((option) => option.id === current)) return current;
+                    if (project?.workspaceConfig) return '__current__';
+                    return options[0]?.id || '';
+                });
+            } catch (err) {
+                console.error(err);
+                setWorkspaceError('Unable to load workspace templates for this client. You can still keep the current project workspace.');
+                const options = buildWorkspaceTemplateOptions({
+                    clientId: formData.clientId,
+                    currentConfig: project?.workspaceConfig || null,
+                });
+                setWorkspaceOptions(options);
+                setSelectedWorkspaceOptionId(project?.workspaceConfig ? '__current__' : options[0]?.id || '');
+            } finally {
+                setWorkspaceLoading(false);
+            }
+        };
+
+        if (!fetching) {
+            loadWorkspaceOptions();
+        }
+    }, [fetching, formData.clientId, project?.workspaceConfig]);
+
+    const selectedWorkspaceOption = useMemo(
+        () => workspaceOptions.find((option) => option.id === selectedWorkspaceOptionId) || null,
+        [selectedWorkspaceOptionId, workspaceOptions],
+    );
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!projectId || !formData.clientId) return;
@@ -72,7 +134,8 @@ export const ProjectEdit: React.FC = () => {
             const payload = {
                 ...formData,
                 startDate: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
-                deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined
+                deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
+                workspaceConfigDraft: selectedWorkspaceOption?.draft,
             };
 
             await api.projects.update(projectId, payload);
@@ -166,6 +229,17 @@ export const ProjectEdit: React.FC = () => {
                         </div>
                     </div>
                 </GlassCard>
+
+                <WorkspaceTemplateSelector
+                    title="Workspace Template"
+                    description="Review or change the workspace template this project uses. Saving here updates the project snapshot without changing the client’s default assignment."
+                    options={workspaceOptions}
+                    selectedOptionId={selectedWorkspaceOptionId}
+                    onChange={setSelectedWorkspaceOptionId}
+                    loading={workspaceLoading}
+                    error={workspaceError}
+                    disabled={!formData.clientId}
+                />
 
                 <div className="flex justify-end gap-4">
                     <Button type="button" variant="ghost" onClick={() => navigate('..')}>{t('cancel')}</Button>

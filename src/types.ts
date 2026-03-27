@@ -27,6 +27,8 @@ export enum Permission {
   MANAGE_TEAM = 'MANAGE_TEAM',
   MANAGE_REPORT_TEMPLATES = 'MANAGE_REPORT_TEMPLATES',
   ASSIGN_REPORT_TEMPLATES = 'ASSIGN_REPORT_TEMPLATES',
+  MANAGE_WORKSPACE_TEMPLATES = 'MANAGE_WORKSPACE_TEMPLATES',
+  ASSIGN_WORKSPACE_TEMPLATES = 'ASSIGN_WORKSPACE_TEMPLATES',
   CREATE_PROJECT_REPORTS = 'CREATE_PROJECT_REPORTS',
   EDIT_PROJECT_REPORTS = 'EDIT_PROJECT_REPORTS',
   EDIT_PROJECT_REPORT_ENTRIES = 'EDIT_PROJECT_REPORT_ENTRIES',
@@ -298,6 +300,69 @@ export interface DiscussionReply {
 
 export type ProjectStatus = 'planning' | 'in_progress' | 'testing' | 'deployed' | 'maintenance' | 'archived' | 'on_hold' | 'completed';
 export type ProjectHealth = 'good' | 'at-risk' | 'critical';
+export type WorkspaceAudienceType = 'internal' | 'client' | 'mixed';
+export type WorkspaceTabState = 'hidden' | 'visible_read_only' | 'visible_interactive';
+export type WorkspaceTemplateStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export interface ProjectWorkspaceConfigTab {
+  tabId: string;
+  state: WorkspaceTabState;
+  orderIndex: number;
+}
+
+export interface ProjectWorkspaceTemplateDefinition {
+  tabs: ProjectWorkspaceConfigTab[];
+  overviewSections?: string[];
+}
+
+export interface ProjectWorkspaceConfigDraft {
+  sourceTemplateId?: string;
+  sourceTemplateVersion?: number;
+  assignedClientId?: string;
+  audienceType: WorkspaceAudienceType;
+  tabs: ProjectWorkspaceConfigTab[];
+  overviewSections?: string[];
+}
+
+export interface ProjectWorkspaceConfig {
+  id: string;
+  projectId: string;
+  sourceTemplateId?: string | null;
+  sourceTemplateVersion?: number | null;
+  assignedClientId?: string | null;
+  audienceType: WorkspaceAudienceType;
+  tabsJson: ProjectWorkspaceConfigTab[];
+  overviewSectionsJson?: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectWorkspaceTemplate {
+  id: string;
+  orgId: string;
+  name: string;
+  description?: string | null;
+  audienceType: WorkspaceAudienceType;
+  status: WorkspaceTemplateStatus;
+  isDefault: boolean;
+  definitionJson: ProjectWorkspaceTemplateDefinition;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    assignments: number;
+    projectConfigs: number;
+  };
+}
+
+export interface ClientWorkspaceTemplateAssignment {
+  id: string;
+  clientId: string;
+  templateId: string;
+  isDefault: boolean;
+  isActive: boolean;
+  assignedAt: string;
+  template: Pick<ProjectWorkspaceTemplate, 'id' | 'name' | 'audienceType' | 'status' | 'isDefault' | 'definitionJson'>;
+}
 
 export interface Project {
   id: string;
@@ -311,6 +376,7 @@ export interface Project {
   health: ProjectHealth;
   description?: string;
   tags?: string[];
+  workspaceConfig?: ProjectWorkspaceConfig | null;
 }
 
 export type MilestoneStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
@@ -486,7 +552,7 @@ export interface KpiStat {
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.SUPER_ADMIN]: Object.values(Permission),
-  [Role.OPS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_CLIENTS, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM],
+  [Role.OPS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_CLIENTS, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM, Permission.MANAGE_WORKSPACE_TEMPLATES, Permission.ASSIGN_WORKSPACE_TEMPLATES],
   [Role.PM]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_PROJECTS, Permission.VIEW_CLIENTS, Permission.VIEW_FINANCIALS, Permission.MANAGE_TASKS, Permission.MANAGE_TEAM, Permission.CREATE_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORT_ENTRIES, Permission.GENERATE_PROJECT_REPORT_EXPORTS, Permission.PUBLISH_PROJECT_REPORTS],
   [Role.DEV]: [Permission.VIEW_DASHBOARD, Permission.VIEW_CLIENTS, Permission.MANAGE_TASKS],
   [Role.QA]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_TASKS, Permission.CREATE_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORTS, Permission.EDIT_PROJECT_REPORT_ENTRIES, Permission.GENERATE_PROJECT_REPORT_EXPORTS],

@@ -35,6 +35,7 @@ import { SlaModule } from './sla/sla.module';
 import { WikiModule } from './wiki/wiki.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ReportBuilderModule } from './report-builder/report-builder.module';
+import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
@@ -107,6 +108,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     WikiModule,
     PaymentsModule,
     ReportBuilderModule,
+    ProjectWorkspaceModule,
     RecurringTasksModule,
     ScheduleModule.forRoot(),
   ],

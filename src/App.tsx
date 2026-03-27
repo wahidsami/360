@@ -10,6 +10,7 @@ import Signup from './pages/Signup';
 import AcceptInvite from './pages/auth/AcceptInvite';
 import AuthCallback from './pages/auth/AuthCallback';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { Role } from './types';
 import './services/i18n';
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ClientList = React.lazy(() => import('./pages/Clients').then((module) => ({ default: module.ClientList })));
@@ -29,6 +30,7 @@ const FindingDetails = React.lazy(() => import('./pages/findings/FindingDetails'
 const UsersAdmin = React.lazy(() => import('./pages/admin/UsersAdmin'));
 const RolesAdmin = React.lazy(() => import('./pages/admin/RolesAdmin'));
 const ReportTemplatesAdmin = React.lazy(() => import('./pages/admin/ReportTemplatesAdmin'));
+const WorkspaceTemplatesAdmin = React.lazy(() => import('./pages/admin/WorkspaceTemplatesAdmin'));
 const Automations = React.lazy(() => import('./pages/Automations'));
 const Integrations = React.lazy(() => import('./pages/Integrations'));
 const Calendar = React.lazy(() => import('./pages/Calendar'));
@@ -40,6 +42,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-500">Initializing...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
+
+const RoleProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Role[] }> = ({ children, allowedRoles }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-500">Initializing...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user || !allowedRoles.includes(user.role)) return <Navigate to="/app/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -109,9 +119,10 @@ const App: React.FC = () => {
               </Route>
 
               <Route path="admin">
-                <Route path="report-templates" element={<ReportTemplatesAdmin />} />
-                <Route path="users" element={<UsersAdmin />} />
-                <Route path="roles" element={<RolesAdmin />} />
+                <Route path="report-templates" element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]}><ReportTemplatesAdmin /></RoleProtectedRoute>} />
+                <Route path="workspace-templates" element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.OPS]}><WorkspaceTemplatesAdmin /></RoleProtectedRoute>} />
+                <Route path="users" element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]}><UsersAdmin /></RoleProtectedRoute>} />
+                <Route path="roles" element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]}><RolesAdmin /></RoleProtectedRoute>} />
               </Route>
 
               <Route path="automations" element={<Automations />} />

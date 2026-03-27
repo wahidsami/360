@@ -4,7 +4,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import {
   LayoutDashboard, Users, Briefcase, FileText, AlertCircle, ShieldCheck,
-  Settings, Bell, Search, LogOut, Menu, X, ChevronRight, Globe, ClipboardList, User as UserIcon, Sparkles, Workflow, Calendar, Link2, BookOpen, BarChart3, History
+  Settings, Bell, Search, LogOut, Menu, X, ChevronRight, Globe, ClipboardList, User as UserIcon, Sparkles, Workflow, Calendar, Link2, BookOpen, BarChart3, History, PanelsTopLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Role, isInternalRole } from '../types';
@@ -40,6 +40,15 @@ const SidebarItem = ({ to, icon: Icon, label, onClick, isCollapsed }: any) => (
     )}
   </NavLink>
 );
+
+const SidebarSectionLabel = ({ label, isCollapsed }: { label: string; isCollapsed: boolean }) => {
+  if (isCollapsed) return <div className="h-3" />;
+  return (
+    <div className="px-4 pt-4 pb-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{label}</p>
+    </div>
+  );
+};
 
 export const Layout: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -148,41 +157,51 @@ export const Layout: React.FC = () => {
     navigate('/app/dashboard');
   };
 
-  const menuItems = [
+  const primaryMenuItems = [
     { to: '/app/dashboard', icon: LayoutDashboard, label: t('dashboard') },
   ];
 
   if (user && isInternalRole(user.role)) {
-    menuItems.push({ to: '/app/my-work', icon: ClipboardList, label: t('my_work') });
-    menuItems.push({ to: '/app/calendar', icon: Calendar, label: t('calendar') });
+    primaryMenuItems.push({ to: '/app/my-work', icon: ClipboardList, label: t('my_work') });
+    primaryMenuItems.push({ to: '/app/calendar', icon: Calendar, label: t('calendar') });
   }
 
-  menuItems.push(
+  primaryMenuItems.push(
     { to: '/app/clients', icon: Users, label: t('clients') },
     { to: '/app/projects', icon: Briefcase, label: t('projects') }
   );
 
   if (user && [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.FINANCE, Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user.role)) {
-    menuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
+    primaryMenuItems.push({ to: '/app/reports', icon: FileText, label: t('reports') });
   }
 
   if (user?.role !== Role.FINANCE) {
-    menuItems.push({ to: '/app/findings', icon: AlertCircle, label: t('findings') });
+    primaryMenuItems.push({ to: '/app/findings', icon: AlertCircle, label: t('findings') });
   }
 
+  const knowledgeMenuItems: Array<{ to: string; icon: any; label: string }> = [];
   if (user && isInternalRole(user.role)) {
-    menuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') });
-    menuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') });
+    knowledgeMenuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') });
+    knowledgeMenuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') });
 
     if ([Role.SUPER_ADMIN, Role.OPS, Role.PM].includes(user.role)) {
-      menuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') });
-      menuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') });
+      knowledgeMenuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') });
+      knowledgeMenuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') });
     }
   }
 
+  const adminToolItems: Array<{ to: string; icon: any; label: string }> = [];
   if (user?.role === Role.SUPER_ADMIN) {
-    menuItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'TOOLS BUILDER' });
-    menuItems.push({ to: '/app/admin/users', icon: ShieldCheck, label: t('admin') });
+    adminToolItems.push({ to: '/app/admin/report-templates', icon: FileText, label: 'Report Builder' });
+  }
+
+  if (user && [Role.SUPER_ADMIN, Role.OPS].includes(user.role)) {
+    adminToolItems.push({ to: '/app/admin/workspace-templates', icon: PanelsTopLeft, label: 'Workspace Builder' });
+  }
+
+  const adminManagementItems: Array<{ to: string; icon: any; label: string }> = [];
+  if (user?.role === Role.SUPER_ADMIN) {
+    adminManagementItems.push({ to: '/app/admin/users', icon: ShieldCheck, label: t('admin') });
   }
 
   return (
@@ -237,9 +256,39 @@ export const Layout: React.FC = () => {
         </div>
 
         <nav className={`flex-1 ${isCollapsed ? 'p-2' : 'p-4'} space-y-2 overflow-y-auto`}>
-          {menuItems.map((item) => (
+          {primaryMenuItems.map((item) => (
             <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           ))}
+
+          {knowledgeMenuItems.length > 0 && (
+            <>
+              <SidebarSectionLabel label="Workspace" isCollapsed={isCollapsed} />
+              {knowledgeMenuItems.map((item) => (
+                <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
+              ))}
+            </>
+          )}
+
+          {adminToolItems.length > 0 && (
+            <>
+              <SidebarSectionLabel label="Admin Tools" isCollapsed={isCollapsed} />
+              <div className="space-y-2 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-2 dark:border-slate-800 dark:bg-slate-900/40">
+                {adminToolItems.map((item) => (
+                  <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {adminManagementItems.length > 0 && (
+            <>
+              <SidebarSectionLabel label="Administration" isCollapsed={isCollapsed} />
+              {adminManagementItems.map((item) => (
+                <SidebarItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
+              ))}
+            </>
+          )}
+
           <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
             <SidebarItem to="/app/settings" icon={Settings} label={t('settings')} onClick={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
           </div>

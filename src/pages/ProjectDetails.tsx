@@ -14,34 +14,8 @@ import { useAI } from '../contexts/AIContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PermissionsService } from '../services/permissions.service';
 import toast from 'react-hot-toast';
-
-// --- TAB CONFIGURATION (PHASE 1) ---
-const TAB_GROUPS = [
-  { id: 'core', label: 'Core', color: 'text-cyan-400' },
-  { id: 'planning', label: 'Planning & Delivery', color: 'text-indigo-400' },
-  { id: 'resources', label: 'Resources', color: 'text-slate-400' }
-];
-
-const TAB_DEFINITIONS = [
-  { id: 'overview', label: 'Overview', group: 'core', order: 1 },
-  { id: 'discussions', label: 'Discussions', group: 'core', order: 2 },
-  { id: 'tasks', label: 'Tasks', group: 'core', order: 3 },
-  { id: 'milestones', label: 'Milestones', group: 'core', order: 4 },
-  { id: 'updates', label: 'Updates', group: 'core', order: 5 },
-
-  { id: 'timeline', label: 'Timeline', group: 'planning', internalOnly: true, order: 1 },
-  { id: 'sprints', label: 'Sprints', group: 'planning', internalOnly: true, order: 2 },
-  { id: 'findings', label: 'Findings', group: 'planning', order: 3 },
-  { id: 'reports', label: 'Reports', group: 'planning', order: 4 },
-  { id: 'time', label: 'Time', group: 'planning', internalOnly: true, order: 5 },
-  { id: 'recurring', label: 'Recurring', group: 'planning', internalOnly: true, order: 6 },
-
-  { id: 'files', label: 'Files', group: 'resources', order: 1 },
-  { id: 'team', label: 'Team', group: 'resources', order: 2 },
-  { id: 'financials', label: 'Financials', group: 'resources', order: 3 },
-  { id: 'testing', label: 'Testing Access', group: 'resources', order: 4 },
-  { id: 'activity', label: 'Activity', group: 'resources', order: 5 },
-];
+import { PROJECT_TAB_DEFINITIONS, PROJECT_TAB_GROUPS, ProjectTabId } from '@/features/project-workspace/registry';
+import { resolveProjectWorkspace } from '@/features/project-workspace/resolver';
 
 export const ProjectDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -71,12 +45,37 @@ export const ProjectDetails: React.FC = () => {
   const [hasLoadedOverviewMeta, setHasLoadedOverviewMeta] = useState(false);
   const [isOverviewMetaStale, setIsOverviewMetaStale] = useState(false);
 
+  const resolvedWorkspace = React.useMemo(() => {
+    if (!user) {
+      return resolveProjectWorkspace({ visibleTabIds: [] });
+    }
+
+    const roleVisibleTabIds = PermissionsService.getVisibleTabs(user.role)
+      .filter((tabId): tabId is ProjectTabId => PROJECT_TAB_DEFINITIONS.some((definition) => definition.id === tabId));
+
+    const roleReadOnlyTabIds = PROJECT_TAB_DEFINITIONS
+      .filter((definition) => PermissionsService.isTabReadOnly(user.role, definition.id))
+      .map((definition) => definition.id);
+
+    return resolveProjectWorkspace({
+      visibleTabIds: roleVisibleTabIds,
+      readOnlyTabIds: roleReadOnlyTabIds,
+      workspaceConfig: project?.workspaceConfig
+        ? {
+            tabs: Array.isArray(project.workspaceConfig.tabsJson)
+              ? project.workspaceConfig.tabsJson.map((tab) => ({
+                  tabId: tab.tabId as ProjectTabId,
+                  state: tab.state,
+                  orderIndex: tab.orderIndex,
+                }))
+              : [],
+          }
+        : null,
+    });
+  }, [project?.workspaceConfig, user?.role]);
+
   // --- Role-Based Tab Selection ---
-  const visibleTabs = user
-    ? TAB_DEFINITIONS
-      .filter(tab => PermissionsService.getVisibleTabs(user.role).includes(tab.id))
-      .sort((a, b) => (a.order || 99) - (b.order || 99))
-    : [];
+  const visibleTabs = resolvedWorkspace.visibleTabs;
 
   // --- Safe Role-Based Default Tab Selection ---
   useEffect(() => {
@@ -92,7 +91,13 @@ export const ProjectDetails: React.FC = () => {
     if (targetTab !== 'overview' && visibleTabs.some(t => t.id === targetTab)) {
       setActiveTab(targetTab);
     }
-  }, [project?.id, user?.role]); // Only re-run if project or role changes
+  }, [project?.id, user?.role, visibleTabs]); // Only re-run if project or role changes
+
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    if (visibleTabs.some((tab) => tab.id === activeTab)) return;
+    setActiveTab(visibleTabs[0]?.id || 'overview');
+  }, [activeTab, visibleTabs]);
 
   useEffect(() => {
     if (projectId) {
@@ -487,7 +492,7 @@ export const ProjectDetails: React.FC = () => {
       {/* Tabs Nav (Grouped) */}
       <div className="flex flex-col gap-4 border-b border-slate-700/50 pb-1">
         <div className="flex items-center overflow-x-auto scrollbar-none gap-2">
-          {TAB_GROUPS.map((group, idx) => {
+          {PROJECT_TAB_GROUPS.map((group, idx) => {
             const groupTabs = visibleTabs.filter(t => t.group === group.id);
             if (groupTabs.length === 0) return null;
 
@@ -560,6 +565,7 @@ export const ProjectDetails: React.FC = () => {
                   readiness={readiness}
                   metrics={metrics}
                   activity={activity}
+                  hiddenOverviewSections={resolvedWorkspace.hiddenOverviewSections}
                 />
                 {isOverviewMetaLoading && (
                   <div className="pointer-events-none absolute right-6 top-10 z-10 w-[320px] max-w-[calc(100%-3rem)]">

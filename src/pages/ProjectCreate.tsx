@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../services/api';
 import { GlassCard, Button, Input, Label, Select, TextArea } from '../components/ui/UIComponents';
 import { Client, ProjectStatus, ProjectHealth } from '../types';
+import { WorkspaceTemplateSelector } from '@/components/project/WorkspaceTemplateSelector';
+import { buildWorkspaceTemplateOptions, WorkspaceTemplateOption } from '@/features/project-workspace/helpers';
 
 export const ProjectCreate: React.FC = () => {
   const { t } = useTranslation();
@@ -14,6 +16,10 @@ export const ProjectCreate: React.FC = () => {
 
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const [workspaceOptions, setWorkspaceOptions] = useState<WorkspaceTemplateOption[]>([]);
+  const [selectedWorkspaceOptionId, setSelectedWorkspaceOptionId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -31,6 +37,52 @@ export const ProjectCreate: React.FC = () => {
     api.clients.list().then(setClients);
   }, []);
 
+  useEffect(() => {
+    const loadWorkspaceOptions = async () => {
+      if (!formData.clientId) {
+        setWorkspaceOptions([]);
+        setSelectedWorkspaceOptionId('');
+        setWorkspaceError(null);
+        return;
+      }
+
+      setWorkspaceLoading(true);
+      setWorkspaceError(null);
+      try {
+        const [assignments, defaultDraft] = await Promise.all([
+          api.workspaceTemplatesAdmin.listClientAssignments(formData.clientId).catch(() => []),
+          api.workspaceTemplatesAdmin.getDefaultDraft(formData.clientId).catch(() => null),
+        ]);
+
+        const options = buildWorkspaceTemplateOptions({
+          clientId: formData.clientId,
+          assignments,
+          defaultDraft,
+        });
+
+        setWorkspaceOptions(options);
+        setSelectedWorkspaceOptionId((current) =>
+          options.some((option) => option.id === current) ? current : options[0]?.id || '',
+        );
+      } catch (err) {
+        console.error(err);
+        setWorkspaceError('Unable to load workspace templates for this client. The project will fall back to the default workspace.');
+        const fallbackOptions = buildWorkspaceTemplateOptions({ clientId: formData.clientId });
+        setWorkspaceOptions(fallbackOptions);
+        setSelectedWorkspaceOptionId(fallbackOptions[0]?.id || '');
+      } finally {
+        setWorkspaceLoading(false);
+      }
+    };
+
+    loadWorkspaceOptions();
+  }, [formData.clientId]);
+
+  const selectedWorkspaceOption = useMemo(
+    () => workspaceOptions.find((option) => option.id === selectedWorkspaceOptionId) || null,
+    [selectedWorkspaceOptionId, workspaceOptions],
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.clientId) return;
@@ -42,7 +94,8 @@ export const ProjectCreate: React.FC = () => {
       const payload = {
         ...formData,
         startDate: new Date(formData.startDate).toISOString(),
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
+        workspaceConfigDraft: selectedWorkspaceOption?.draft,
       };
 
       const newProject = await api.projects.create(payload);
@@ -123,6 +176,17 @@ export const ProjectCreate: React.FC = () => {
             </div>
           </div>
         </GlassCard>
+
+        <WorkspaceTemplateSelector
+          title="Workspace Template"
+          description="Choose how the client will experience project tabs and overview sections when this project is created."
+          options={workspaceOptions}
+          selectedOptionId={selectedWorkspaceOptionId}
+          onChange={setSelectedWorkspaceOptionId}
+          loading={workspaceLoading}
+          error={workspaceError}
+          disabled={!formData.clientId}
+        />
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="ghost" onClick={() => navigate('..')}>{t('cancel')}</Button>

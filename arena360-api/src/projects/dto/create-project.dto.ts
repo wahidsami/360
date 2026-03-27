@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsDateString, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsDateString, Min, Max, IsObject } from 'class-validator';
 import { ProjectStatus, ProjectHealth } from '@prisma/client';
 
 export class CreateProjectDto {
@@ -77,4 +77,8 @@ export class CreateProjectDto {
 
     @IsOptional()
     _count?: any;
+
+    @IsOptional()
+    @IsObject()
+    workspaceConfigDraft?: Record<string, any>;
 }

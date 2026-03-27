@@ -133,6 +133,24 @@ enum ReportVisibility {
   CLIENT
 }
 
+enum WorkspaceAudienceType {
+  INTERNAL
+  CLIENT
+  MIXED
+}
+
+enum WorkspaceTemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum WorkspaceTabState {
+  HIDDEN
+  VISIBLE_READ_ONLY
+  VISIBLE_INTERACTIVE
+}
+
 enum ReportBuilderTemplateCategory {
   ACCESSIBILITY
   SECURITY
@@ -233,6 +251,9 @@ model Org {
   wikiPages       WikiPage[]
   reportBuilderTemplates ReportBuilderTemplate[]
   clientReportTemplateAssignments ClientReportTemplateAssignment[]
+  projectWorkspaceTemplates ProjectWorkspaceTemplate[]
+  clientWorkspaceTemplateAssignments ClientWorkspaceTemplateAssignment[]
+  projectWorkspaceConfigs ProjectWorkspaceConfig[]
   projectReports ProjectReport[]
   projectReportEntries ProjectReportEntry[]
   projectReportExports ProjectReportExport[]
@@ -282,6 +303,9 @@ model User {
   reportBuilderTemplatesCreated ReportBuilderTemplate[] @relation("ReportBuilderTemplateCreator")
   reportBuilderTemplateVersionsPublished ReportBuilderTemplateVersion[] @relation("ReportBuilderTemplateVersionPublisher")
   clientReportTemplateAssignmentsCreated ClientReportTemplateAssignment[] @relation("ClientReportTemplateAssignmentCreator")
+  projectWorkspaceTemplatesCreated ProjectWorkspaceTemplate[] @relation("ProjectWorkspaceTemplateCreator")
+  clientWorkspaceTemplateAssignmentsCreated ClientWorkspaceTemplateAssignment[] @relation("ClientWorkspaceTemplateAssignmentCreator")
+  projectWorkspaceConfigsCreated ProjectWorkspaceConfig[] @relation("ProjectWorkspaceConfigCreator")
   projectReportsPerformed ProjectReport[] @relation("ProjectReportPerformer")
   projectReportEntriesCreated ProjectReportEntry[] @relation("ProjectReportEntryCreator")
   projectReportEntriesUpdated ProjectReportEntry[] @relation("ProjectReportEntryUpdater")
@@ -380,6 +404,8 @@ model Client {
   projects  Project[]
   files     FileAsset[]
   reportTemplateAssignments ClientReportTemplateAssignment[]
+  workspaceTemplateAssignments ClientWorkspaceTemplateAssignment[]
+  projectWorkspaceConfigs ProjectWorkspaceConfig[] @relation("ProjectWorkspaceAssignedClient")
   projectReports ProjectReport[]
   
   // Extended Fields
@@ -449,9 +475,74 @@ model Project {
   findings   Finding[]
   reports    Report[]
   projectReports ProjectReport[]
+  workspaceConfig ProjectWorkspaceConfig?
   contracts  Contract[]
   invoices   Invoice[]
   discussions Discussion[]
+}
+
+model ProjectWorkspaceTemplate {
+  id           String                  @id @default(cuid())
+  orgId        String
+  org          Org                     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?                 @db.Text
+  audienceType WorkspaceAudienceType   @default(CLIENT)
+  status       WorkspaceTemplateStatus @default(DRAFT)
+  isDefault    Boolean                 @default(false)
+  definitionJson Json
+  createdById  String?
+  createdBy    User?                   @relation("ProjectWorkspaceTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  assignments   ClientWorkspaceTemplateAssignment[]
+  projectConfigs ProjectWorkspaceConfig[]
+
+  @@index([orgId])
+  @@index([status])
+}
+
+model ClientWorkspaceTemplateAssignment {
+  id           String                  @id @default(cuid())
+  orgId        String
+  org          Org                     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  templateId   String
+  template     ProjectWorkspaceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  isDefault    Boolean                 @default(true)
+  isActive     Boolean                 @default(true)
+  assignedById String?
+  assignedBy   User?                   @relation("ClientWorkspaceTemplateAssignmentCreator", fields: [assignedById], references: [id], onDelete: SetNull)
+  assignedAt   DateTime                @default(now())
+
+  @@unique([clientId, templateId])
+  @@index([orgId])
+  @@index([clientId])
+}
+
+model ProjectWorkspaceConfig {
+  id                  String                 @id @default(cuid())
+  orgId               String
+  org                 Org                    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  projectId           String                 @unique
+  project             Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceTemplateId    String?
+  sourceTemplate      ProjectWorkspaceTemplate? @relation(fields: [sourceTemplateId], references: [id], onDelete: SetNull)
+  sourceTemplateVersion Int?
+  assignedClientId    String?
+  assignedClient      Client?                @relation("ProjectWorkspaceAssignedClient", fields: [assignedClientId], references: [id], onDelete: SetNull)
+  audienceType        WorkspaceAudienceType  @default(CLIENT)
+  tabsJson            Json
+  overviewSectionsJson Json?
+  createdById         String?
+  createdBy           User?                  @relation("ProjectWorkspaceConfigCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([orgId])
+  @@index([assignedClientId])
 }
 
 model ProjectMember {

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility } from '../types';
+import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility, ProjectWorkspaceConfigDraft, ClientWorkspaceTemplateAssignment, ProjectWorkspaceTemplate, WorkspaceAudienceType, WorkspaceTemplateStatus } from '../types';
 import toast from 'react-hot-toast';
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
@@ -53,7 +53,23 @@ const normalizeTask = (t: any): Task => ({
 const normalizeProject = (p: any): Project => ({
   ...p,
   status: (p.status?.toLowerCase().replace('-', '_') || 'planning') as any,
-  health: (p.health?.toLowerCase().replace('_', '-') || 'good') as any
+  health: (p.health?.toLowerCase().replace('_', '-') || 'good') as any,
+  workspaceConfig: p.workspaceConfig
+    ? {
+        ...p.workspaceConfig,
+        audienceType: (p.workspaceConfig.audienceType?.toLowerCase() || 'client') as any,
+      }
+    : null,
+});
+
+const normalizeWorkspaceTemplate = (template: any): ProjectWorkspaceTemplate => ({
+  ...template,
+  audienceType: (template.audienceType?.toLowerCase() || 'client') as WorkspaceAudienceType,
+});
+
+const normalizeClientWorkspaceTemplateAssignment = (assignment: any): ClientWorkspaceTemplateAssignment => ({
+  ...assignment,
+  template: normalizeWorkspaceTemplate(assignment.template),
 });
 
 // Helper to normalize backend client to frontend Client type
@@ -399,7 +415,7 @@ export const api = {
       return fetchApi(`/projects/${id}/readiness`);
     },
     getMetrics: async (id: string) => fetchApi(`/projects/${id}/metrics`),
-    create: async (payload: Omit<Project, 'id'>): Promise<Project> => {
+    create: async (payload: Omit<Project, 'id'> & { workspaceConfigDraft?: ProjectWorkspaceConfigDraft }): Promise<Project> => {
       const body = {
         ...payload,
         status: payload.status?.toUpperCase().replace('-', '_')
@@ -410,10 +426,10 @@ export const api = {
       });
       return normalizeProject(project);
     },
-    update: async (id: string, payload: Partial<Project>): Promise<Project | undefined> => {
-      try {
-        const body = {
-          ...payload,
+    update: async (id: string, payload: Partial<Project> & { workspaceConfigDraft?: ProjectWorkspaceConfigDraft }): Promise<Project | undefined> => {
+        try {
+          const body = {
+            ...payload,
           status: payload.status?.toUpperCase().replace('-', '_')
         };
         const project = await fetchApi(`/projects/${id}`, {
@@ -1375,6 +1391,85 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(payload),
       });
+    },
+  },
+
+  workspaceTemplatesAdmin: {
+    listTemplates: async (): Promise<ProjectWorkspaceTemplate[]> => {
+      const templates = await fetchApi('/admin/project-workspaces/templates');
+      return (templates || []).map(normalizeWorkspaceTemplate);
+    },
+    createTemplate: async (payload: {
+      name: string;
+      description?: string;
+      audienceType?: WorkspaceAudienceType;
+      status?: WorkspaceTemplateStatus;
+      isDefault?: boolean;
+      definitionJson: Record<string, unknown>;
+    }): Promise<ProjectWorkspaceTemplate> => {
+      const body = {
+        ...payload,
+        audienceType: payload.audienceType?.toUpperCase(),
+        status: payload.status?.toUpperCase(),
+      };
+      const template = await fetchApi('/admin/project-workspaces/templates', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      return normalizeWorkspaceTemplate(template);
+    },
+    updateTemplate: async (
+      templateId: string,
+      payload: Partial<{
+        name: string;
+        description: string;
+        audienceType: WorkspaceAudienceType;
+        status: WorkspaceTemplateStatus;
+        isDefault: boolean;
+        definitionJson: Record<string, unknown>;
+      }>,
+    ): Promise<ProjectWorkspaceTemplate> => {
+      const body = {
+        ...payload,
+        audienceType: payload.audienceType?.toUpperCase(),
+        status: payload.status?.toUpperCase(),
+      };
+      const template = await fetchApi(`/admin/project-workspaces/templates/${templateId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+      return normalizeWorkspaceTemplate(template);
+    },
+    listClientAssignments: async (clientId: string): Promise<ClientWorkspaceTemplateAssignment[]> => {
+      const assignments = await fetchApi(`/admin/project-workspaces/clients/${clientId}/assignments`);
+      return (assignments || []).map(normalizeClientWorkspaceTemplateAssignment);
+    },
+    createClientAssignment: async (
+      clientId: string,
+      payload: {
+        templateId: string;
+        isDefault?: boolean;
+        isActive?: boolean;
+      },
+    ): Promise<ClientWorkspaceTemplateAssignment> => {
+      const assignment = await fetchApi(`/admin/project-workspaces/clients/${clientId}/assignments`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return normalizeClientWorkspaceTemplateAssignment(assignment);
+    },
+    updateClientAssignment: async (
+      assignmentId: string,
+      payload: { isDefault?: boolean; isActive?: boolean },
+    ): Promise<ClientWorkspaceTemplateAssignment> => {
+      const assignment = await fetchApi(`/admin/project-workspaces/client-assignments/${assignmentId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      return normalizeClientWorkspaceTemplateAssignment(assignment);
+    },
+    getDefaultDraft: async (clientId: string): Promise<ProjectWorkspaceConfigDraft | null> => {
+      return fetchApi(`/project-workspaces/clients/${clientId}/default-draft`);
     },
   },
 

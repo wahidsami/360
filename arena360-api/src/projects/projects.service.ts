@@ -10,6 +10,63 @@ export class ProjectsService {
         private activityService: ActivityService,
     ) { }
 
+    private async resolveWorkspaceConfigDraft(
+        user: UserWithRoles,
+        clientId: string | undefined,
+        workspaceConfigDraft:
+            | {
+                sourceTemplateId?: string;
+                sourceTemplateVersion?: number;
+                assignedClientId?: string;
+                audienceType?: string;
+                tabs?: unknown;
+                overviewSections?: unknown;
+            }
+            | undefined,
+    ) {
+        const assignedWorkspaceTemplate = !workspaceConfigDraft?.sourceTemplateId && clientId
+            ? await this.prisma.clientWorkspaceTemplateAssignment.findFirst({
+                where: {
+                    orgId: user.orgId,
+                    clientId,
+                    isActive: true,
+                    isDefault: true,
+                },
+                include: {
+                    template: true,
+                },
+                orderBy: [{ assignedAt: 'desc' }],
+            }) || await this.prisma.clientWorkspaceTemplateAssignment.findFirst({
+                where: {
+                    orgId: user.orgId,
+                    clientId,
+                    isActive: true,
+                },
+                include: {
+                    template: true,
+                },
+                orderBy: [{ assignedAt: 'desc' }],
+            })
+            : null;
+
+        if (assignedWorkspaceTemplate) {
+            return {
+                sourceTemplateId: assignedWorkspaceTemplate.templateId,
+                sourceTemplateVersion: undefined,
+                assignedClientId: clientId,
+                audienceType: assignedWorkspaceTemplate.template.audienceType.toLowerCase(),
+                tabs: Array.isArray((assignedWorkspaceTemplate.template.definitionJson as any)?.tabs)
+                    ? (assignedWorkspaceTemplate.template.definitionJson as any).tabs
+                    : [],
+                overviewSections: Array.isArray((assignedWorkspaceTemplate.template.definitionJson as any)?.overviewSections)
+                    ? (assignedWorkspaceTemplate.template.definitionJson as any).overviewSections
+                    : [],
+            };
+        }
+
+        return workspaceConfigDraft;
+    }
+
     async findAll(user: UserWithRoles, query: any) {
         const where: any = {
             ...ScopeUtils.projectScope(user), // Apply RBAC Project Scope
@@ -36,7 +93,7 @@ export class ProjectsService {
                 ...ScopeUtils.projectScope(user),
                 deletedAt: null,
             },
-            include: { client: true, members: true },
+            include: { client: true, members: true, workspaceConfig: true },
         });
         if (!project) throw new NotFoundException('Project not found');
         return project;
@@ -51,6 +108,33 @@ export class ProjectsService {
         // strict mapping for Prisma
         const startDate = data.startDate ? new Date(data.startDate) : new Date();
         const endDate = data.deadline ? new Date(data.deadline) : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const workspaceConfigDraft = data.workspaceConfigDraft as
+            | {
+                sourceTemplateId?: string;
+                sourceTemplateVersion?: number;
+                assignedClientId?: string;
+                audienceType?: string;
+                tabs?: unknown;
+                overviewSections?: unknown;
+            }
+            | undefined;
+
+        const effectiveWorkspaceConfigDraft = await this.resolveWorkspaceConfigDraft(user, data.clientId, workspaceConfigDraft);
+
+        const workspaceConfigCreate = effectiveWorkspaceConfigDraft
+            ? {
+                create: {
+                    orgId: user.orgId,
+                    sourceTemplateId: effectiveWorkspaceConfigDraft.sourceTemplateId || undefined,
+                    sourceTemplateVersion: effectiveWorkspaceConfigDraft.sourceTemplateVersion ?? undefined,
+                    assignedClientId: effectiveWorkspaceConfigDraft.assignedClientId || data.clientId,
+                    audienceType: (effectiveWorkspaceConfigDraft.audienceType || 'client').toUpperCase() as any,
+                    tabsJson: Array.isArray(effectiveWorkspaceConfigDraft.tabs) ? effectiveWorkspaceConfigDraft.tabs : [],
+                    overviewSectionsJson: Array.isArray(effectiveWorkspaceConfigDraft.overviewSections) ? effectiveWorkspaceConfigDraft.overviewSections : [],
+                    createdById: user.id,
+                }
+            }
+            : undefined;
 
         return this.prisma.project.create({
             data: {
@@ -69,8 +153,10 @@ export class ProjectsService {
                         userId: user.id,
                         role: user.role as any
                     }
-                }
+                },
+                workspaceConfig: workspaceConfigCreate,
             },
+            include: { workspaceConfig: true },
         });
     }
 
@@ -113,9 +199,53 @@ export class ProjectsService {
             updateData.client = { connect: { id: data.clientId } };
         }
 
+        const workspaceConfigDraft = data.workspaceConfigDraft as
+            | {
+                sourceTemplateId?: string;
+                sourceTemplateVersion?: number;
+                assignedClientId?: string;
+                audienceType?: string;
+                tabs?: unknown;
+                overviewSections?: unknown;
+            }
+            | undefined;
+
+        if (workspaceConfigDraft) {
+            const effectiveWorkspaceConfigDraft = await this.resolveWorkspaceConfigDraft(
+                user,
+                data.clientId || project.clientId,
+                workspaceConfigDraft,
+            );
+
+            updateData.workspaceConfig = {
+                upsert: {
+                    create: {
+                        orgId: user.orgId,
+                        sourceTemplateId: effectiveWorkspaceConfigDraft?.sourceTemplateId || undefined,
+                        sourceTemplateVersion: effectiveWorkspaceConfigDraft?.sourceTemplateVersion ?? undefined,
+                        assignedClientId: effectiveWorkspaceConfigDraft?.assignedClientId || data.clientId || project.clientId,
+                        audienceType: ((effectiveWorkspaceConfigDraft?.audienceType || 'client').toUpperCase()) as any,
+                        tabsJson: Array.isArray(effectiveWorkspaceConfigDraft?.tabs) ? effectiveWorkspaceConfigDraft?.tabs : [],
+                        overviewSectionsJson: Array.isArray(effectiveWorkspaceConfigDraft?.overviewSections) ? effectiveWorkspaceConfigDraft?.overviewSections : [],
+                        createdById: user.id,
+                    },
+                    update: {
+                        sourceTemplateId: effectiveWorkspaceConfigDraft?.sourceTemplateId || null,
+                        sourceTemplateVersion: effectiveWorkspaceConfigDraft?.sourceTemplateVersion ?? null,
+                        assignedClientId: effectiveWorkspaceConfigDraft?.assignedClientId || data.clientId || project.clientId,
+                        audienceType: ((effectiveWorkspaceConfigDraft?.audienceType || 'client').toUpperCase()) as any,
+                        tabsJson: Array.isArray(effectiveWorkspaceConfigDraft?.tabs) ? effectiveWorkspaceConfigDraft?.tabs : [],
+                        overviewSectionsJson: Array.isArray(effectiveWorkspaceConfigDraft?.overviewSections) ? effectiveWorkspaceConfigDraft?.overviewSections : [],
+                        updatedAt: new Date(),
+                    },
+                }
+            };
+        }
+
         return this.prisma.project.update({
             where: { id },
-            data: updateData
+            data: updateData,
+            include: { workspaceConfig: true },
         });
     }
 

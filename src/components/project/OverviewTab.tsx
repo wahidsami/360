@@ -27,6 +27,7 @@ interface OverviewTabProps {
     readiness?: ProjectReadiness | null;
     metrics?: any;
     activity?: any[];
+    hiddenOverviewSections?: string[];
 }
 
 // --- NEW SUB-COMPONENTS ---
@@ -274,8 +275,19 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
     );
 }
 
-export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, stats, tasks = [], findings = [], milestones = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [] }) => {
+export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }> = ({ project, stats, tasks = [], findings = [], milestones = [], onAction, onNavigate, onRefresh, allowedTabs = [], readiness, metrics, activity = [], hiddenOverviewSections = [] }) => {
     const { t } = useTranslation();
+    const hiddenOverviewSectionSet = React.useMemo(() => new Set(hiddenOverviewSections), [hiddenOverviewSections]);
+    const showSection = React.useCallback((sectionId: string) => !hiddenOverviewSectionSet.has(sectionId), [hiddenOverviewSectionSet]);
+    const canSee = (tabId: string) => allowedTabs.includes(tabId);
+    const filterReadinessItems = React.useCallback(
+        (items: any[] = []) =>
+            items.filter((item) => {
+                if (!item?.tab) return true;
+                return canSee(item.tab);
+            }),
+        [allowedTabs],
+    );
     // Derived operational metrics
     const taskCount = stats?.taskCount || 0;
     const completedTasks = stats?.completedTasks || 0;
@@ -351,9 +363,28 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
         return (severityOrder[a.severity?.toUpperCase()] ?? 4) - (severityOrder[b.severity?.toUpperCase()] ?? 4);
     })[0];
 
-    const canSee = (tabId: string) => allowedTabs.includes(tabId);
+    const readinessSections = React.useMemo(() => {
+        const coreItems = filterReadinessItems(readiness?.sections.core.items || []);
+        const planningItems = filterReadinessItems(readiness?.sections.planning.items || []);
+        const resourceItems = filterReadinessItems(readiness?.sections.resources.items || []);
+        return {
+            coreItems,
+            planningItems,
+            resourceItems,
+        };
+    }, [filterReadinessItems, readiness]);
+
+    const filteredNextAction = React.useMemo(() => {
+        if (!readiness?.nextAction) return null;
+        if (readiness.nextAction.tab && !canSee(readiness.nextAction.tab)) return null;
+        if (readiness.nextAction.action?.type === 'navigate_tab' && readiness.nextAction.action.target && !canSee(readiness.nextAction.action.target)) {
+            return null;
+        }
+        return readiness.nextAction;
+    }, [allowedTabs, readiness]);
+
     const criticalFindingCount = findingsBySeverity.CRITICAL || 0;
-    const criticalFindingAlert = (readiness?.nextAction as any)?.type === 'critical_findings' ? readiness?.nextAction as any : null;
+    const criticalFindingAlert = (filteredNextAction as any)?.type === 'critical_findings' ? filteredNextAction as any : null;
     const activeBlockerCount = metrics?.blockers?.active?.length || 0;
     const capacityMembers = metrics?.capacity?.members || [];
     const highLoadMembers = metrics?.capacity?.highLoad || [];
@@ -440,43 +471,49 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             </div>
 
                             {/* Predictive Insights */}
-                            <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
+                            {showSection('predictive_insights') && (
+                                <PredictiveInsights project={project} tasks={tasks} milestones={milestones} metrics={metrics} />
+                            )}
                         </div>
                     </div>
                 </GlassCard>
 
-                <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-4">
-                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <ChecklistSection
-                                title={t('core_setup')}
-                                items={readiness?.sections.core.items || []}
-                                isComplete={readiness?.sections.core.items.every((i: any) => i.status === 'complete') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('planning')}
-                                items={readiness?.sections.planning.items || []}
-                                isComplete={readiness?.sections.planning.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
-                            <ChecklistSection
-                                title={t('resources')}
-                                items={readiness?.sections.resources.items || []}
-                                isComplete={readiness?.sections.resources.items.every((i: any) => i.status !== 'missing') || false}
-                                onAction={onAction}
-                                onNavigate={onNavigate}
-                            />
-                        </div>
-                    </div>
-                </GlassCard>
+                {showSection('readiness_checklist') && (
+                    <GlassCard className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col gap-4">
+                        <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Checklist</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                {readinessSections.coreItems.length > 0 && <ChecklistSection
+                                      title={t('core_setup')}
+                                      items={readinessSections.coreItems}
+                                      isComplete={readinessSections.coreItems.every((i: any) => i.status === 'complete') || false}
+                                      onAction={onAction}
+                                      onNavigate={onNavigate}
+                                  />}
+                                {readinessSections.planningItems.length > 0 && <ChecklistSection
+                                      title={t('planning')}
+                                      items={readinessSections.planningItems}
+                                      isComplete={readinessSections.planningItems.every((i: any) => i.status !== 'missing') || false}
+                                      onAction={onAction}
+                                      onNavigate={onNavigate}
+                                  />}
+                                {readinessSections.resourceItems.length > 0 && <ChecklistSection
+                                      title={t('resources')}
+                                      items={readinessSections.resourceItems}
+                                      isComplete={readinessSections.resourceItems.every((i: any) => i.status !== 'missing') || false}
+                                      onAction={onAction}
+                                      onNavigate={onNavigate}
+                                  />}
+                              </div>
+                          </div>
+                    </GlassCard>
+                )}
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {(showSection('tasks_panel') || showSection('quality_panel')) && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* Task Health */}
+                {showSection('tasks_panel') && (
                 <GlassCard className={`p-6 border-t-4 border-t-blue-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('tasks') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('tasks') && onNavigate?.('tasks')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
@@ -544,8 +581,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </div>
                     )}
                 </GlassCard>
+                )}
 
                 {/* Findings Summary */}
+                {showSection('quality_panel') && (
                 <GlassCard className={`p-6 border-t-4 border-t-rose-500 dark:border-slate-800 bg-white transition-colors flex flex-col h-full ${canSee('findings') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group' : ''}`} onClick={() => canSee('findings') && onNavigate?.('findings')}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
@@ -639,11 +678,14 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                         </>
                     )}
                 </GlassCard>
+                )}
             </div>
+            )}
 
+            {(showSection('team_capacity') || showSection('activity_feed')) && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-
+                {showSection('team_capacity') && (
                     <GlassCard className={`p-6 border-t-4 border-t-indigo-500 dark:border-slate-800 relative transition-colors h-full ${canSee('team') ? 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : ''}`} onClick={() => canSee('team') && onNavigate?.('team')}>
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -729,9 +771,11 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 </div>
                             )}
                         </GlassCard>
+                )}
 
-                <ActivityFeed activities={activity} />
+                {showSection('activity_feed') && <ActivityFeed activities={activity} />}
             </div>
+            )}
         </div>
     );
 };
