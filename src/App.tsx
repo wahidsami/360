@@ -65,6 +65,11 @@ import { Toaster } from 'react-hot-toast';
 
 const App: React.FC = () => {
   React.useEffect(() => {
+    if (window.location.pathname.startsWith('/api/') && window.location.hash.startsWith('#/app')) {
+      window.location.replace(`${window.location.origin}/${window.location.hash}`);
+      return;
+    }
+
     const theme = localStorage.getItem('arena360_theme') || 'dark';
     document.documentElement.classList.toggle('theme-light', theme === 'light');
     document.documentElement.classList.toggle('dark', theme === 'dark');
