@@ -113,13 +113,21 @@ export interface Report {
   id: string;
   projectId: string;
   title: string;
-  type: 'security' | 'performance' | 'financial' | 'status';
+  type: 'TECHNICAL' | 'EXECUTIVE' | 'COMPLIANCE' | 'OTHER' | string;
+  description?: string | null;
   generatedAt?: string;
   generatedBy?: string;
-  status: 'ready' | 'generating' | 'failed' | string;
+  publishedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | string;
+  visibility?: 'INTERNAL' | 'CLIENT' | string;
   url?: string;
   /** Backend: key for generated file (e.g. reports/xxx.pptx) */
   generatedFileKey?: string | null;
+  generatedFileSizeBytes?: number;
+  project?: { id: string; name: string };
+  createdBy?: { id: string; name: string; email?: string };
 }
 
 export type ReportBuilderTemplateCategory =

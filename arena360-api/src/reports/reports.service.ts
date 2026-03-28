@@ -3,8 +3,8 @@ import { PrismaService } from '../common/prisma.service';
 import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { CreateReportDto, UpdateReportDto } from './dto/report.dto';
 import { ReportGeneratorService } from './report-generator.service';
+import { existsSync, mkdirSync, statSync } from 'fs';
 import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
 
 @Injectable()
 export class ReportsService {
@@ -12,6 +12,25 @@ export class ReportsService {
         private prisma: PrismaService,
         private reportGenerator: ReportGeneratorService,
     ) { }
+
+    private getGeneratedFileSizeBytes(generatedFileKey?: string | null) {
+        if (!generatedFileKey) return 0;
+        try {
+            const filePath = this.reportGenerator.getFilePath(generatedFileKey);
+            if (!existsSync(filePath)) return 0;
+            return statSync(filePath).size;
+        } catch {
+            return 0;
+        }
+    }
+
+    private serializeReport(report: any) {
+        return {
+            ...report,
+            generatedBy: report.createdBy?.name || null,
+            generatedFileSizeBytes: this.getGeneratedFileSizeBytes(report.generatedFileKey),
+        };
+    }
 
     async findAll(projectId: string, user: UserWithRoles) {
         // Verify project exists and user has access
@@ -26,7 +45,7 @@ export class ReportsService {
         const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
         const isClientUser = clientRoles.includes(user.role);
 
-        return this.prisma.report.findMany({
+        const reports = await this.prisma.report.findMany({
             where: {
                 projectId,
                 orgId: user.orgId,
@@ -35,6 +54,9 @@ export class ReportsService {
                 ...(isClientUser && { visibility: 'CLIENT' })
             },
             include: {
+                project: {
+                    select: { id: true, name: true }
+                },
                 createdBy: {
                     select: { id: true, name: true, email: true }
                 }
@@ -44,6 +66,36 @@ export class ReportsService {
                 { createdAt: 'desc' }
             ]
         });
+
+        return reports.map((report) => this.serializeReport(report));
+    }
+
+    async findAllOrg(user: UserWithRoles) {
+        const allowedRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'FINANCE'];
+        if (!allowedRoles.includes(user.role)) {
+            throw new ForbiddenException('Only internal staff can view organization report archives');
+        }
+
+        const reports = await this.prisma.report.findMany({
+            where: {
+                orgId: user.orgId,
+                deletedAt: null,
+            },
+            include: {
+                project: {
+                    select: { id: true, name: true }
+                },
+                createdBy: {
+                    select: { id: true, name: true, email: true }
+                }
+            },
+            orderBy: [
+                { generatedAt: 'desc' },
+                { createdAt: 'desc' }
+            ]
+        });
+
+        return reports.map((report) => this.serializeReport(report));
     }
 
     async create(projectId: string, user: UserWithRoles, dto: CreateReportDto) {

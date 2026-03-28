@@ -11,6 +11,11 @@ import { CreateReportDto, UpdateReportDto } from './dto/report.dto';
 export class ReportsController {
     constructor(private readonly reportsService: ReportsService) { }
 
+    @Get('reports')
+    findAllOrg(@Request() req: any) {
+        return this.reportsService.findAllOrg(req.user);
+    }
+
     @Get('projects/:projectId/reports')
     findAll(@Request() req: any, @Param('projectId') projectId: string) {
         return this.reportsService.findAll(projectId, req.user);

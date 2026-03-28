@@ -91,6 +91,13 @@ const normalizeFinding = (f: any): Finding => ({
   severity: (f.severity?.toLowerCase() || 'medium') as any
 });
 
+const normalizeReport = (report: any): Report => ({
+  ...report,
+  type: report.type || 'OTHER',
+  status: report.status || 'DRAFT',
+  generatedBy: report.generatedBy || report.createdBy?.name || undefined,
+});
+
 export type SearchResultItem = { type: 'project' | 'task' | 'client' | 'finding'; id: string; title: string; subtitle?: string; projectId?: string; clientId?: string };
 
 export const api = {
@@ -832,7 +839,8 @@ export const api = {
     },
     getReports: async (projectId: string): Promise<Report[]> => {
       try {
-        return await fetchApi(`/projects/${projectId}/reports`);
+        const reports = await fetchApi(`/projects/${projectId}/reports`);
+        return (reports || []).map(normalizeReport);
       } catch (e) {
         console.error('Failed to get reports:', e);
         return [];
@@ -840,10 +848,11 @@ export const api = {
     },
     createReport: async (projectId: string, report: Partial<Report>): Promise<Report | undefined> => {
       try {
-        return await fetchApi(`/projects/${projectId}/reports`, {
+        const created = await fetchApi(`/projects/${projectId}/reports`, {
           method: 'POST',
           body: JSON.stringify(report)
         });
+        return normalizeReport(created);
       } catch (e) {
         console.error('Failed to create report:', e);
         return undefined;
@@ -851,10 +860,11 @@ export const api = {
     },
     updateReport: async (projectId: string, id: string, report: Partial<Report>): Promise<Report | undefined> => {
       try {
-        return await fetchApi(`/projects/${projectId}/reports/${id}`, {
+        const updated = await fetchApi(`/projects/${projectId}/reports/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(report)
         });
+        return normalizeReport(updated);
       } catch (e) {
         console.error('Failed to update report:', e);
         return undefined;
@@ -881,7 +891,7 @@ export const api = {
         });
 
         if (!response.ok) throw new Error('Upload failed');
-        return await response.json();
+        return normalizeReport(await response.json());
       } catch (e) {
         console.error('Failed to upload report file:', e);
         return undefined;
@@ -1173,8 +1183,8 @@ export const api = {
 
   reports: {
     list: async (): Promise<Report[]> => {
-      // Backend does not support global report list yet.
-      return [];
+      const reports = await fetchApi('/reports');
+      return (reports || []).map(normalizeReport);
     }
   },
 
