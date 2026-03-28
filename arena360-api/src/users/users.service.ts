@@ -185,7 +185,7 @@ export class UsersService {
             const effectiveRole = newRole || oldRole;
             const effectiveIsClientRole = !!effectiveRole?.startsWith('CLIENT_');
             const requestedClientId = updateUserDto.clientId;
-            const currentClientId = user.clientMemberships[0]?.clientId;
+            const hasRequestedMembership = !!requestedClientId && user.clientMemberships.some((membership) => membership.clientId === requestedClientId);
 
             if (isChangingRole) {
                 if (newIsClientRole) {
@@ -193,18 +193,14 @@ export class UsersService {
                     const clientId = requestedClientId;
 
                     if (oldIsClientRole && user.clientMemberships.length > 0) {
-                        // Was already a client user — update their existing membership
-                        if (clientId && clientId !== user.clientMemberships[0]?.clientId) {
-                            // Moving to a different client: delete old, create new
-                            await tx.clientMember.deleteMany({ where: { userId: id } });
+                        await tx.clientMember.updateMany({
+                            where: { userId: id },
+                            data: { role: newRole }
+                        });
+
+                        if (clientId && !hasRequestedMembership) {
                             await tx.clientMember.create({
                                 data: { userId: id, clientId, role: newRole }
-                            });
-                        } else {
-                            // Same client, just update the role (e.g. CLIENT_MEMBER → CLIENT_OWNER)
-                            await tx.clientMember.updateMany({
-                                where: { userId: id },
-                                data: { role: newRole }
                             });
                         }
                     } else {
@@ -227,11 +223,17 @@ export class UsersService {
                 }
             }
 
-            if (!isChangingRole && effectiveIsClientRole && requestedClientId && requestedClientId !== currentClientId) {
-                await tx.clientMember.deleteMany({ where: { userId: id } });
-                await tx.clientMember.create({
-                    data: { userId: id, clientId: requestedClientId, role: effectiveRole as GlobalRole }
-                });
+            if (!isChangingRole && effectiveIsClientRole && requestedClientId) {
+                if (hasRequestedMembership) {
+                    await tx.clientMember.updateMany({
+                        where: { userId: id, clientId: requestedClientId },
+                        data: { role: effectiveRole as GlobalRole }
+                    });
+                } else {
+                    await tx.clientMember.create({
+                        data: { userId: id, clientId: requestedClientId, role: effectiveRole as GlobalRole }
+                    });
+                }
             }
 
             // Update the user record itself
@@ -296,4 +298,5 @@ export class UsersService {
         return this.getDashboardPreferences(userId);
     }
 }
+
 

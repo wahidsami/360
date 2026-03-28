@@ -37,22 +37,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException();
         }
 
-        if (user.role.startsWith('CLIENT_') && user.clientMemberships.length > 1) {
-            const [primaryMembership, ...staleMemberships] = user.clientMemberships;
-            await this.prisma.clientMember.deleteMany({
-                where: {
-                    userId: user.id,
-                    id: { in: staleMemberships.map((membership) => membership.id) },
-                },
-            });
-
-            user = {
-                ...user,
-                clientMemberships: [primaryMembership],
-            };
-        }
-
         const { passwordHash, twoFactorSecret, recoveryCodes, ...safe } = user;
         return { ...safe, twoFactorEnabled: user.twoFactorEnabled };
     }
 }
+

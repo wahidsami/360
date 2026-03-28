@@ -230,7 +230,7 @@ export class DashboardService {
             throw new Error('Client dashboard is for client users only');
         }
 
-        const membership = await this.prisma.clientMember.findFirst({
+        const memberships = await this.prisma.clientMember.findMany({
             where: {
                 userId: user.id,
                 client: {
@@ -239,12 +239,11 @@ export class DashboardService {
                 },
             },
             orderBy: { createdAt: 'desc' },
-            include: { client: true },
         });
 
-        const client = membership?.client;
+        const clientIds = memberships.map((membership) => membership.clientId);
 
-        if (!client) {
+        if (clientIds.length === 0) {
             return {
                 activeProjects: 0,
                 nextMilestonesCount: 0,
@@ -253,9 +252,8 @@ export class DashboardService {
             };
         }
 
-        // Get projects for this client
         const projects = await this.prisma.project.findMany({
-            where: { clientId: client.id },
+            where: { clientId: { in: clientIds } },
             orderBy: { updatedAt: 'desc' }
         });
 
@@ -467,3 +465,4 @@ export class DashboardService {
         };
     }
 }
+

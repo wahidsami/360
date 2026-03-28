@@ -159,17 +159,6 @@ export class ClientsService {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
-        const isClientRole = String(role || user.role || '').startsWith('CLIENT_');
-
-        if (isClientRole) {
-            await this.prisma.clientMember.deleteMany({
-                where: {
-                    userId,
-                    NOT: { clientId }
-                }
-            });
-        }
-
         // Check if already exists
         const existing = await this.prisma.clientMember.findFirst({
             where: { clientId, userId }
@@ -224,3 +213,4 @@ export class ClientsService {
         return { success: true };
     }
 }
+
