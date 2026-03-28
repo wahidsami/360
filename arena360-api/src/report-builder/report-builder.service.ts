@@ -786,19 +786,53 @@ export class ReportBuilderService {
         : this.getTemplateLocale(report?.templateVersion);
     const labels = this.getPreviewLabels(localeConfig.locale);
     const summary = (report.summaryJson || {}) as Record<string, string>;
+    const isRtl = localeConfig.direction === 'rtl';
+    const reportTitle = this.normalizeDisplayText(report?.title) || labels.coverTag;
+    const clientName = this.normalizeDisplayText(report?.client?.name) || labels.client;
+    const projectName = this.normalizeDisplayText(report?.project?.name) || labels.project;
+    const auditorName = this.normalizeDisplayText(report?.performedBy?.name || labels.performedBy);
+    const logoUrl = typeof report?.client?.logo === 'string' ? report.client.logo : '';
+    const reportDate = this.formatReportDate(report.publishedAt || report.updatedAt || report.createdAt, localeConfig.locale);
+    const introductionBody =
+      this.normalizeDisplayText(summary.introduction) ||
+      this.normalizeDisplayText(report.description) ||
+      labels.sampleDescription;
     const statisticsNarrative = this.normalizeDisplayText(summary.statisticsSummary || summary.executiveSummary);
+    const recommendationBullets = this.buildRecommendationBullets(summary.recommendationsSummary, entries, localeConfig.locale);
+    const scopeServices = Array.from(
+      new Set(entries.map((entry) => this.normalizeDisplayText(entry.serviceName)).filter(Boolean)),
+    );
+    const scopePages = entries.filter((entry) => entry.pageUrl).length;
+    const scopeServicesText = scopeServices.length
+      ? scopeServices.slice(0, 6).join(localeConfig.locale === 'ar' ? '\u060C ' : ', ')
+      : localeConfig.locale === 'ar'
+        ? '\u0644\u0645 \u064a\u062a\u0645 \u062a\u062d\u062f\u064a\u062f \u062e\u062f\u0645\u0627\u062a \u0628\u0639\u062f'
+        : 'No services listed yet';
+
     const severityCounts = [
-      { label: labels.totalIssues, count: entries.length, severity: 'TOTAL' },
-      { label: this.severityLabel('HIGH', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'HIGH').length, severity: 'HIGH' },
-      { label: this.severityLabel('MEDIUM', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'MEDIUM').length, severity: 'MEDIUM' },
-      { label: this.severityLabel('LOW', localeConfig.locale), count: entries.filter((entry) => entry.severity === 'LOW').length, severity: 'LOW' },
+      { label: labels.totalIssues, count: entries.length, tone: 'total' },
+      {
+        label: this.severityLabel('HIGH', localeConfig.locale),
+        count: entries.filter((entry) => entry.severity === 'HIGH').length,
+        tone: 'high',
+      },
+      {
+        label: this.severityLabel('MEDIUM', localeConfig.locale),
+        count: entries.filter((entry) => entry.severity === 'MEDIUM').length,
+        tone: 'medium',
+      },
+      {
+        label: this.severityLabel('LOW', localeConfig.locale),
+        count: entries.filter((entry) => entry.severity === 'LOW').length,
+        tone: 'low',
+      },
     ];
     const criticalCount = entries.filter((entry) => entry.severity === 'CRITICAL').length;
     if (criticalCount > 0) {
       severityCounts.splice(1, 0, {
         label: this.severityLabel('CRITICAL', localeConfig.locale),
         count: criticalCount,
-        severity: 'CRITICAL',
+        tone: 'high',
       });
     }
 
@@ -824,287 +858,673 @@ export class ReportBuilderService {
     const subcategoryHeader = this.getSchemaLabel(schemaVersion, 'subcategory', localeConfig.locale, labels.subcategory);
     const pageUrlHeader = this.getSchemaLabel(schemaVersion, 'pageUrl', localeConfig.locale, labels.pageUrl);
     const evidenceHeader = this.getSchemaLabel(schemaVersion, 'evidence', localeConfig.locale, labels.media);
-    const reportDate = this.formatReportDate(report.publishedAt || report.updatedAt || report.createdAt, localeConfig.locale);
-    const recommendationBullets = this.buildRecommendationBullets(summary.recommendationsSummary, entries, localeConfig.locale);
-    const scopeServices = Array.from(new Set(entries.map((entry) => this.normalizeDisplayText(entry.serviceName)).filter(Boolean)));
-    const scopePages = entries.filter((entry) => entry.pageUrl).length;
-
-    const tableRows = entries
-      .map((entry, index) => {
-        const mediaItems = Array.isArray(entry.media) ? entry.media : [];
-        const mediaHtml = mediaItems.length
-          ? mediaItems
-              .map((media: any) => {
-                const actionLabel =
-                  media.mediaType === 'IMAGE'
-                    ? labels.viewImage
-                    : media.mediaType === 'VIDEO'
-                      ? labels.viewVideo
-                      : labels.viewEvidence;
-                return (
-                  '<div class="evidence evidence-link">' +
-                  '<a href="' + media.signedUrl + '" target="_blank" rel="noreferrer">' + this.escapeHtml(actionLabel) + '</a>' +
-                  '</div>'
-                );
-              })
-              .join('')
-          : '<span class="muted">-</span>';
-
-        const pageUrlHtml = entry.pageUrl
-          ? '<a href="' + this.escapeHtml(entry.pageUrl) + '" target="_blank" rel="noreferrer">' + this.escapeHtml(labels.clickHere) + '</a>'
-          : '<span class="muted">-</span>';
-
-        const serviceName = this.normalizeDisplayText(entry.serviceName);
-        const issueTitle = this.normalizeDisplayText(entry.issueTitle);
-        const issueDescription = this.normalizeDisplayText(entry.issueDescription);
-        const category = this.normalizeDisplayText(entry.category);
-        const subcategory = this.normalizeDisplayText(entry.subcategory);
-
-        return (
-          '<tr>' +
-          '<td>' + (index + 1) + '</td>' +
-          '<td>' + (this.escapeHtml(serviceName) || '<span class="muted">-</span>') + '</td>' +
-          '<td><strong>' + this.escapeHtml(issueTitle) + '</strong>' +
-          (issueDescription ? '<div class="cell-note">' + this.escapeHtml(issueDescription) + '</div>' : '') + '</td>' +
-          '<td><span class="severity severity-' + ((entry.severity || 'LOW').toLowerCase()) + '">' + this.escapeHtml(this.severityLabel(entry.severity, localeConfig.locale)) + '</span></td>' +
-          '<td>' + (this.escapeHtml(category) || '<span class="muted">-</span>') + '</td>' +
-          '<td>' + (this.escapeHtml(subcategory) || '<span class="muted">-</span>') + '</td>' +
-          '<td>' + pageUrlHtml + '</td>' +
-          '<td>' + mediaHtml + '</td>' +
-          '</tr>'
-        );
-      })
-      .join('');
+    const coverDescription =
+      this.escapeHtml(this.normalizeDisplayText(report.description)) || this.escapeHtml(labels.sampleDescription);
 
     const severityCards = severityCounts
       .map(
-        (item) =>
-          '<div class="stat-card stat-' + item.severity.toLowerCase() + '">' +
-          '<div class="summary-value">' + item.count + '</div>' +
-          '<div class="summary-label">' + this.escapeHtml(item.label) + '</div>' +
-          '</div>',
+        (item) => `
+          <article class="metric-card metric-card--${item.tone}">
+            <div class="metric-value">${item.count}</div>
+            <div class="metric-label">${this.escapeHtml(item.label)}</div>
+          </article>
+        `,
       )
       .join('');
 
-    const coverDescription =
-      this.escapeHtml(this.normalizeDisplayText(report.description)) || this.escapeHtml(labels.sampleDescription);
-    const introductionBody = this.normalizeDisplayText(summary.introduction) || this.normalizeDisplayText(report.description) || labels.sampleDescription;
     const categoryRows = categoryCounts.length
       ? categoryCounts
           .map((item) => {
             const width = entries.length ? Math.max(8, Math.round((item.count / entries.length) * 100)) : 0;
-            return (
-              '<div class="category-row">' +
-              '<div class="category-row-head">' +
-              '<span>' + this.escapeHtml(item.label || item.key) + '</span>' +
-              '<strong>' + item.count + '</strong>' +
-              '</div>' +
-              '<div class="category-bar-track"><div class="category-bar-fill" style="width:' + width + '%"></div></div>' +
-              '</div>'
-            );
+            return `
+              <div class="bar-list-item">
+                <div class="bar-list-head">
+                  <span>${this.escapeHtml(item.label || item.key)}</span>
+                  <strong>${item.count}</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:${width}%"></div>
+                </div>
+              </div>
+            `;
           })
           .join('')
-      : '<p class="muted">-</p>';
-    const recommendationsHtml = recommendationBullets
-      .map((item) => '<li>' + this.escapeHtml(item) + '</li>')
+      : `<div class="empty-block">${this.escapeHtml(labels.noEntries)}</div>`;
+
+    const tableRows = entries.length
+      ? entries
+          .map((entry, index) => {
+            const mediaItems = Array.isArray(entry.media) ? entry.media : [];
+            const mediaHtml = mediaItems.length
+              ? mediaItems
+                  .map((media: any) => {
+                    const actionLabel =
+                      media.mediaType === 'IMAGE'
+                        ? labels.viewImage
+                        : media.mediaType === 'VIDEO'
+                          ? labels.viewVideo
+                          : labels.viewEvidence;
+                    return `<a class="pill-button pill-button--ghost" href="${this.escapeHtml(media.signedUrl)}" target="_blank" rel="noreferrer">${this.escapeHtml(actionLabel)}</a>`;
+                  })
+                  .join('<div class="stack-gap"></div>')
+              : '<span class="muted">-</span>';
+
+            const pageUrlHtml = entry.pageUrl
+              ? `<a class="inline-link" href="${this.escapeHtml(entry.pageUrl)}" target="_blank" rel="noreferrer">${this.escapeHtml(labels.clickHere)}</a>`
+              : '<span class="muted">-</span>';
+
+            const serviceName = this.normalizeDisplayText(entry.serviceName);
+            const issueTitle = this.normalizeDisplayText(entry.issueTitle);
+            const issueDescription = this.normalizeDisplayText(entry.issueDescription);
+            const category = this.normalizeDisplayText(entry.category);
+            const subcategory = this.normalizeDisplayText(entry.subcategory);
+            const severityClass = (entry.severity || 'LOW').toLowerCase() === 'critical' ? 'high' : (entry.severity || 'LOW').toLowerCase();
+
+            return `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${this.escapeHtml(serviceName) || '<span class="muted">-</span>'}</td>
+                <td>
+                  <div class="issue-title">${this.escapeHtml(issueTitle) || '-'}</div>
+                  ${issueDescription ? `<div class="cell-note">${this.escapeHtml(issueDescription)}</div>` : ''}
+                </td>
+                <td><span class="severity-pill severity-pill--${severityClass}">${this.escapeHtml(this.severityLabel(entry.severity, localeConfig.locale))}</span></td>
+                <td>${this.escapeHtml(category) || '<span class="muted">-</span>'}</td>
+                <td>${this.escapeHtml(subcategory) || '<span class="muted">-</span>'}</td>
+                <td>${pageUrlHtml}</td>
+                <td><div class="media-stack">${mediaHtml}</div></td>
+              </tr>
+            `;
+          })
+          .join('')
+      : `<tr><td colspan="8" class="empty-table">${this.escapeHtml(labels.noEntries)}</td></tr>`;
+
+    const recommendationCards = recommendationBullets
+      .map(
+        (item, index) => `
+          <article class="recommendation-card">
+            <div class="recommendation-index">${String(index + 1).padStart(2, '0')}</div>
+            <div class="recommendation-copy">${this.escapeHtml(item)}</div>
+          </article>
+        `,
+      )
       .join('');
 
-    return (
-      '<!doctype html>' +
-      '<html lang="' + localeConfig.locale + '" dir="' + localeConfig.direction + '">' +
-      '<head>' +
-      '<meta charset="utf-8" />' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1" />' +
-      '<title>' + this.escapeHtml(this.normalizeDisplayText(report.title)) + '</title>' +
-      '<style>' +
-      ':root {--bg: #0b1020;--panel: #ffffff;--ink: #162033;--muted: #667085;--accent: #0f7cff;--accent-2: #00b3c7;--accent-soft: #eef6ff;--border: #dbe5f0;--cover: #08111f;--cover-ink: #f8fbff;}' +
-      '* { box-sizing: border-box; }' +
-      'body { margin: 0; font-family: "Noto Naskh Arabic", Tahoma, "Segoe UI", Arial, sans-serif; background: #eef3f8; color: var(--ink); }' +
-      '.document { padding: 0; }' +
-      '.pdf-page { position: relative; min-height: 178mm; padding: 14mm; page-break-after: always; background: var(--panel); }' +
-      '.pdf-page:last-child { page-break-after: auto; }' +
-      '.page-shell { height: 100%; border: 1px solid var(--border); border-radius: 22px; overflow: hidden; background: var(--panel); }' +
-      '.page-body { padding: 18px 22px 22px; }' +
-      '.page-header-strip { height: 10px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); }' +
-      '.eyebrow { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 10px; }' +
-      'h1, h2, h3, p { margin: 0; }' +
-      'h1 { font-size: 34px; margin-bottom: 10px; }' +
-      'h2 { font-size: 22px; margin-bottom: 10px; }' +
-      'h3 { font-size: 15px; }' +
-      'p { line-height: 1.8; }' +
-      '.meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }' +
-      '.meta-card { border: 1px solid var(--border); border-radius: 16px; padding: 14px; background: #fff; }' +
-      '.meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 6px; }' +
-      '.meta-value { font-size: 15px; font-weight: 700; }' +
-      '.cover-page { background: linear-gradient(140deg, #07111e 0%, #0c1a32 55%, #0f7cff 140%); color: var(--cover-ink); }' +
-      '.cover-page .page-shell, .closing-page .page-shell { background: transparent; border-color: rgba(255,255,255,0.12); }' +
-      '.cover-page .page-body, .closing-page .page-body { height: calc(178mm - 28px); display: flex; flex-direction: column; justify-content: space-between; }' +
-      '.cover-page .eyebrow, .closing-page .eyebrow { color: #9bd7ff; }' +
-      '.cover-page .meta-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); }' +
-      '.cover-page .meta-label { color: rgba(255,255,255,0.66); }' +
-      '.cover-page .meta-value { color: #fff; }' +
-      '.cover-brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }' +
-      '.cover-logo { max-height: 70px; max-width: 220px; object-fit: contain; background: rgba(255,255,255,0.95); padding: 10px 14px; border-radius: 18px; }' +
-      '.cover-accent { width: 110px; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #22d3ee, #38bdf8); margin: 18px 0; }' +
-      '.cover-summary { max-width: 70%; font-size: 15px; color: rgba(255,255,255,0.86); }' +
-      '.section-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; }' +
-      '.content-card { border: 1px solid var(--border); border-radius: 18px; padding: 18px; background: #fff; }' +
-      '.content-card.soft { background: var(--accent-soft); }' +
-      '.bullet-list { margin: 0; padding-' + (localeConfig.direction === 'rtl' ? 'right' : 'left') + ': 18px; }' +
-      '.bullet-list li { margin: 0 0 10px; line-height: 1.8; }' +
-      '.stats-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; }' +
-      '.stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }' +
-      '.stat-card { border-radius: 18px; border: 1px solid var(--border); background: #fff; padding: 18px; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }' +
-      '.stat-total { background: linear-gradient(180deg, #eff6ff, #ffffff); }' +
-      '.stat-critical { background: linear-gradient(180deg, #fff1f2, #ffffff); }' +
-      '.stat-high { background: linear-gradient(180deg, #fff1f2, #ffffff); }' +
-      '.stat-medium { background: linear-gradient(180deg, #fffbeb, #ffffff); }' +
-      '.stat-low { background: linear-gradient(180deg, #ecfdf3, #ffffff); }' +
-      '.summary-value { font-size: 32px; font-weight: 800; color: var(--ink); }' +
-      '.summary-label { margin-top: 8px; font-size: 13px; color: var(--muted); }' +
-      '.category-panel { border: 1px solid var(--border); border-radius: 18px; padding: 18px; background: #fff; }' +
-      '.category-row { margin-bottom: 14px; }' +
-      '.category-row:last-child { margin-bottom: 0; }' +
-      '.category-row-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-size: 13px; }' +
-      '.category-bar-track { height: 9px; border-radius: 999px; background: #e8eef5; overflow: hidden; }' +
-      '.category-bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); }' +
-      '.table-page .page-body { padding-bottom: 10px; }' +
-      'table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }' +
-      'thead { display: table-header-group; }' +
-      'tfoot { display: table-footer-group; }' +
-      'th, td { border: 1px solid #e5e7eb; padding: 12px; vertical-align: top; }' +
-      'th { background: #0d4f8b; color: #ffffff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }' +
-      'td { background: #ffffff; }' +
-      'tr { page-break-inside: avoid; }' +
-      '.cell-note { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; }' +
-      '.severity { display: inline-block; border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 11px; }' +
-      '.severity-critical, .severity-high { background: #fee2e2; color: #b91c1c; }' +
-      '.severity-medium { background: #fef3c7; color: #b45309; }' +
-      '.severity-low { background: #dcfce7; color: #166534; }' +
-      '.evidence { margin-bottom: 6px; }' +
-      '.evidence a { color: #2563eb; text-decoration: none; font-weight: 600; }' +
-      '.muted { color: var(--muted); }' +
-      '.footer-note { color: var(--muted); font-size: 11px; margin-top: 14px; }' +
-      '.narrative { white-space: pre-wrap; }' +
-      '.closing-page { background: linear-gradient(160deg, #07111e 0%, #123766 60%, #0f7cff 160%); color: var(--cover-ink); }' +
-      '.closing-page .page-body { align-items: center; text-align: center; }' +
-      '.closing-mark { width: 120px; height: 120px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin: 0 auto; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.14), rgba(255,255,255,0.02)); }' +
-      '.closing-page p { color: rgba(255,255,255,0.86); }' +
-      '@page { size: A4 landscape; margin: 14mm; }' +
-      '</style>' +
-      '</head>' +
-      '<body>' +
-      '<div class="document">' +
-      '<section class="pdf-page cover-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div>' +
-      '<div class="cover-brand">' +
-      '<div>' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.coverTag) + '</div>' +
-      '<h1>' + this.escapeHtml(this.normalizeDisplayText(report.title)) + '</h1>' +
-      '<div class="cover-accent"></div>' +
-      '<p class="cover-summary">' + coverDescription + '</p>' +
-      '</div>' +
-      (report.client.logo ? '<img class="cover-logo" src="' + this.escapeHtml(report.client.logo) + '" alt="' + this.escapeHtml(this.normalizeDisplayText(report.client.name)) + '" />' : '') +
-      '</div>' +
-      '</section>' +
-      '<div class="meta-grid">' +
-      '<div class="meta-card"><div class="meta-label">' + this.escapeHtml(labels.client) + '</div><div class="meta-value">' + this.escapeHtml(this.normalizeDisplayText(report.client.name)) + '</div></div>' +
-      '<div class="meta-card"><div class="meta-label">' + this.escapeHtml(labels.project) + '</div><div class="meta-value">' + this.escapeHtml(this.normalizeDisplayText(report.project.name)) + '</div></div>' +
-      '<div class="meta-card"><div class="meta-label">' + this.escapeHtml(labels.reportDate) + '</div><div class="meta-value">' + this.escapeHtml(reportDate) + '</div></div>' +
-      '<div class="meta-card"><div class="meta-label">' + this.escapeHtml(labels.createdBy) + '</div><div class="meta-value">' + this.escapeHtml(this.normalizeDisplayText(report.performedBy?.name || labels.performedBy)) + '</div></div>' +
-      '</div>' +
-      '</div>' +
-      '<div><p>' + this.escapeHtml(labels.generatedWith) + '</p></div>' +
-      '</div></div>' +
-      '</section>' +
+    const pageHeader = `
+      <div class="report-chrome">
+        <div class="report-chrome__title">${this.escapeHtml(reportTitle)}</div>
+        <div class="report-chrome__meta">${this.escapeHtml(reportDate)}</div>
+      </div>
+    `;
 
-      '<section class="pdf-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.introduction) + '</div>' +
-      '<h2>' + this.escapeHtml(labels.introduction) + '</h2>' +
-      '<div class="section-grid">' +
-      '<div class="content-card"><p class="narrative">' + this.escapeHtml(introductionBody).replace(/\n/g, '<br />') + '</p></div>' +
-      '<div class="content-card soft">' +
-      '<h3>' + this.escapeHtml(labels.scopeTitle) + '</h3>' +
-      '<p class="muted" style="margin-top:8px;">' + this.escapeHtml(labels.scopeBody) + '</p>' +
-      '<ul class="bullet-list" style="margin-top:12px;">' +
-      '<li>' + this.escapeHtml(scopeServices.length ? scopeServices.slice(0, 6).join(localeConfig.locale === 'ar' ? '، ' : ', ') : (localeConfig.locale === 'ar' ? 'لم يتم تحديد خدمات بعد' : 'No services listed yet')) + '</li>' +
-      '<li>' + this.escapeHtml((localeConfig.locale === 'ar' ? 'عدد الصفحات/المسارات الموثقة: ' : 'Documented pages/routes: ') + scopePages) + '</li>' +
-      '</ul>' +
-      '<div style="height:14px"></div>' +
-      '<h3>' + this.escapeHtml(labels.methodologyTitle) + '</h3>' +
-      '<p class="muted" style="margin-top:8px;">' + this.escapeHtml(labels.methodologyBody) + '</p>' +
-      '<div style="height:14px"></div>' +
-      '<h3>' + this.escapeHtml(labels.standardsTitle) + '</h3>' +
-      '<p class="muted" style="margin-top:8px;">' + this.escapeHtml(labels.standardsBody) + '</p>' +
-      '</div>' +
-      '</div>' +
-      '</div></div>' +
-      '</section>' +
+    return `
+      <!doctype html>
+      <html lang="${localeConfig.locale}" dir="${localeConfig.direction}">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${this.escapeHtml(reportTitle)}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+          :root {
+            --primary: #1E88E5;
+            --accent: #00ACC1;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-alt: #F4F7FB;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B7280;
+            --border-soft: #E5EDF5;
+            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
+            --radius-lg: 12px;
+            --severity-high: #E53935;
+            --severity-high-bg: rgba(229, 57, 53, 0.12);
+            --severity-medium: #FB8C00;
+            --severity-medium-bg: rgba(251, 140, 0, 0.14);
+            --severity-low: #43A047;
+            --severity-low-bg: rgba(67, 160, 71, 0.14);
+          }
+          * { box-sizing: border-box; }
+          html, body { margin: 0; padding: 0; background: var(--background); color: var(--text-primary); }
+          body { font-family: 'Cairo', sans-serif; font-weight: 400; }
+          @page { size: A4 landscape; margin: 0; }
+          .document { background: var(--background); }
+          .page {
+            width: 100%;
+            min-height: 210mm;
+            padding: 40px;
+            background: var(--background);
+            page-break-after: always;
+          }
+          .page:last-child { page-break-after: auto; }
+          .page-shell {
+            min-height: calc(210mm - 80px);
+            border-radius: 28px;
+            background: var(--surface);
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            position: relative;
+          }
+          .page-shell--cover,
+          .page-shell--closing {
+            background: linear-gradient(135deg, #0F4C81 0%, #1E88E5 52%, #00ACC1 100%);
+            color: #FFFFFF;
+          }
+          .page-shell__body { padding: 40px; }
+          .page-shell--cover .page-shell__body,
+          .page-shell--closing .page-shell__body {
+            min-height: calc(210mm - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+          }
+          .report-chrome {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 40px;
+            background: linear-gradient(90deg, rgba(30,136,229,0.12), rgba(0,172,193,0.08));
+            border-bottom: 1px solid rgba(30, 41, 59, 0.06);
+            font-size: 13px;
+          }
+          .report-chrome__title { font-weight: 700; color: var(--text-primary); }
+          .report-chrome__meta { color: var(--text-secondary); }
+          .page-shell--cover .report-chrome,
+          .page-shell--closing .report-chrome {
+            background: rgba(255,255,255,0.08);
+            border-bottom-color: rgba(255,255,255,0.14);
+          }
+          .page-shell--cover .report-chrome__title,
+          .page-shell--cover .report-chrome__meta,
+          .page-shell--closing .report-chrome__title,
+          .page-shell--closing .report-chrome__meta {
+            color: #FFFFFF;
+          }
+          .eyebrow {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+          }
+          .page-shell--cover .eyebrow,
+          .page-shell--closing .eyebrow { color: rgba(255,255,255,0.78); }
+          h1, h2, h3, p { margin: 0; }
+          h1 { font-size: 36px; font-weight: 700; line-height: 1.2; }
+          h2 { font-size: 22px; font-weight: 700; line-height: 1.25; }
+          h3 { font-size: 16px; font-weight: 700; line-height: 1.35; }
+          p { font-size: 13px; line-height: 1.9; color: var(--text-secondary); }
+          .grid-12 {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 24px;
+          }
+          .span-5 { grid-column: span 5; }
+          .span-7 { grid-column: span 7; }
+          .card {
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 24px;
+          }
+          .card--soft { background: var(--surface-alt); }
+          .cover-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+          }
+          .brand-logo {
+            max-width: 180px;
+            max-height: 72px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.96);
+            padding: 10px 14px;
+          }
+          .cover-hero {
+            padding-top: 28px;
+            max-width: 70%;
+          }
+          .cover-line {
+            width: 120px;
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.28));
+            margin: 18px 0 24px;
+          }
+          .cover-summary {
+            max-width: 760px;
+            font-size: 14px;
+            line-height: 1.9;
+            color: rgba(255,255,255,0.88);
+          }
+          .cover-meta {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+          }
+          .meta-card {
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.08);
+          }
+          .meta-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.68);
+            margin-bottom: 8px;
+          }
+          .meta-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #FFFFFF;
+          }
+          .section-stack > * + * { margin-top: 24px; }
+          .split-copy { columns: 2; column-gap: 24px; }
+          .split-copy p { break-inside: avoid; }
+          .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+          }
+          .metric-card {
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+            min-height: 118px;
+          }
+          .metric-card--total { background: linear-gradient(180deg, #E9F4FF 0%, #FFFFFF 100%); }
+          .metric-card--high { background: linear-gradient(180deg, #FFF1F0 0%, #FFFFFF 100%); }
+          .metric-card--medium { background: linear-gradient(180deg, #FFF7E8 0%, #FFFFFF 100%); }
+          .metric-card--low { background: linear-gradient(180deg, #EFFAF1 0%, #FFFFFF 100%); }
+          .metric-value { font-size: 36px; font-weight: 700; line-height: 1; margin-bottom: 10px; color: var(--text-primary); }
+          .metric-label { font-size: 13px; color: var(--text-secondary); }
+          .bar-list-item + .bar-list-item { margin-top: 16px; }
+          .bar-list-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+          }
+          .bar-track {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: #E9EEF5;
+            overflow: hidden;
+          }
+          .bar-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+          }
+          .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+          }
+          .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #E9F4FF;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+          }
+          .table-wrap {
+            margin-top: 24px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-soft);
+            background: #FFFFFF;
+            box-shadow: var(--shadow-soft);
+          }
+          table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            font-size: 12px;
+          }
+          thead { display: table-header-group; }
+          thead th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(90deg, rgba(30,136,229,0.96), rgba(0,172,193,0.92));
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: ${isRtl ? 'right' : 'left'};
+            padding: 16px 14px;
+          }
+          tbody tr { page-break-inside: avoid; }
+          tbody tr:nth-child(odd) td { background: #FBFCFE; }
+          tbody td {
+            padding: 14px;
+            vertical-align: top;
+            color: var(--text-primary);
+            border-bottom: 1px solid #EDF2F7;
+            word-break: break-word;
+          }
+          tbody tr:last-child td { border-bottom: none; }
+          .issue-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.6;
+          }
+          .cell-note {
+            margin-top: 8px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+          }
+          .severity-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 76px;
+          }
+          .severity-pill--critical,
+          .severity-pill--high {
+            background: var(--severity-high-bg);
+            color: var(--severity-high);
+          }
+          .severity-pill--medium {
+            background: var(--severity-medium-bg);
+            color: var(--severity-medium);
+          }
+          .severity-pill--low {
+            background: var(--severity-low-bg);
+            color: var(--severity-low);
+          }
+          .inline-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+          }
+          .pill-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+          }
+          .pill-button--ghost {
+            background: rgba(30, 136, 229, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(30, 136, 229, 0.18);
+          }
+          .media-stack { display: flex; flex-direction: column; gap: 8px; }
+          .stack-gap { height: 0; }
+          .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+          }
+          .recommendation-card {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            background: var(--surface-alt);
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+          }
+          .recommendation-index {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+          }
+          .recommendation-copy {
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-primary);
+          }
+          .empty-block,
+          .empty-table {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 24px;
+          }
+          .muted { color: var(--text-secondary); }
+          .narrative { white-space: pre-wrap; }
+          .footer-note {
+            margin-top: 18px;
+            font-size: 11px;
+            color: var(--text-secondary);
+          }
+          .closing-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 18px;
+            min-height: calc(210mm - 200px);
+          }
+          .closing-mark {
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #FFFFFF;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+          }
+          .closing-copy,
+          .cover-footnote { color: rgba(255,255,255,0.86); }
+          .closing-tagline {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.92);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="document">
+          <section class="page">
+            <div class="page-shell page-shell--cover">
+              ${pageHeader}
+              <div class="page-shell__body">
+                <div>
+                  <div class="cover-top">
+                    <div class="cover-hero">
+                      <div class="eyebrow">${this.escapeHtml(labels.coverTag)}</div>
+                      <h1>${this.escapeHtml(reportTitle)}</h1>
+                      <div class="cover-line"></div>
+                      <p class="cover-summary">${coverDescription}</p>
+                    </div>
+                    ${logoUrl ? `<img class="brand-logo" src="${this.escapeHtml(logoUrl)}" alt="${this.escapeHtml(clientName)}" />` : ''}
+                  </div>
+                </div>
+                <div class="cover-meta">
+                  <div class="meta-card">
+                    <div class="meta-label">${this.escapeHtml(labels.client)}</div>
+                    <div class="meta-value">${this.escapeHtml(clientName)}</div>
+                  </div>
+                  <div class="meta-card">
+                    <div class="meta-label">${this.escapeHtml(labels.project)}</div>
+                    <div class="meta-value">${this.escapeHtml(projectName)}</div>
+                  </div>
+                  <div class="meta-card">
+                    <div class="meta-label">${this.escapeHtml(labels.reportDate)}</div>
+                    <div class="meta-value">${this.escapeHtml(reportDate)}</div>
+                  </div>
+                  <div class="meta-card">
+                    <div class="meta-label">${this.escapeHtml(labels.createdBy)}</div>
+                    <div class="meta-value">${this.escapeHtml(auditorName)}</div>
+                  </div>
+                </div>
+                <div class="cover-footnote">${this.escapeHtml(labels.generatedWith)}</div>
+              </div>
+            </div>
+          </section>
 
-      '<section class="pdf-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.statisticsTitle) + '</div>' +
-      '<h2>' + this.escapeHtml(labels.statisticsTitle) + '</h2>' +
-      '<div class="stats-layout">' +
-      '<div>' +
-      '<div class="stats-grid">' + severityCards + '</div>' +
-      (statisticsNarrative
-        ? '<div class="content-card" style="margin-top:16px;"><h3>' + this.escapeHtml(labels.executiveSummary) + '</h3><p class="narrative muted" style="margin-top:10px;">' + this.escapeHtml(statisticsNarrative).replace(/\n/g, '<br />') + '</p></div>'
-        : '') +
-      '</div>' +
-      '<div class="category-panel">' +
-      '<h3>' + this.escapeHtml(labels.categoryBreakdown) + '</h3>' +
-      '<div style="margin-top:16px;">' + categoryRows + '</div>' +
-      '</div>' +
-      '</div>' +
-      '</div></div>' +
-      '</section>' +
+          <section class="page">
+            <div class="page-shell">
+              ${pageHeader}
+              <div class="page-shell__body section-stack">
+                <div>
+                  <div class="eyebrow">${this.escapeHtml(labels.introduction)}</div>
+                  <h2>${this.escapeHtml(labels.introduction)}</h2>
+                </div>
+                <div class="grid-12">
+                  <div class="span-7 card">
+                    <div class="split-copy">
+                      <p class="narrative">${this.escapeHtml(introductionBody).replace(/\n/g, '<br />')}</p>
+                    </div>
+                  </div>
+                  <div class="span-5 section-stack">
+                    <div class="card card--soft">
+                      <h3>${this.escapeHtml(labels.scopeTitle)}</h3>
+                      <p style="margin-top:12px;">${this.escapeHtml(labels.scopeBody)}</p>
+                      <div class="pill-row">
+                        <span class="tag-pill">${this.escapeHtml(scopeServicesText)}</span>
+                        <span class="tag-pill">${this.escapeHtml(`${localeConfig.locale === 'ar' ? '\u0639\u062f\u062f \u0627\u0644\u0635\u0641\u062d\u0627\u062a/\u0627\u0644\u0645\u0633\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0648\u062b\u0642\u0629' : 'Documented pages/routes'}: ${scopePages}`)}</span>
+                      </div>
+                    </div>
+                    <div class="card">
+                      <h3>${this.escapeHtml(labels.methodologyTitle)}</h3>
+                      <p style="margin-top:12px;">${this.escapeHtml(labels.methodologyBody)}</p>
+                    </div>
+                    <div class="card">
+                      <h3>${this.escapeHtml(labels.standardsTitle)}</h3>
+                      <p style="margin-top:12px;">${this.escapeHtml(labels.standardsBody)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-      '<section class="pdf-page table-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.findingsTag) + '</div>' +
-      '<h2>' + this.escapeHtml(labels.findingsTitle) + '</h2>' +
-      '<table><thead><tr>' +
-      '<th style="width: 5%">ID</th>' +
-      '<th style="width: 12%">' + this.escapeHtml(serviceHeader) + '</th>' +
-      '<th style="width: 22%">' + this.escapeHtml(issueTitleHeader) + '</th>' +
-      '<th style="width: 9%">' + this.escapeHtml(severityHeader) + '</th>' +
-      '<th style="width: 12%">' + this.escapeHtml(categoryHeader) + '</th>' +
-      '<th style="width: 15%">' + this.escapeHtml(subcategoryHeader) + '</th>' +
-      '<th style="width: 10%">' + this.escapeHtml(pageUrlHeader) + '</th>' +
-      '<th style="width: 15%">' + this.escapeHtml(evidenceHeader) + '</th>' +
-      '</tr></thead><tbody>' +
-      (tableRows || '<tr><td colspan="8" class="muted">' + this.escapeHtml(labels.noEntries) + '</td></tr>') +
-      '</tbody></table>' +
-      '<p class="footer-note">' + this.escapeHtml(labels.footerNote) + '</p>' +
-      '</div></div>' +
-      '</section>' +
+          <section class="page">
+            <div class="page-shell">
+              ${pageHeader}
+              <div class="page-shell__body section-stack">
+                <div>
+                  <div class="eyebrow">${this.escapeHtml(labels.statisticsTitle)}</div>
+                  <h2>${this.escapeHtml(labels.statisticsTitle)}</h2>
+                </div>
+                <div class="grid-12">
+                  <div class="span-7 section-stack">
+                    <div class="metric-grid">${severityCards}</div>
+                    ${
+                      statisticsNarrative
+                        ? `
+                          <div class="card">
+                            <h3>${this.escapeHtml(labels.executiveSummary)}</h3>
+                            <p class="narrative" style="margin-top:12px;">${this.escapeHtml(statisticsNarrative).replace(/\n/g, '<br />')}</p>
+                          </div>
+                        `
+                        : ''
+                    }
+                  </div>
+                  <div class="span-5 card">
+                    <h3>${this.escapeHtml(labels.categoryBreakdown)}</h3>
+                    <div style="margin-top:20px;">${categoryRows}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-      '<section class="pdf-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.recommendationSummary) + '</div>' +
-      '<h2>' + this.escapeHtml(labels.recommendationsTitle) + '</h2>' +
-      '<div class="content-card soft">' +
-      '<ul class="bullet-list">' + recommendationsHtml + '</ul>' +
-      '</div>' +
-      '</div></div>' +
-      '</section>' +
+          <section class="page">
+            <div class="page-shell">
+              ${pageHeader}
+              <div class="page-shell__body">
+                <div class="eyebrow">${this.escapeHtml(labels.findingsTag)}</div>
+                <h2>${this.escapeHtml(labels.findingsTitle)}</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width:5%">#</th>
+                        <th style="width:12%">${this.escapeHtml(serviceHeader)}</th>
+                        <th style="width:23%">${this.escapeHtml(issueTitleHeader)}</th>
+                        <th style="width:10%">${this.escapeHtml(severityHeader)}</th>
+                        <th style="width:12%">${this.escapeHtml(categoryHeader)}</th>
+                        <th style="width:14%">${this.escapeHtml(subcategoryHeader)}</th>
+                        <th style="width:10%">${this.escapeHtml(pageUrlHeader)}</th>
+                        <th style="width:14%">${this.escapeHtml(evidenceHeader)}</th>
+                      </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                  </table>
+                </div>
+                <div class="footer-note">${this.escapeHtml(labels.footerNote)}</div>
+              </div>
+            </div>
+          </section>
 
-      '<section class="pdf-page closing-page">' +
-      '<div class="page-shell"><div class="page-header-strip"></div><div class="page-body">' +
-      '<div class="eyebrow">' + this.escapeHtml(labels.closingTag) + '</div>' +
-      '<div class="closing-mark">A360</div>' +
-      '<h2>' + this.escapeHtml(labels.closingTitle) + '</h2>' +
-      '<p>' + this.escapeHtml(labels.closingThanks) + '</p>' +
-      '<p>' + this.escapeHtml(labels.closingBody) + '</p>' +
-      '</section>' +
-      '</div></div>' +
-      '</div>' +
-      '</body>' +
-      '</html>'
-    );
+          <section class="page">
+            <div class="page-shell">
+              ${pageHeader}
+              <div class="page-shell__body section-stack">
+                <div>
+                  <div class="eyebrow">${this.escapeHtml(labels.recommendationSummary)}</div>
+                  <h2>${this.escapeHtml(labels.recommendationsTitle)}</h2>
+                </div>
+                <div class="recommendation-grid">${recommendationCards}</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page">
+            <div class="page-shell page-shell--closing">
+              ${pageHeader}
+              <div class="page-shell__body">
+                <div class="closing-center">
+                  <div class="eyebrow">${this.escapeHtml(labels.closingTag)}</div>
+                  <div class="closing-mark">A360</div>
+                  <h2>${this.escapeHtml(labels.closingTitle)}</h2>
+                  <p class="closing-copy">${this.escapeHtml(labels.closingThanks)}</p>
+                  <div class="closing-tagline">${this.escapeHtml(labels.closingBody)}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </body>
+      </html>
+    `;
   }
 
   private async renderProjectReportHtml(reportId: string, user: UserWithRoles, localeOverride?: string) {
