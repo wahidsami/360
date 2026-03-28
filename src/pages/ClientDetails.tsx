@@ -15,6 +15,7 @@ export const ClientDetails: React.FC = () => {
     const { t } = useTranslation();
     const { clientId } = useParams();
     const navigate = useNavigate();
+    const { can } = useAuth();
 
     const [client, setClient] = useState<Client | undefined>();
     const [projects, setProjects] = useState<Project[]>([]);
@@ -171,7 +172,6 @@ export const ClientDetails: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-slate-500">Loading client data...</div>;
     if (!client) return <div className="p-10 text-center text-slate-500">Client not found.</div>;
 
-    const { can } = useAuth();
     const tabs = [
         { id: 'overview', label: t('overview') },
         { id: 'projects', label: t('projects') },
