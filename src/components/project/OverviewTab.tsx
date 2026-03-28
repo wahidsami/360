@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Project, Milestone, Task, ProjectReadiness, ReadinessAction, Role } from '@/types';
 import { GlassCard, Badge, Button } from '../ui/UIComponents';
-import { Activity, Flag, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { Activity, Flag, ArrowRight, CheckCircle, AlertCircle, PlusCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -232,7 +232,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                 <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
                     {canSee('tasks') && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
-                            <span className="text-emerald-500">➕</span> Add Task
+                            <PlusCircle className="w-4 h-4 text-emerald-500" /> {t('add_task')}
                         </button>
                     )}
                     {canSee('updates') && (
@@ -779,3 +779,4 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
         </div>
     );
 };
+

@@ -319,9 +319,11 @@ export const ClientDetails: React.FC = () => {
                     <div className="space-y-4">
                         <div className="flex justify-between">
                             <h3 className="text-lg font-semibold text-white">Active Engagements</h3>
-                            <Button size="sm" onClick={() => navigate(`/app/projects/new?clientId=${client.id}`)}>
-                                <Folder className="w-4 h-4 mr-2" /> {t('new_project')}
-                            </Button>
+                            <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                                <Button size="sm" onClick={() => navigate(`/app/projects/new?clientId=${client.id}`)}>
+                                    <Folder className="w-4 h-4 mr-2" /> {t('new_project')}
+                                </Button>
+                            </PermissionGate>
                         </div>
                         <div className="grid gap-4">
                             {projects.map(p => (
