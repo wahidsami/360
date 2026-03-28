@@ -23,7 +23,6 @@ enum GlobalRole {
 enum ClientStatus {
   ACTIVE
   INACTIVE
-  LEAD
   ARCHIVED
 }
 

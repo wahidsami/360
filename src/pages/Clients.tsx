@@ -113,7 +113,6 @@ export const ClientList: React.FC = () => {
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">{t('all_statuses')}</option>
                 <option value="active">{t('active')}</option>
-                <option value="lead">{t('lead')}</option>
                 <option value="inactive">{t('inactive')}</option>
                 <option value="archived">{t('archived')}</option>
               </Select>
@@ -175,7 +174,7 @@ export const ClientList: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-6">
-                      <Badge variant={client.status === 'active' ? 'success' : client.status === 'lead' ? 'info' : 'neutral'}>
+                      <Badge variant={client.status === 'active' ? 'success' : 'neutral'}>
                         {t(client.status).toUpperCase()}
                       </Badge>
                     </td>

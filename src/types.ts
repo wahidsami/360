@@ -48,7 +48,7 @@ export interface User {
   twoFactorEnabled?: boolean;
 }
 
-export type ClientStatus = 'active' | 'inactive' | 'lead' | 'archived';
+export type ClientStatus = 'active' | 'inactive' | 'archived';
 
 export interface ClientBillingProfile {
   currency: string;

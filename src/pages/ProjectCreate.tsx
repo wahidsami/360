@@ -152,10 +152,10 @@ export const ProjectCreate: React.FC = () => {
             <div>
               <Label>{t('status')}</Label>
               <Select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-                <option value="planning">Planning</option>
-                <option value="in_progress">In Progress</option>
-                <option value="testing">Testing</option>
-                <option value="deployed">Deployed</option>
+                <option value="planning">{t('planning')}</option>
+                <option value="in_progress">{t('in_progress')}</option>
+                <option value="testing">{t('testing')}</option>
+                <option value="deployed">{t('deployed')}</option>
               </Select>
             </div>
             <div>

@@ -109,7 +109,6 @@ export const ClientCreate: React.FC = () => {
               <Label htmlFor="status">{t('status')}</Label>
               <Select name="status" id="status" value={formData.status} onChange={handleChange}>
                 <option value="active">Active</option>
-                <option value="lead">Lead</option>
                 <option value="inactive">Inactive</option>
               </Select>
             </div>

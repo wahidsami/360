@@ -54,6 +54,9 @@ export const ProjectsList: React.FC = () => {
     setFilteredProjects(result);
   };
 
+  const projectStatusLabel = (status: Project['status']) =>
+    t(`status_${status}`, { defaultValue: t(status, { defaultValue: status.replace(/_/g, ' ') }) });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -85,6 +88,8 @@ export const ProjectsList: React.FC = () => {
             <option value="in_progress">{t('in_progress')}</option>
             <option value="testing">{t('testing')}</option>
             <option value="deployed">{t('deployed')}</option>
+            <option value="on_hold">{t('on_hold')}</option>
+            <option value="completed">{t('completed')}</option>
             <option value="maintenance">{t('maintenance')}</option>
             <option value="archived">{t('archived')}</option>
           </Select>
@@ -122,7 +127,7 @@ export const ProjectsList: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-6 text-slate-400">{clients[p.clientId] || t('unknown')}</td>
-                    <td className="p-6"><Badge variant="neutral">{t(p.status)}</Badge></td>
+                    <td className="p-6"><Badge variant="neutral">{projectStatusLabel(p.status)}</Badge></td>
                     <td className="p-6">
                       <Badge variant={p.health === 'good' ? 'success' : p.health === 'at-risk' ? 'warning' : 'danger'}>
                         {t(p.health).toUpperCase()}

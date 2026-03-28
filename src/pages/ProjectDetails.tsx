@@ -76,6 +76,9 @@ export const ProjectDetails: React.FC = () => {
 
   // --- Role-Based Tab Selection ---
   const visibleTabs = resolvedWorkspace.visibleTabs;
+  const projectStatusLabel = project
+    ? t(`status_${project.status}`, { defaultValue: t(project.status, { defaultValue: project.status.replace(/_/g, ' ') }) })
+    : '';
 
   // --- Safe Role-Based Default Tab Selection ---
   useEffect(() => {
@@ -477,7 +480,7 @@ export const ProjectDetails: React.FC = () => {
           </Button>
           */}
           <Badge variant={project.status === 'in_progress' ? 'info' : project.status === 'deployed' ? 'success' : 'neutral'}>
-            {t(project.status).toUpperCase()}
+            {projectStatusLabel.toUpperCase()}
           </Badge>
           <PermissionGate permission={Permission.MANAGE_PROJECTS}>
             {![Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER].includes(user?.role as Role) && (
