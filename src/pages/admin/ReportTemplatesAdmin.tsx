@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { CheckCircle2, Eye, FileText, Plus, Sparkles, Users } from 'lucide-react';
 import { Badge, Button, GlassCard, Input, Label, Modal, Select, TextArea } from '@/components/ui/UIComponents';
@@ -13,7 +14,9 @@ import {
   buildAccessibilityTaxonomySelection,
   countEnabledAccessibilityCategories,
   createDefaultAccessibilityTaxonomySelection,
+  getAccessibilityCategoryLabel,
   getAccessibilityOutputLocale,
+  getAccessibilitySubcategoryLabel,
 } from '@/features/accessibility/accessibilityAuditConfig';
 import { Client, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateVersion, Role } from '@/types';
 
@@ -83,10 +86,222 @@ const buildAccessibilityVersionPayload = (
 });
 
 const sortVersions = (versions: ReportBuilderTemplateVersion[]) => [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
-const prettyDate = (value?: string | null) => (value ? new Date(value).toLocaleString() : 'Not set');
+const prettyDate = (value?: string | null, locale = 'en') => (value ? new Date(value).toLocaleString(locale) : locale === 'ar' ? 'غير محدد' : 'Not set');
 
 export const ReportTemplatesAdmin: React.FC = () => {
+  const { i18n } = useTranslation();
   const { user } = useAuth();
+  const isArabic = i18n.language === 'ar';
+  const uiLocale: AccessibilityAuditOutputLocale = isArabic ? 'ar' : 'en';
+  const copy = React.useMemo(() => (isArabic ? {
+    pageTitle: 'لوحة الإدارة / أداة إمكانية الوصول',
+    pageDescription: 'إدارة أداة إمكانية الوصول الثابتة، ونشر الإصدارات غير القابلة للتعديل، ومعاينة شكل التصدير النهائي، وتعيينها للعملاء.',
+    users: 'المستخدمون',
+    roles: 'الأدوار',
+    createTool: 'إنشاء أداة إمكانية الوصول',
+    loadingAdmin: 'جاري تحميل إعدادات أداة إمكانية الوصول...',
+    toolTitle: 'أداة إمكانية الوصول',
+    toolSummary: 'أداة واحدة ثابتة لإمكانية الوصول وإصداراتها.',
+    assignmentsCount: 'تعيينات',
+    noToolYet: 'لا توجد أداة إمكانية وصول بعد. أنشئها لبدء مسار التدقيق.',
+    toolDetails: 'تفاصيل الأداة',
+    accessibility: 'إمكانية الوصول',
+    toolName: 'اسم الأداة',
+    internalCode: 'الرمز الداخلي',
+    internalCodeHelp: 'مفتاح داخلي ثابت لمسار أداة إمكانية الوصول.',
+    toolDescription: 'وصف الأداة',
+    saveToolDetails: 'حفظ تفاصيل الأداة',
+    newVersion: 'إصدار جديد',
+    findingFields: 'حقول الملاحظات',
+    enabledCategories: 'التصنيفات المفعلة',
+    publishedVersions: 'الإصدارات المنشورة',
+    clientAssignments: 'تعيينات العملاء',
+    versionLibrary: 'مكتبة الإصدارات',
+    version: 'الإصدار',
+    published: 'منشور',
+    draft: 'مسودة',
+    created: 'تم الإنشاء',
+    publishedAt: 'تم النشر',
+    loading: 'جاري التحميل...',
+    preview: 'معاينة',
+    publish: 'نشر',
+    fixedDefinition: 'التعريف الثابت لإمكانية الوصول',
+    includedFields: 'حقول الملاحظات المضمنة',
+    exportAiBehavior: 'سلوك التصدير والذكاء الاصطناعي',
+    exportRule1: 'تصدير PDF أفقي',
+    exportRule2: 'صفحة غلاف، مقدمة بالذكاء الاصطناعي، إحصاءات، جدول الملاحظات، ملخص التوصيات، وصفحة ختامية',
+    exportRule3: 'يُستخدم الذكاء الاصطناعي للملخصات فقط وليس لمنطق اكتشاف الملاحظة',
+    exportRule4: 'تصنيفات وتصنيفات فرعية ثابتة من تعريف المنتج',
+    clientAssignment: 'تعيين العميل',
+    client: 'العميل',
+    selectClient: 'اختر العميل',
+    publishedVersion: 'الإصدار المنشور',
+    noPublishedVersionYet: 'لا يوجد إصدار منشور بعد',
+    selectVersion: 'اختر الإصدار',
+    makeDefault: 'تعيين كافتراضي',
+    keepActive: 'الإبقاء عليه مفعلاً',
+    assignTool: 'تعيين الأداة',
+    assignmentsForClient: 'تعيينات العميل',
+    selectClientHint: 'اختر عميلاً لعرض التعيينات.',
+    active: 'نشط',
+    inactive: 'غير نشط',
+    default: 'افتراضي',
+    assigned: 'تم التعيين',
+    disable: 'تعطيل',
+    enable: 'تفعيل',
+    markDefault: 'تعيين كافتراضي',
+    noAssignments: 'لا توجد تعيينات لهذه الأداة لدى العميل المحدد حتى الآن.',
+    createToolPrompt: 'أنشئ أداة إمكانية الوصول لبدء مسار التدقيق المبسط.',
+    previewTitle: 'معاينة أداة إمكانية الوصول',
+    previewDescription: 'تستخدم هذه المعاينة بيانات تجريبية من إصدار الأداة المحدد حتى يتمكن مسؤولو النظام من مراجعة شكل التصدير النهائي قبل تعيينه للعملاء.',
+    createToolTitle: 'إنشاء أداة إمكانية الوصول',
+    toolNameInput: 'اسم الأداة',
+    toolCodeInput: 'رمز الأداة',
+    description: 'الوصف',
+    createToolHelp: 'يؤدي هذا إلى إنشاء أداة إمكانية الوصول الرئيسية فقط. أما بنية الملاحظات الثابتة وإعدادات التصدير وسلوك الذكاء الاصطناعي وتصنيف الفئات فتوجد داخل إصدارات الأداة.',
+    cancel: 'إلغاء',
+    create: 'إنشاء الأداة',
+    createVersionTitle: 'إنشاء إصدار لأداة إمكانية الوصول',
+    createVersionHelp: 'يؤدي هذا إلى إنشاء إصدار تدقيق إمكانية الوصول الثابت المحدد في مواصفات المنتج. يمكنك تحديد لغة الإخراج الافتراضية واختيار الفئات والتصنيفات الفرعية المتاحة داخل هذا الإصدار.',
+    defaultLanguage: 'لغة المعاينة / التصدير الافتراضية',
+    defaultLanguageHelp: 'يمكن للمدققين تبديل لغة المعاينة لاحقاً، لكن هذا يحدد لغة الإخراج الافتراضية لإصدار الأداة.',
+    englishLtr: 'الإنجليزية / LTR',
+    arabicRtl: 'العربية / RTL',
+    exportIncludes: 'يتضمن التصدير صفحة غلاف، ومقدمة بالذكاء الاصطناعي، وإحصاءات، وجدول الملاحظات، وملخص التوصيات، وصفحة ختامية.',
+    findingsSupport: 'تدعم الملاحظات أدلة الصور/الفيديو، ورابط الصفحة الدقيق، ومستويات الشدة الثابتة HIGH / MEDIUM / LOW.',
+    categoryAvailability: 'توفر التصنيفات',
+    categoryAvailabilityHelp: 'عطّل الفئات أو التصنيفات الفرعية لإخفائها من هذا الإصدار دون حذفها من المكتبة الرئيسية.',
+    includeAll: 'تضمين الكل',
+    subcategoriesEnabled: 'تصنيفات فرعية مفعلة',
+    failedLoad: 'فشل تحميل إدارة أداة إمكانية الوصول.',
+    failedLoadAssignments: 'فشل تحميل تعيينات العملاء.',
+    createdToolSuccess: 'تم إنشاء أداة إمكانية الوصول.',
+    createdToolError: 'فشل إنشاء أداة إمكانية الوصول.',
+    emptyMainCategoryError: 'فعّل تصنيفاً رئيسياً واحداً على الأقل قبل إنشاء إصدار الأداة.',
+    emptySubcategoryError: 'يحتاج كل تصنيف رئيسي مفعّل إلى تصنيف فرعي واحد مفعّل على الأقل.',
+    draftedVersionSuccess: 'تم إنشاء مسودة إصدار الأداة.',
+    draftedVersionError: 'فشل إنشاء إصدار الأداة.',
+    publishedVersionSuccess: 'تم نشر إصدار الأداة.',
+    publishedVersionError: 'فشل نشر إصدار الأداة.',
+    failedSamplePreview: 'فشل تحميل معاينة النموذج المعروضة.',
+    updatedToolSuccess: 'تم تحديث تفاصيل أداة إمكانية الوصول.',
+    updatedToolError: 'فشل تحديث تفاصيل أداة إمكانية الوصول.',
+    assignedToolSuccess: 'تم تعيين أداة إمكانية الوصول للعميل.',
+    assignedToolError: 'فشل تعيين أداة إمكانية الوصول.',
+    assignmentUpdated: 'تم تحديث التعيين.',
+    assignmentUpdateError: 'فشل تحديث التعيين.',
+    createVersion: 'إنشاء الإصدار',
+    restrictedTitle: 'أداة إمكانية الوصول',
+    restrictedBody: 'هذه المنطقة متاحة فقط لدور SUPER_ADMIN. يظل نشر إصدارات الأداة وتعيينها للعملاء مركزياً هنا.',
+  } : {
+    pageTitle: 'Admin / Accessibility Tool',
+    pageDescription: 'Manage the fixed accessibility tool, publish immutable versions, preview the exported layout, and assign it to clients.',
+    users: 'Users',
+    roles: 'Roles',
+    createTool: 'Create Accessibility Tool',
+    loadingAdmin: 'Loading accessibility tool administration...',
+    toolTitle: 'Accessibility Tool',
+    toolSummary: 'One fixed accessibility tool and its versions.',
+    assignmentsCount: 'assignments',
+    noToolYet: 'No accessibility tool yet. Create it to start the audit flow.',
+    toolDetails: 'Tool Details',
+    accessibility: 'Accessibility',
+    toolName: 'Tool Name',
+    internalCode: 'Internal Code',
+    internalCodeHelp: 'Fixed internal key for the accessibility tool flow.',
+    toolDescription: 'Tool Description',
+    saveToolDetails: 'Save Tool Details',
+    newVersion: 'New Version',
+    findingFields: 'Finding Fields',
+    enabledCategories: 'Enabled Categories',
+    publishedVersions: 'Published Versions',
+    clientAssignments: 'Client Assignments',
+    versionLibrary: 'Version Library',
+    version: 'Version',
+    published: 'Published',
+    draft: 'Draft',
+    created: 'Created',
+    publishedAt: 'Published',
+    loading: 'Loading...',
+    preview: 'Preview',
+    publish: 'Publish',
+    fixedDefinition: 'Fixed Accessibility Definition',
+    includedFields: 'Included Finding Fields',
+    exportAiBehavior: 'Export and AI Behavior',
+    exportRule1: 'Landscape PDF export',
+    exportRule2: 'Cover page, AI introduction, statistics, findings table, recommendations summary, and closing page',
+    exportRule3: 'AI used only for summaries, not for finding logic',
+    exportRule4: 'Static categories and subcategories from product definition',
+    clientAssignment: 'Client Assignment',
+    client: 'Client',
+    selectClient: 'Select client',
+    publishedVersion: 'Published Version',
+    noPublishedVersionYet: 'No published version yet',
+    selectVersion: 'Select version',
+    makeDefault: 'Make default',
+    keepActive: 'Keep active',
+    assignTool: 'Assign Tool',
+    assignmentsForClient: 'Assignments for Client',
+    selectClientHint: 'Select a client to inspect assignments.',
+    active: 'Active',
+    inactive: 'Inactive',
+    default: 'Default',
+    assigned: 'Assigned',
+    disable: 'Disable',
+    enable: 'Enable',
+    markDefault: 'Mark Default',
+    noAssignments: 'No assignments for this tool on the selected client yet.',
+    createToolPrompt: 'Create the accessibility tool to begin the simplified audit flow.',
+    previewTitle: 'Accessibility Tool Preview',
+    previewDescription: 'This mock preview uses sample data from the selected tool version so admin users can review the final export layout before client assignment.',
+    createToolTitle: 'Create Accessibility Tool',
+    toolNameInput: 'Tool name',
+    toolCodeInput: 'Tool code',
+    description: 'Description',
+    createToolHelp: 'This creates the master accessibility tool only. The fixed finding structure, export settings, AI behavior, and category taxonomy live in the tool versions.',
+    cancel: 'Cancel',
+    create: 'Create Tool',
+    createVersionTitle: 'Create Accessibility Tool Version',
+    createVersionHelp: 'This creates the fixed Accessibility Audit version defined by the product spec. You can set the default output language and decide which categories and subcategories stay available inside this tool version.',
+    defaultLanguage: 'Default Preview / Export Language',
+    defaultLanguageHelp: 'Auditors can still switch preview language later, but this controls the default output for the tool version.',
+    englishLtr: 'English / LTR',
+    arabicRtl: 'Arabic / RTL',
+    exportIncludes: 'Export includes cover page, AI introduction, AI statistics, findings table, recommendations summary, and closing page.',
+    findingsSupport: 'Findings support image/video evidence, exact page URL, and fixed HIGH / MEDIUM / LOW severity.',
+    categoryAvailability: 'Category Availability',
+    categoryAvailabilityHelp: 'Disable categories or subcategories to keep them out of this tool version without deleting them from the master library.',
+    includeAll: 'Include All',
+    subcategoriesEnabled: 'subcategories enabled',
+    failedLoad: 'Failed to load accessibility tool administration.',
+    failedLoadAssignments: 'Failed to load client assignments.',
+    createdToolSuccess: 'Accessibility tool created.',
+    createdToolError: 'Failed to create accessibility tool.',
+    emptyMainCategoryError: 'Enable at least one main category before creating a tool version.',
+    emptySubcategoryError: 'Each enabled main category needs at least one enabled subcategory.',
+    draftedVersionSuccess: 'Tool version drafted.',
+    draftedVersionError: 'Failed to create tool version.',
+    publishedVersionSuccess: 'Tool version published.',
+    publishedVersionError: 'Failed to publish tool version.',
+    failedSamplePreview: 'Failed to load rendered sample preview.',
+    updatedToolSuccess: 'Accessibility tool details updated.',
+    updatedToolError: 'Failed to update accessibility tool details.',
+    assignedToolSuccess: 'Accessibility tool assigned to client.',
+    assignedToolError: 'Failed to assign accessibility tool.',
+    assignmentUpdated: 'Assignment updated.',
+    assignmentUpdateError: 'Failed to update assignment.',
+    createVersion: 'Create Version',
+    restrictedTitle: 'Accessibility Tool',
+    restrictedBody: 'This area is restricted to SUPER_ADMIN. Tool version publishing and client assignment stay centralized here.',
+  }), [isArabic]);
+  const fixedEntryFieldLabels = React.useMemo(() => ACCESSIBILITY_ENTRY_FIELD_DEFINITIONS.map((field) => (isArabic ? field.labelAr : field.labelEn)), [isArabic]);
+  const statusLabel = React.useCallback((status: string) => {
+    if (!isArabic) return status;
+    if (status === 'ACTIVE') return 'نشط';
+    if (status === 'ARCHIVED') return 'مؤرشف';
+    if (status === 'DRAFT') return 'مسودة';
+    return status;
+  }, [isArabic]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [templates, setTemplates] = React.useState<ReportBuilderTemplate[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
@@ -170,7 +385,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
         }
       } catch (error) {
         console.error(error);
-        toast.error('Failed to load accessibility tool administration.');
+        toast.error(copy.failedLoad);
       } finally {
         setIsLoading(false);
       }
@@ -208,16 +423,16 @@ export const ReportTemplatesAdmin: React.FC = () => {
   React.useEffect(() => {
     loadAssignments(selectedClientId).catch((error) => {
       console.error(error);
-      toast.error('Failed to load client assignments.');
+      toast.error(copy.failedLoadAssignments);
     });
   }, [loadAssignments, selectedClientId]);
 
   if (user?.role !== Role.SUPER_ADMIN) {
     return (
       <GlassCard className="max-w-3xl">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Accessibility Tool</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{copy.restrictedTitle}</h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          This area is restricted to <code>SUPER_ADMIN</code>. Tool version publishing and client assignment stay centralized here.
+          {copy.restrictedBody}
         </p>
       </GlassCard>
     );
@@ -232,10 +447,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
       });
       await loadTemplates(created.id);
       setTemplateModalOpen(false);
-      toast.success('Accessibility tool created.');
+      toast.success(copy.createdToolSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create accessibility tool.');
+      toast.error(copy.createdToolError);
     }
   };
 
@@ -244,7 +459,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
     if (!selectedTemplate) return;
     const taxonomyPayload = buildAccessibilityTaxonomyPayload(versionTaxonomySelection);
     if (taxonomyPayload.accessibilityCategories.length === 0) {
-      toast.error('Enable at least one main category before creating a tool version.');
+      toast.error(copy.emptyMainCategoryError);
       return;
     }
 
@@ -253,7 +468,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
     );
 
     if (hasEmptyCategory) {
-      toast.error('Each enabled main category needs at least one enabled subcategory.');
+      toast.error(copy.emptySubcategoryError);
       return;
     }
 
@@ -264,10 +479,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
       );
       await loadTemplates(selectedTemplate.id);
       setVersionModalOpen(false);
-      toast.success('Tool version drafted.');
+      toast.success(copy.draftedVersionSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create tool version.');
+      toast.error(copy.draftedVersionError);
     }
   };
 
@@ -276,10 +491,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
     try {
       await api.reportBuilderAdmin.publishTemplateVersion(selectedTemplate.id, versionId);
       await loadTemplates(selectedTemplate.id);
-      toast.success('Tool version published.');
+      toast.success(copy.publishedVersionSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to publish tool version.');
+      toast.error(copy.publishedVersionError);
     }
   };
 
@@ -298,7 +513,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
       setSamplePreviewOpen(true);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load rendered sample preview.');
+      toast.error(copy.failedSamplePreview);
     } finally {
       setSamplePreviewLoadingId('');
     }
@@ -314,10 +529,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
         description: toolDetailsForm.description.trim(),
       });
       await loadTemplates(selectedTemplate.id);
-      toast.success('Accessibility tool details updated.');
+      toast.success(copy.updatedToolSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update accessibility tool details.');
+      toast.error(copy.updatedToolError);
     }
   };
 
@@ -352,10 +567,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
         isActive: assignmentForm.isActive,
       });
       await loadAssignments(selectedClientId);
-      toast.success('Accessibility tool assigned to client.');
+      toast.success(copy.assignedToolSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to assign accessibility tool.');
+      toast.error(copy.assignedToolError);
     }
   };
 
@@ -363,10 +578,10 @@ export const ReportTemplatesAdmin: React.FC = () => {
     try {
       await api.reportBuilderAdmin.updateClientAssignment(assignment.id, payload);
       await loadAssignments(selectedClientId);
-      toast.success('Assignment updated.');
+      toast.success(copy.assignmentUpdated);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update assignment.');
+      toast.error(copy.assignmentUpdateError);
     }
   };
 
@@ -374,17 +589,17 @@ export const ReportTemplatesAdmin: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">Admin / Accessibility Tool</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">{copy.pageTitle}</h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Manage the fixed accessibility tool, publish immutable versions, preview the exported layout, and assign it to clients.
+            {copy.pageDescription}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <NavLink to="/app/admin/users"><Button variant="outline" size="sm">Users</Button></NavLink>
-          <NavLink to="/app/admin/roles"><Button variant="outline" size="sm">Roles</Button></NavLink>
+          <NavLink to="/app/admin/users"><Button variant="outline" size="sm">{copy.users}</Button></NavLink>
+          <NavLink to="/app/admin/roles"><Button variant="outline" size="sm">{copy.roles}</Button></NavLink>
           {templates.length === 0 && (
             <Button size="sm" onClick={() => setTemplateModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Create Accessibility Tool
+              <Plus className="mr-2 h-4 w-4" /> {copy.createTool}
             </Button>
           )}
         </div>
@@ -392,14 +607,14 @@ export const ReportTemplatesAdmin: React.FC = () => {
 
       {isLoading ? (
         <GlassCard>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Loading accessibility tool administration...</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{copy.loadingAdmin}</p>
         </GlassCard>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <GlassCard className="p-4">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Accessibility Tool</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">One fixed accessibility tool and its versions.</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.toolTitle}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{copy.toolSummary}</p>
             </div>
             <div className="space-y-3">
               {templates.map((template) => {
@@ -412,19 +627,19 @@ export const ReportTemplatesAdmin: React.FC = () => {
                         <p className="font-semibold text-slate-900 dark:text-white">{template.name}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{template.code}</p>
                       </div>
-                      <Badge variant={template.status === 'ACTIVE' ? 'success' : template.status === 'ARCHIVED' ? 'warning' : 'neutral'}>{template.status}</Badge>
+                      <Badge variant={template.status === 'ACTIVE' ? 'success' : template.status === 'ARCHIVED' ? 'warning' : 'neutral'}>{statusLabel(template.status)}</Badge>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                      <Badge variant="info">ACCESSIBILITY</Badge>
+                      <Badge variant="info">{copy.accessibility}</Badge>
                       <Badge variant="neutral">v{latestVersion?.versionNumber ?? 0}</Badge>
-                      <Badge variant="neutral">{template._count?.assignments ?? 0} assignments</Badge>
+                      <Badge variant="neutral">{template._count?.assignments ?? 0} {copy.assignmentsCount}</Badge>
                     </div>
                   </button>
                 );
               })}
               {templates.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  No accessibility tool yet. Create it to start the audit flow.
+                  {copy.noToolYet}
                 </div>
               )}
             </div>
@@ -437,54 +652,54 @@ export const ReportTemplatesAdmin: React.FC = () => {
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <form className="flex-1 space-y-4" onSubmit={handleUpdateToolDetails}>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Tool Details</h2>
-                        <Badge variant={selectedTemplate.status === 'ACTIVE' ? 'success' : selectedTemplate.status === 'ARCHIVED' ? 'warning' : 'neutral'}>{selectedTemplate.status}</Badge>
-                        <Badge variant="info">Accessibility</Badge>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{copy.toolDetails}</h2>
+                        <Badge variant={selectedTemplate.status === 'ACTIVE' ? 'success' : selectedTemplate.status === 'ARCHIVED' ? 'warning' : 'neutral'}>{statusLabel(selectedTemplate.status)}</Badge>
+                        <Badge variant="info">{copy.accessibility}</Badge>
                       </div>
                       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
                         <Input
-                          label="Tool Name"
+                          label={copy.toolName}
                           value={toolDetailsForm.name}
                           onChange={(event) => setToolDetailsForm((current) => ({ ...current, name: event.target.value }))}
                           required
                         />
                         <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Internal Code</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.internalCode}</p>
                           <p className="mt-2 font-semibold text-slate-900 dark:text-white">{selectedTemplate.code}</p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Fixed internal key for the accessibility tool flow.</p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{copy.internalCodeHelp}</p>
                         </div>
                       </div>
                       <TextArea
-                        label="Tool Description"
+                        label={copy.toolDescription}
                         value={toolDetailsForm.description}
                         onChange={(event) => setToolDetailsForm((current) => ({ ...current, description: event.target.value }))}
                       />
                       <div className="flex justify-end">
-                        <Button type="submit" variant="outline">Save Tool Details</Button>
+                        <Button type="submit" variant="outline">{copy.saveToolDetails}</Button>
                       </div>
                     </form>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" onClick={() => setVersionModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> New Version
+                        <Plus className="mr-2 h-4 w-4" /> {copy.newVersion}
                       </Button>
                     </div>
                   </div>
 
                   <div className="mt-6 grid gap-4 md:grid-cols-4">
                     <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Finding Fields</p>
-                      <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{FIXED_ENTRY_FIELDS.length}</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.findingFields}</p>
+                      <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{fixedEntryFieldLabels.length}</p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Enabled Categories</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.enabledCategories}</p>
                       <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{countEnabledAccessibilityCategories(activeVersionTaxonomySelection)}</p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Published Versions</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.publishedVersions}</p>
                       <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{publishedVersions.length}</p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Client Assignments</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.clientAssignments}</p>
                       <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{selectedTemplate._count?.assignments ?? 0}</p>
                     </div>
                   </div>
@@ -495,7 +710,7 @@ export const ReportTemplatesAdmin: React.FC = () => {
                     <GlassCard>
                       <div className="mb-4 flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5 text-cyan-500" />
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Version Library</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.versionLibrary}</h3>
                       </div>
                       <div className="space-y-4">
                         {sortedVersions.map((version) => (
@@ -503,18 +718,18 @@ export const ReportTemplatesAdmin: React.FC = () => {
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Version {version.versionNumber}</h4>
-                                  <Badge variant={version.isPublished ? 'success' : 'neutral'}>{version.isPublished ? 'Published' : 'Draft'}</Badge>
+                                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.version} {version.versionNumber}</h4>
+                                  <Badge variant={version.isPublished ? 'success' : 'neutral'}>{version.isPublished ? copy.published : copy.draft}</Badge>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Created {prettyDate(version.createdAt)} / Published {prettyDate(version.publishedAt)}</p>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{copy.created} {prettyDate(version.createdAt, uiLocale)} / {copy.publishedAt} {prettyDate(version.publishedAt, uiLocale)}</p>
                               </div>
                               <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleOpenSamplePreview(version.id, samplePreviewLocale)} disabled={samplePreviewLoadingId === version.id}>
-                                  <Eye className="mr-2 h-4 w-4" /> {samplePreviewLoadingId === version.id ? 'Loading...' : 'Preview'}
+                                  <Eye className="mr-2 h-4 w-4" /> {samplePreviewLoadingId === version.id ? copy.loading : copy.preview}
                                 </Button>
                                 {!version.isPublished && (
                                   <Button size="sm" onClick={() => handlePublishVersion(version.id)}>
-                                    Publish
+                                    {copy.publish}
                                   </Button>
                                 )}
                               </div>
@@ -527,24 +742,24 @@ export const ReportTemplatesAdmin: React.FC = () => {
                     <GlassCard>
                       <div className="mb-4 flex items-center gap-2">
                         <FileText className="h-5 w-5 text-cyan-500" />
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Fixed Accessibility Definition</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.fixedDefinition}</h3>
                       </div>
                       <div className="grid gap-4 xl:grid-cols-2">
                         <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">Included Finding Fields</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{copy.includedFields}</p>
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {FIXED_ENTRY_FIELDS.map((field) => <Badge key={field} variant="info">{field}</Badge>)}
+                            {fixedEntryFieldLabels.map((field) => <Badge key={field} variant="info">{field}</Badge>)}
                           </div>
                         </div>
                         <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            <Sparkles className="h-4 w-4 text-cyan-500" /> Export and AI Behavior
+                            <Sparkles className="h-4 w-4 text-cyan-500" /> {copy.exportAiBehavior}
                           </div>
                           <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                            <li>Landscape PDF export</li>
-                            <li>Cover page, AI introduction, statistics, findings table, recommendations summary, and closing page</li>
-                            <li>AI used only for summaries, not for finding logic</li>
-                            <li>Static categories and subcategories from product definition</li>
+                            <li>{copy.exportRule1}</li>
+                            <li>{copy.exportRule2}</li>
+                            <li>{copy.exportRule3}</li>
+                            <li>{copy.exportRule4}</li>
                           </ul>
                         </div>
                       </div>
@@ -555,58 +770,58 @@ export const ReportTemplatesAdmin: React.FC = () => {
                     <GlassCard>
                       <div className="mb-4 flex items-center gap-2">
                         <Users className="h-5 w-5 text-cyan-500" />
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Client Assignment</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.clientAssignment}</h3>
                       </div>
                       <form className="space-y-4" onSubmit={handleAssignTemplate}>
                         <div>
-                          <Label>Client</Label>
+                          <Label>{copy.client}</Label>
                           <Select value={selectedClientId} onChange={(event) => setSelectedClientId(event.target.value)}>
-                            <option value="">Select client</option>
+                            <option value="">{copy.selectClient}</option>
                             {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
                           </Select>
                         </div>
                         <div>
-                          <Label>Published Version</Label>
+                          <Label>{copy.publishedVersion}</Label>
                           <Select value={assignmentForm.templateVersionId} disabled={publishedVersions.length === 0} onChange={(event) => setAssignmentForm((current) => ({ ...current, templateVersionId: event.target.value }))}>
-                            <option value="">{publishedVersions.length === 0 ? 'No published version yet' : 'Select version'}</option>
-                            {publishedVersions.map((version) => <option key={version.id} value={version.id}>v{version.versionNumber} (Published)</option>)}
+                            <option value="">{publishedVersions.length === 0 ? copy.noPublishedVersionYet : copy.selectVersion}</option>
+                            {publishedVersions.map((version) => <option key={version.id} value={version.id}>v{version.versionNumber} ({copy.published})</option>)}
                           </Select>
                         </div>
                         <div className="grid gap-3 md:grid-cols-2">
                           <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-300">
                             <input type="checkbox" checked={assignmentForm.isDefault} onChange={(event) => setAssignmentForm((current) => ({ ...current, isDefault: event.target.checked }))} />
-                            Make default
+                            {copy.makeDefault}
                           </label>
                           <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-300">
                             <input type="checkbox" checked={assignmentForm.isActive} onChange={(event) => setAssignmentForm((current) => ({ ...current, isActive: event.target.checked }))} />
-                            Keep active
+                            {copy.keepActive}
                           </label>
                         </div>
-                        <Button type="submit" className="w-full" disabled={!selectedClientId || !assignmentForm.templateVersionId}>Assign Tool</Button>
+                        <Button type="submit" className="w-full" disabled={!selectedClientId || !assignmentForm.templateVersionId}>{copy.assignTool}</Button>
                       </form>
                     </GlassCard>
 
                     <GlassCard>
                       <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Assignments for Client</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{clients.find((client) => client.id === selectedClientId)?.name || 'Select a client to inspect assignments.'}</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.assignmentsForClient}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{clients.find((client) => client.id === selectedClientId)?.name || copy.selectClientHint}</p>
                       </div>
                       <div className="space-y-3">
                         {filteredAssignments.map((assignment) => (
                           <div key={assignment.id} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium text-slate-900 dark:text-white">{assignment.template.name} / v{assignment.templateVersion.versionNumber}</p>
-                              <Badge variant={assignment.isActive ? 'success' : 'warning'}>{assignment.isActive ? 'Active' : 'Inactive'}</Badge>
-                              {assignment.isDefault && <Badge variant="info">Default</Badge>}
+                              <Badge variant={assignment.isActive ? 'success' : 'warning'}>{assignment.isActive ? copy.active : copy.inactive}</Badge>
+                              {assignment.isDefault && <Badge variant="info">{copy.default}</Badge>}
                             </div>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Assigned {prettyDate(assignment.assignedAt)}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{copy.assigned} {prettyDate(assignment.assignedAt, uiLocale)}</p>
                             <div className="mt-3 flex flex-wrap gap-2">
-                              <Button type="button" variant="ghost" size="sm" onClick={() => handleToggleAssignment(assignment, { isActive: !assignment.isActive })}>{assignment.isActive ? 'Disable' : 'Enable'}</Button>
-                              {!assignment.isDefault && <Button type="button" variant="outline" size="sm" onClick={() => handleToggleAssignment(assignment, { isDefault: true })}>Mark Default</Button>}
+                              <Button type="button" variant="ghost" size="sm" onClick={() => handleToggleAssignment(assignment, { isActive: !assignment.isActive })}>{assignment.isActive ? copy.disable : copy.enable}</Button>
+                              {!assignment.isDefault && <Button type="button" variant="outline" size="sm" onClick={() => handleToggleAssignment(assignment, { isDefault: true })}>{copy.markDefault}</Button>}
                             </div>
                           </div>
                         ))}
-                        {selectedClientId && filteredAssignments.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No assignments for this tool on the selected client yet.</p>}
+                        {selectedClientId && filteredAssignments.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{copy.noAssignments}</p>}
                       </div>
                     </GlassCard>
                   </div>
@@ -614,18 +829,18 @@ export const ReportTemplatesAdmin: React.FC = () => {
               </>
             ) : (
               <GlassCard>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Create the accessibility tool to begin the simplified audit flow.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{copy.createToolPrompt}</p>
               </GlassCard>
             )}
           </div>
         </div>
       )}
 
-      <Modal isOpen={samplePreviewOpen} onClose={() => setSamplePreviewOpen(false)} title="Accessibility Tool Preview" maxWidth="max-w-6xl">
+      <Modal isOpen={samplePreviewOpen} onClose={() => setSamplePreviewOpen(false)} title={copy.previewTitle} maxWidth="max-w-6xl">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              This mock preview uses sample data from the selected tool version so admin users can review the final export layout before client assignment.
+              {copy.previewDescription}
             </p>
             <div className="flex gap-2">
               <Button
@@ -656,67 +871,67 @@ export const ReportTemplatesAdmin: React.FC = () => {
               </Button>
             </div>
           </div>
-          <iframe title="Accessibility Tool Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={samplePreviewHtml} />
+          <iframe title={copy.previewTitle} className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={samplePreviewHtml} />
         </div>
       </Modal>
 
-      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title="Create Accessibility Tool" maxWidth="max-w-2xl">
+      <Modal isOpen={templateModalOpen} onClose={() => setTemplateModalOpen(false)} title={copy.createToolTitle} maxWidth="max-w-2xl">
         <form className="space-y-4" onSubmit={handleCreateTemplate}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Tool name" value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
-            <Input label="Tool code" value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required disabled />
+            <Input label={copy.toolNameInput} value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} placeholder="Accessibility Audit" required />
+            <Input label={copy.toolCodeInput} value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="accessibility-audit" required disabled />
           </div>
-          <TextArea label="Description" value={templateForm.description} onChange={(event) => setTemplateForm((current) => ({ ...current, description: event.target.value }))} />
+          <TextArea label={copy.description} value={templateForm.description} onChange={(event) => setTemplateForm((current) => ({ ...current, description: event.target.value }))} />
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-            This creates the master accessibility tool only. The fixed finding structure, export settings, AI behavior, and category taxonomy live in the tool versions.
+            {copy.createToolHelp}
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setTemplateModalOpen(false)}>Cancel</Button>
-            <Button type="submit">Create Tool</Button>
+            <Button type="button" variant="ghost" onClick={() => setTemplateModalOpen(false)}>{copy.cancel}</Button>
+            <Button type="submit">{copy.create}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} title="Create Accessibility Tool Version" maxWidth="max-w-3xl">
+      <Modal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} title={copy.createVersionTitle} maxWidth="max-w-3xl">
         <form className="space-y-4" onSubmit={handleCreateVersion}>
           <div className="rounded-2xl border border-cyan-200/60 bg-cyan-50 p-4 text-sm text-slate-700 dark:border-cyan-500/20 dark:bg-cyan-500/5 dark:text-slate-300">
-            This creates the fixed Accessibility Audit version defined by the product spec. You can set the default output language and decide which categories and subcategories stay available inside this tool version.
+            {copy.createVersionHelp}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Included Finding Fields</h4>
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{copy.includedFields}</h4>
               <div className="mt-3 flex flex-wrap gap-2">
-                {FIXED_ENTRY_FIELDS.map((field) => <Badge key={field} variant="info">{field}</Badge>)}
+                {fixedEntryFieldLabels.map((field) => <Badge key={field} variant="info">{field}</Badge>)}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-              <Label>Default Preview / Export Language</Label>
+              <Label>{copy.defaultLanguage}</Label>
               <Select value={versionLocale} onChange={(event) => setVersionLocale(event.target.value as AccessibilityAuditOutputLocale)}>
-                <option value="en">English / LTR</option>
-                <option value="ar">Arabic / RTL</option>
+                <option value="en">{copy.englishLtr}</option>
+                <option value="ar">{copy.arabicRtl}</option>
               </Select>
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                Auditors can still switch preview language later, but this controls the default output for the tool version.
+                {copy.defaultLanguageHelp}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
-              Export includes cover page, AI introduction, AI statistics, findings table, recommendations summary, and closing page.
+              {copy.exportIncludes}
             </div>
             <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
-              Findings support image/video evidence, exact page URL, and fixed HIGH / MEDIUM / LOW severity.
+              {copy.findingsSupport}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Category Availability</h4>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{copy.categoryAvailability}</h4>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Disable categories or subcategories to keep them out of this tool version without deleting them from the master library.
+                  {copy.categoryAvailabilityHelp}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button type="button" size="sm" variant="outline" onClick={() => setVersionTaxonomySelection(createDefaultAccessibilityTaxonomySelection())}>
-                  Include All
+                  {copy.includeAll}
                 </Button>
               </div>
             </div>
@@ -728,11 +943,11 @@ export const ReportTemplatesAdmin: React.FC = () => {
                 const categoryEnabled = enabledCount > 0;
 
                 return (
-                  <div key={category} className={`rounded-2xl border p-4 ${categoryEnabled ? 'border-cyan-400/30 bg-cyan-500/5' : 'border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40'}`}>
+                  <div key={getAccessibilityCategoryLabel(category, uiLocale)} className={`rounded-2xl border p-4 ${categoryEnabled ? 'border-cyan-400/30 bg-cyan-500/5' : 'border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40'}`}>
                     <label className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">{category}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{enabledCount} subcategories enabled</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">{getAccessibilityCategoryLabel(category, uiLocale)}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{enabledCount} {copy.subcategoriesEnabled}</p>
                       </div>
                       <input
                         type="checkbox"
@@ -744,14 +959,14 @@ export const ReportTemplatesAdmin: React.FC = () => {
 
                     <div className="mt-3 grid gap-2">
                       {Object.keys(categorySelection).map((subcategory) => (
-                        <label key={subcategory} className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm ${categorySelection[subcategory] ? 'border-cyan-400/30 bg-cyan-500/5 text-slate-800 dark:text-slate-100' : 'border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400'}`}>
+                        <label key={getAccessibilitySubcategoryLabel(category as any, subcategory, uiLocale)} className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm ${categorySelection[subcategory] ? 'border-cyan-400/30 bg-cyan-500/5 text-slate-800 dark:text-slate-100' : 'border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400'}`}>
                           <input
                             type="checkbox"
                             checked={categorySelection[subcategory]}
                             onChange={(event) => toggleSubcategorySelection(category, subcategory, event.target.checked)}
                             className="h-4 w-4 rounded border-slate-300"
                           />
-                          <span>{subcategory}</span>
+                          <span>{getAccessibilitySubcategoryLabel(category as any, subcategory, uiLocale)}</span>
                         </label>
                       ))}
                     </div>
@@ -761,8 +976,8 @@ export const ReportTemplatesAdmin: React.FC = () => {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setVersionModalOpen(false)}>Cancel</Button>
-            <Button type="submit">Create Version</Button>
+            <Button type="button" variant="ghost" onClick={() => setVersionModalOpen(false)}>{copy.cancel}</Button>
+            <Button type="submit">{copy.createVersion}</Button>
           </div>
         </form>
       </Modal>
