@@ -89,11 +89,15 @@ export class ClientsService {
     }
 
     async findOne(id: string, user: UserWithRoles) {
+        const clientScope = ScopeUtils.clientScope(user, 'id');
         const client = await this.prisma.client.findFirst({
             where: {
-                id,
-                ...ScopeUtils.clientScope(user, 'id'),
-                deletedAt: null
+                orgId: user.orgId,
+                deletedAt: null,
+                AND: [
+                    { id },
+                    clientScope.id ? { id: clientScope.id } : {},
+                ],
             },
             include: {
                 projects: true,
