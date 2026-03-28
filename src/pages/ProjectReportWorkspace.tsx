@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Bot, Download, Eye, FileImage, FileText, Pencil, Plus, Search, Trash2, Upload, Video } from 'lucide-react';
+import { ArrowLeft, Bot, Download, Eye, FileImage, FileText, Pencil, Plus, Search, Sparkles, Trash2, Upload, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, Modal, Select, TextArea } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
@@ -235,13 +235,20 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [previewHtml, setPreviewHtml] = React.useState('');
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewLocale, setPreviewLocale] = React.useState<AccessibilityAuditOutputLocale>('en');
+  const [exportingPdf, setExportingPdf] = React.useState(false);
+  const [generatingAi, setGeneratingAi] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
   const [categoryFilter, setCategoryFilter] = React.useState<'ALL' | AccessibilityAuditMainCategory>('ALL');
 
   const canEditEntries = hasPermission(Permission.EDIT_PROJECT_REPORT_ENTRIES);
   const canEditReport = hasPermission(Permission.EDIT_PROJECT_REPORTS);
+  const canGenerateExports = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
+  const exportPdfLabel = isArabic ? 'تصدير PDF' : 'Export PDF';
+  const exportInProgressLabel = isArabic ? 'جارٍ تصدير PDF...' : 'Exporting PDF...';
+  const generateAiLabel = isArabic ? 'إنشاء ملخص ذكي' : 'Generate AI Summary';
+  const generatingAiLabel = isArabic ? 'إنشاء النصوص الذكية...' : 'Generating AI narrative...';
 
   const taxonomy = React.useMemo(() => getVersionTaxonomy(report?.templateVersion), [report?.templateVersion]);
   const availableCategories = React.useMemo(
@@ -411,15 +418,37 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handlePrintPreview = () => {
-    const iframe = document.getElementById('project-report-preview-frame') as HTMLIFrameElement | null;
-    const frameWindow = iframe?.contentWindow;
-    if (!frameWindow) {
-      toast.error('Preview frame is not ready yet.');
-      return;
+  const handleGenerateAiSummary = async () => {
+    if (!reportId) return;
+    setGeneratingAi(true);
+    try {
+      await api.reportBuilderProjects.generateAiSummary(reportId);
+      await loadData();
+      toast.success(isArabic ? 'تم إنشاء النصوص الذكية للتقرير.' : 'AI report narrative generated.');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || (isArabic ? 'تعذر إنشاء النصوص الذكية للتقرير.' : 'Failed to generate AI report narrative.'));
+    } finally {
+      setGeneratingAi(false);
     }
-    frameWindow.focus();
-    frameWindow.print();
+  };
+
+  const handleExportPdf = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
+    if (!reportId) return;
+    setExportingPdf(true);
+    try {
+      const result = await api.reportBuilderProjects.exportPdf(reportId, locale);
+      await loadData();
+      if (result.downloadUrl) {
+        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
+      }
+      toast.success(isArabic ? 'تم إنشاء ملف PDF بنجاح.' : 'PDF exported successfully.');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || (isArabic ? 'تعذر تصدير ملف PDF.' : 'Failed to export PDF.'));
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const handleDownloadLatestExport = async () => {
@@ -481,6 +510,16 @@ export const ProjectReportWorkspace: React.FC = () => {
           <Button variant="outline" onClick={handlePreview} disabled={previewLoading}>
             <Eye className="mr-2 h-4 w-4" /> {previewLoading ? copy.loadingPreview : copy.previewReport}
           </Button>
+          {canGenerateExports && (
+            <>
+              <Button variant="outline" onClick={handleGenerateAiSummary} disabled={generatingAi || entries.length === 0}>
+                <Sparkles className="mr-2 h-4 w-4" /> {generatingAi ? generatingAiLabel : generateAiLabel}
+              </Button>
+              <Button onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
+                <Download className="mr-2 h-4 w-4" /> {exportingPdf ? exportInProgressLabel : exportPdfLabel}
+              </Button>
+            </>
+          )}
           {(report.exports?.length || 0) > 0 && (
             <Button variant="outline" onClick={handleDownloadLatestExport}>
               <Download className="mr-2 h-4 w-4" /> {copy.downloadLatestExport}
@@ -510,7 +549,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.low}</p><p className="mt-2 text-3xl font-bold text-emerald-500">{summaryCounts.low}</p></GlassCard>
       </div>
 
-      {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.recommendationsSummary ? (
+      {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.recommendationsSummary ? (
         <GlassCard>
           <div className="mb-4 flex items-center gap-2">
             <Bot className="h-5 w-5 text-cyan-500" />
@@ -523,10 +562,10 @@ export const ProjectReportWorkspace: React.FC = () => {
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).introduction}</p>
               </div>
             )}
-            {(report.summaryJson as any)?.executiveSummary && (
+            {((report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary) && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.executiveSummary}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).executiveSummary}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).statisticsSummary || (report.summaryJson as any).executiveSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.recommendationsSummary && (
@@ -754,8 +793,8 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Button type="button" size="sm" variant={previewLocale === 'ar' ? 'primary' : 'outline'} onClick={() => handlePreview('ar')}>
                 {copy.arabic}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={handlePrintPreview}>
-                {copy.printPdf}
+              <Button type="button" size="sm" variant="outline" onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
+                {exportingPdf ? exportInProgressLabel : exportPdfLabel}
               </Button>
             </div>
           </div>

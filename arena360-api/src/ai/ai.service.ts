@@ -127,6 +127,7 @@ export class AiService {
 
   async generateProjectReportNarratives(projectReportId: string, orgId: string): Promise<{
     introduction: string;
+    statisticsSummary: string;
     executiveSummary: string;
     recommendationsSummary: string;
   }> {
@@ -180,11 +181,11 @@ export class AiService {
 
     const raw = await this.chat(
       'You are an accessibility audit reporting assistant. Use only the provided findings as source of truth. Write formal Arabic-first report text that can later be adapted to English. Do not invent issues or recommendations. Output valid JSON only.',
-      `Generate a JSON object with exactly these keys: introduction, executiveSummary, recommendationsSummary.
+      `Generate a JSON object with exactly these keys: introduction, statisticsSummary, recommendationsSummary.
 
 Requirements:
 - introduction: 1 to 2 professional paragraphs introducing scope and overall result
-- executiveSummary: concise management summary with severity distribution and major themes
+- statisticsSummary: concise analytical narrative explaining severity distribution, category themes, and overall issue patterns
 - recommendationsSummary: grouped practical recommendation summary using only provided recommendations
 - Output valid JSON only
 
@@ -193,9 +194,11 @@ ${payload}`,
     );
 
     const parsed = JSON.parse(raw);
+    const statisticsSummary = parsed.statisticsSummary || parsed.executiveSummary || '';
     return {
       introduction: parsed.introduction || '',
-      executiveSummary: parsed.executiveSummary || '',
+      statisticsSummary,
+      executiveSummary: parsed.executiveSummary || statisticsSummary,
       recommendationsSummary: parsed.recommendationsSummary || '',
     };
   }

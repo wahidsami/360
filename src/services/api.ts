@@ -1603,7 +1603,7 @@ export const api = {
     getLatestExport: async (reportId: string): Promise<{ url: string; exportVersion: number }> => {
       return fetchApi(`/project-reports/${reportId}/latest-export`);
     },
-    generateAiSummary: async (reportId: string): Promise<{ narratives: { introduction: string; executiveSummary: string; recommendationsSummary: string } }> => {
+    generateAiSummary: async (reportId: string): Promise<{ narratives: { introduction: string; statisticsSummary?: string; executiveSummary?: string; recommendationsSummary: string } }> => {
       return fetchApi(`/project-reports/${reportId}/generate-ai-summary`, {
         method: 'POST',
       });
