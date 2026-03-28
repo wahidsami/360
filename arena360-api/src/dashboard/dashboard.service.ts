@@ -230,10 +230,19 @@ export class DashboardService {
             throw new Error('Client dashboard is for client users only');
         }
 
-        // Find client record for this user's org
-        const client = await this.prisma.client.findFirst({
-            where: { orgId: user.orgId }
+        const membership = await this.prisma.clientMember.findFirst({
+            where: {
+                userId: user.id,
+                client: {
+                    orgId: user.orgId,
+                    deletedAt: null,
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            include: { client: true },
         });
+
+        const client = membership?.client;
 
         if (!client) {
             return {

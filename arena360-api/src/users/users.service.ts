@@ -182,11 +182,15 @@ export class UsersService {
 
         // Run everything in a transaction so DB is always consistent
         return this.prisma.$transaction(async (tx) => {
+            const effectiveRole = newRole || oldRole;
+            const effectiveIsClientRole = !!effectiveRole?.startsWith('CLIENT_');
+            const requestedClientId = updateUserDto.clientId;
+            const currentClientId = user.clientMemberships[0]?.clientId;
 
             if (isChangingRole) {
                 if (newIsClientRole) {
                     // Switching TO a client role — must link to a client
-                    const clientId = updateUserDto.clientId;
+                    const clientId = requestedClientId;
 
                     if (oldIsClientRole && user.clientMemberships.length > 0) {
                         // Was already a client user — update their existing membership
@@ -221,6 +225,13 @@ export class UsersService {
                     await tx.clientMember.deleteMany({ where: { userId: id } });
                     await tx.projectMember.deleteMany({ where: { userId: id } });
                 }
+            }
+
+            if (!isChangingRole && effectiveIsClientRole && requestedClientId && requestedClientId !== currentClientId) {
+                await tx.clientMember.deleteMany({ where: { userId: id } });
+                await tx.clientMember.create({
+                    data: { userId: id, clientId: requestedClientId, role: effectiveRole as GlobalRole }
+                });
             }
 
             // Update the user record itself
@@ -285,3 +296,4 @@ export class UsersService {
         return this.getDashboardPreferences(userId);
     }
 }
+
