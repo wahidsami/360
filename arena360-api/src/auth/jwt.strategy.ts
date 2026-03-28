@@ -18,10 +18,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        const user = await this.prisma.user.findUnique({
+        let user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
             include: { 
-                clientMemberships: true,
+                clientMemberships: {
+                    orderBy: { createdAt: 'desc' }
+                },
                 projectMemberships: {
                     include: {
                         project: {
@@ -34,6 +36,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         if (!user) {
             throw new UnauthorizedException();
         }
+
+        if (user.role.startsWith('CLIENT_') && user.clientMemberships.length > 1) {
+            const [primaryMembership, ...staleMemberships] = user.clientMemberships;
+            await this.prisma.clientMember.deleteMany({
+                where: {
+                    userId: user.id,
+                    id: { in: staleMemberships.map((membership) => membership.id) },
+                },
+            });
+
+            user = {
+                ...user,
+                clientMemberships: [primaryMembership],
+            };
+        }
+
         const { passwordHash, twoFactorSecret, recoveryCodes, ...safe } = user;
         return { ...safe, twoFactorEnabled: user.twoFactorEnabled };
     }
