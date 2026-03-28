@@ -147,7 +147,7 @@ export const ClientList: React.FC = () => {
                 <tr><td colSpan={6} className="p-8 text-center text-slate-500">{t('no_entities_found')}</td></tr>
               ) : (
                 filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-slate-800/30 transition-colors group cursor-pointer" onClick={() => navigate(client.id)}>
+                  <tr key={client.id} className="hover:bg-slate-800/30 transition-colors group cursor-pointer" onClick={() => navigate(`/app/clients/${client.id}`)}>
                     <td className="p-6">
                       <div className="flex items-center gap-3">
                         {client.logoUrl ? (
@@ -191,11 +191,11 @@ export const ClientList: React.FC = () => {
                     </td>
                     <td className="p-6">
                       <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" onClick={() => navigate(client.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clients/${client.id}`)}>
                           <Eye className="w-4 h-4 text-slate-400 hover:text-cyan-400" />
                         </Button>
                         <PermissionGate permission={Permission.MANAGE_CLIENTS}>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`${client.id}/edit`)}>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clients/${client.id}/edit`)}>
                             <Edit className="w-4 h-4 text-slate-400 hover:text-amber-400" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={(e) => handleArchive(client.id, e)}>

@@ -22,6 +22,7 @@ export const ClientDetails: React.FC = () => {
     const [files, setFiles] = useState<FileAsset[]>([]);
     const [activity, setActivity] = useState<ActivityLog[]>([]);
     const [activeTab, setActiveTab] = useState('overview');
+    const [loading, setLoading] = useState(true);
 
     // Modal States
     const [isMemberModalOpen, setMemberModalOpen] = useState(false);
@@ -35,28 +36,46 @@ export const ClientDetails: React.FC = () => {
     const [fileData, setFileData] = useState({ name: '', category: 'other' as any });
 
     useEffect(() => {
+        let isCurrent = true;
+
         if (clientId) {
-            loadData();
+            setLoading(true);
+            setClient(undefined);
+            setProjects([]);
+            setMembers([]);
+            setFiles([]);
+            setActivity([]);
+            loadData(clientId, () => isCurrent);
         }
+
+        return () => {
+            isCurrent = false;
+        };
     }, [clientId]);
 
-    const loadData = async () => {
-        if (!clientId) return;
-        const c = await api.clients.get(clientId);
+    const loadData = async (requestedClientId: string, isCurrent: () => boolean) => {
+        const c = await api.clients.get(requestedClientId);
+        if (!isCurrent()) return;
         setClient(c);
 
-        // Parallel fetch for sub-resources
+        if (!c) {
+            setLoading(false);
+            return;
+        }
+
         const [p, m, f, a] = await Promise.all([
-            api.projects.getByClient(clientId),
-            api.clients.getMembers(clientId),
-            api.clients.getFiles(clientId),
-            api.clients.getActivity(clientId)
+            api.projects.getByClient(requestedClientId),
+            api.clients.getMembers(requestedClientId),
+            api.clients.getFiles(requestedClientId),
+            api.clients.getActivity(requestedClientId)
         ]);
 
+        if (!isCurrent()) return;
         setProjects(p);
         setMembers(m);
         setFiles(f);
         setActivity(a);
+        setLoading(false);
     };
 
     const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -141,7 +160,8 @@ export const ClientDetails: React.FC = () => {
         }
     };
 
-    if (!client) return <div className="p-10 text-center text-slate-500">Loading client data...</div>;
+    if (loading) return <div className="p-10 text-center text-slate-500">Loading client data...</div>;
+    if (!client) return <div className="p-10 text-center text-slate-500">Client not found.</div>;
 
     const { can } = useAuth();
     const tabs = [
