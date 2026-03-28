@@ -60,6 +60,60 @@ const ClientReportsView: React.FC<{
   onPreview: (report: ProjectReport) => void;
   onDownloadLatest: (report: ProjectReport) => void;
 }> = ({ reports, loading, searchTerm, setSearchTerm, onOpenWorkspace, onPreview, onDownloadLatest }) => {
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
+  const copy = React.useMemo(
+    () =>
+      isArabic
+        ? {
+            title: 'التقارير المنشورة',
+            subtitle: 'تظهر هنا تقارير إمكانية الوصول الموجهة للعميل بعد نشرها وتصديرها.',
+            publishedOnly: 'منشور فقط. آمن للعميل بشكل افتراضي.',
+            publishedReports: 'التقارير المنشورة',
+            latestRelease: 'أحدث إصدار',
+            notAvailable: 'غير متاح',
+            toolVersions: 'إصدارات الأداة',
+            reportLibrary: 'مكتبة التقارير',
+            reportLibraryHelp: 'افتح التقرير، أو عاين المخرج النهائي، أو نزّل آخر نسخة معتمدة.',
+            searchPlaceholder: 'ابحث في التقارير أو المشاريع أو الأدوات',
+            loading: 'جاري تحميل التقارير المنشورة...',
+            unknownProject: 'مشروع غير معروف',
+            version: 'الإصدار',
+            published: 'تم النشر',
+            performedBy: 'تم التنفيذ بواسطة',
+            unknown: 'غير معروف',
+            preview: 'معاينة',
+            openReport: 'فتح التقرير',
+            downloadLatest: 'تنزيل آخر نسخة',
+            noExport: 'لا توجد نسخة مصدرة بعد',
+            noResults: 'لا توجد تقارير منشورة تطابق البحث الحالي.',
+          }
+        : {
+            title: 'Published Reports',
+            subtitle: 'Client-facing accessibility reports are available here once they are published and exported.',
+            publishedOnly: 'Published only. Client-safe by default.',
+            publishedReports: 'Published Reports',
+            latestRelease: 'Latest Release',
+            notAvailable: 'N/A',
+            toolVersions: 'Tool Versions',
+            reportLibrary: 'Report Library',
+            reportLibraryHelp: 'Open a report, preview the rendered output, or download the latest approved export.',
+            searchPlaceholder: 'Search reports, projects, or tools',
+            loading: 'Loading published reports...',
+            unknownProject: 'Unknown project',
+            version: 'Version',
+            published: 'Published',
+            performedBy: 'Performed by',
+            unknown: 'Unknown',
+            preview: 'Preview',
+            openReport: 'Open Report',
+            downloadLatest: 'Download Latest Export',
+            noExport: 'No Export Yet',
+            noResults: 'No published reports match the current search.',
+          },
+    [isArabic],
+  );
+
   const filteredReports = useMemo(
     () =>
       reports.filter((report) => {
@@ -81,25 +135,25 @@ const ClientReportsView: React.FC<{
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-white">Published Reports</h1>
+          <h1 className="text-3xl font-bold font-display text-white">{copy.title}</h1>
           <p className="text-slate-400">
-            Client-facing accessibility reports are available here once they are published and exported.
+            {copy.subtitle}
           </p>
         </div>
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-          Published only. Client-safe by default.
+          {copy.publishedOnly}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KpiCard label="Published Reports" value={String(reports.length)} icon={<FileText />} />
+        <KpiCard label={copy.publishedReports} value={String(reports.length)} icon={<FileText />} />
         <KpiCard
-          label="Latest Release"
-          value={reports[0]?.publishedAt ? new Date(reports[0].publishedAt).toLocaleDateString() : 'N/A'}
+          label={copy.latestRelease}
+          value={reports[0]?.publishedAt ? new Date(reports[0].publishedAt).toLocaleDateString(isArabic ? 'ar' : 'en') : copy.notAvailable}
           icon={<ShieldCheck />}
         />
         <KpiCard
-          label="Tool Versions"
+          label={copy.toolVersions}
           value={String(new Set(reports.map((report) => report.templateVersionId)).size)}
           icon={<BarChart3 />}
         />
@@ -107,12 +161,12 @@ const ClientReportsView: React.FC<{
 
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-white">Report Library</h3>
-          <p className="text-sm text-slate-400">Open a report, preview the rendered output, or download the latest approved export.</p>
+          <h3 className="text-lg font-semibold text-white">{copy.reportLibrary}</h3>
+          <p className="text-sm text-slate-400">{copy.reportLibraryHelp}</p>
         </div>
         <div className="relative flex-1 md:max-w-sm w-full">
           <Input
-            placeholder="Search reports, projects, or tools"
+            placeholder={copy.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -124,7 +178,7 @@ const ClientReportsView: React.FC<{
       <div className="grid gap-4">
         {loading && (
           <GlassCard>
-            <p className="text-sm text-slate-400">Loading published reports...</p>
+            <p className="text-sm text-slate-400">{copy.loading}</p>
           </GlassCard>
         )}
 
@@ -140,21 +194,21 @@ const ClientReportsView: React.FC<{
                     <Badge variant="info">{report.template.category}</Badge>
                   </div>
                   <p className="text-sm text-slate-400">
-                    {report.project?.name || 'Unknown project'} / {report.template.name} / Version {report.templateVersion.versionNumber}
+                    {report.project?.name || copy.unknownProject} / {report.template.name} / {copy.version} {report.templateVersion.versionNumber}
                   </p>
                   <p className="text-xs text-slate-500">
-                    Published {formatDate(report.publishedAt)} / Performed by {report.performedBy?.name || 'Unknown'}
+                    {copy.published} {formatDate(report.publishedAt)} / {copy.performedBy} {report.performedBy?.name || copy.unknown}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => onPreview(report)}>
-                    <Eye className="w-4 h-4 mr-2" /> Preview
+                    <Eye className="w-4 h-4 mr-2" /> {copy.preview}
                   </Button>
                   <Button variant="outline" onClick={() => onOpenWorkspace(report)}>
-                    <FolderOpen className="w-4 h-4 mr-2" /> Open Report
+                    <FolderOpen className="w-4 h-4 mr-2" /> {copy.openReport}
                   </Button>
                   <Button variant="outline" onClick={() => onDownloadLatest(report)} disabled={!hasExport}>
-                    <Download className="w-4 h-4 mr-2" /> {hasExport ? 'Download Latest Export' : 'No Export Yet'}
+                    <Download className="w-4 h-4 mr-2" /> {hasExport ? copy.downloadLatest : copy.noExport}
                   </Button>
                 </div>
               </div>
@@ -166,7 +220,7 @@ const ClientReportsView: React.FC<{
           <GlassCard>
             <div className="py-10 text-center text-slate-400">
               <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              No published reports match the current search.
+              {copy.noResults}
             </div>
           </GlassCard>
         )}
