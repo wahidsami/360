@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Bot, Download, Eye, FileImage, FileText, Pencil, Plus, Search, Trash2, Upload, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, Modal, Select, TextArea } from '@/components/ui/UIComponents';
@@ -9,7 +10,9 @@ import {
   ACCESSIBILITY_AUDIT_MAIN_CATEGORIES,
   AccessibilityAuditMainCategory,
   AccessibilityAuditOutputLocale,
+  getAccessibilityCategoryLabel,
   getAccessibilityOutputLocale,
+  getAccessibilitySubcategoryLabel,
   resolveAccessibilityTaxonomy,
 } from '@/features/accessibility/accessibilityAuditConfig';
 import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, ReportBuilderTemplateVersion, Role } from '@/types';
@@ -59,9 +62,166 @@ const mediaActionLabel = (media: ProjectReportEntryMedia) => {
 const getVersionTaxonomy = (version?: ReportBuilderTemplateVersion | null) => resolveAccessibilityTaxonomy(version?.taxonomyJson);
 
 export const ProjectReportWorkspace: React.FC = () => {
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const { projectId, reportId } = useParams();
   const { user, hasPermission } = useAuth();
+
+  const isArabic = i18n.language === 'ar';
+  const uiLocale: AccessibilityAuditOutputLocale = isArabic ? 'ar' : 'en';
+  const copy = React.useMemo(
+    () =>
+      isArabic
+        ? {
+            loadingReport: '???? ????? ????? ??????? ??????...',
+            reportNotFound: '???? ?????? ??? ????? ??????? ??????.',
+            reportVersion: '????? ??????',
+            performedBy: '?? ??????? ??????',
+            unknown: '??? ?????',
+            clientReadOnly: '???? ?????? ??????? ???. ???? ??? ??? ?????? ??????? ?????? ???????? ???????? ??????.',
+            loadingPreview: '???? ????? ????????...',
+            previewReport: '?????? ???????',
+            downloadLatestExport: '????? ??? ????',
+            addFinding: '????? ??????',
+            totalFindings: '?????? ?????????',
+            high: '?????',
+            medium: '??????',
+            low: '??????',
+            aiReportSummary: '???? ??????? ??????? ?????????',
+            introduction: '???????',
+            executiveSummary: '?????? ????????',
+            recommendationsSummary: '???? ????????',
+            findingsList: '????? ?????????',
+            findingsListDescription: '???? ???? ???????? ??????? ?????? ??? ?????? ???????. ???? ????????? ?????????? ??????? ??????? ?? ????? ??????.',
+            searchFindings: '???? ?? ?????????',
+            allSeverities: '?? ??????? ?????',
+            allCategories: '?? ?????????',
+            serviceName: '??? ?????? / ??????',
+            issueTitle: '????? ???????',
+            severity: '?????',
+            category: '???????',
+            subcategory: '??????? ??????',
+            pageUrl: '???? ??????',
+            media: '???????',
+            actions: '?????????',
+            clickHere: '???? ???',
+            remove: '?????',
+            noFindings: '?? ???? ??????? ????? ????? ??????? ??????? ???.',
+            editFinding: '????? ?????? ??????? ??????',
+            newObservation: '?????? ??????? ???? ?????',
+            basicInformation: '????????? ????????',
+            servicePlaceholder: '????: ???? ????? ??? ??????',
+            issueTitlePlaceholder: '??? ???? ????? ???????',
+            issueDescription: '??? ???????',
+            issueDescriptionPlaceholder: '??? ?????? ????? ??????? ??????...',
+            severityClassification: '????? ?????',
+            accessibilityCategory: '????? ??????? ??????',
+            mainCategory: '??????? ???????',
+            selectCategory: '???? ???????',
+            selectSubcategory: '???? ??????? ??????',
+            evidenceMedia: '????? ???????',
+            imageProof: '????? ???????',
+            videoDemo: '??? ?????',
+            digitalLocation: '?????? ??????',
+            exactPageUrl: '???? ?????? ??????',
+            pageUrlPlaceholder: 'https://app.client.com/specific-route',
+            developerRecommendations: '?????? ????? ???????',
+            remediationSteps: '????? ????????',
+            remediationPlaceholder: '??????? ????? ????? ??????? ??????? ??? ???????...',
+            existingEvidence: '?????? ???????',
+            cancel: '?????',
+            updateFinding: '????? ????????',
+            commitFinding: '??? ????????',
+            reportPreview: '?????? ????? ??????? ??????',
+            previewDescription: '????? ??? ???????? ?? ???? HTML/PDF ?? ??????? ?????? ??? ??????? ??????? ???????? ????????? ??????? ???????.',
+            english: 'English',
+            arabic: '???????',
+            printPdf: '????? / ??? PDF'
+          }
+        : {
+            loadingReport: 'Loading accessibility report...',
+            reportNotFound: 'Accessibility report not found.',
+            reportVersion: 'Tool version',
+            performedBy: 'Performed by',
+            unknown: 'Unknown',
+            clientReadOnly: 'Client access is read-only. Only published client-visible accessibility reports are available here.',
+            loadingPreview: 'Loading Preview...',
+            previewReport: 'Preview Report',
+            downloadLatestExport: 'Download Latest Export',
+            addFinding: 'Add Finding',
+            totalFindings: 'Total Findings',
+            high: 'High',
+            medium: 'Medium',
+            low: 'Low',
+            aiReportSummary: 'AI Report Summary',
+            introduction: 'Introduction',
+            executiveSummary: 'Executive Summary',
+            recommendationsSummary: 'Recommendations Summary',
+            findingsList: 'Findings List',
+            findingsListDescription: 'Fixed accessibility findings structure from the assigned tool. Categories and subcategories stay aligned with the product definition.',
+            searchFindings: 'Search findings',
+            allSeverities: 'All severities',
+            allCategories: 'All categories',
+            serviceName: 'Service Name',
+            issueTitle: 'Issue Title',
+            severity: 'Severity',
+            category: 'Category',
+            subcategory: 'Subcategory',
+            pageUrl: 'Page URL',
+            media: 'Media',
+            actions: 'Actions',
+            clickHere: 'Click Here',
+            remove: 'Remove',
+            noFindings: 'No findings match the current filters yet.',
+            editFinding: 'Edit Accessibility Finding',
+            newObservation: 'New Accessibility Observation',
+            basicInformation: 'Basic Information',
+            servicePlaceholder: 'e.g., Mobile Checkout Flow',
+            issueTitlePlaceholder: 'Short descriptive summary of the problem',
+            issueDescription: 'Issue Description',
+            issueDescriptionPlaceholder: 'Detailed breakdown of the accessibility barrier...',
+            severityClassification: 'Severity Classification',
+            accessibilityCategory: 'Accessibility Category',
+            mainCategory: 'Main Category',
+            selectCategory: 'Select Category',
+            selectSubcategory: 'Select Sub-Category',
+            evidenceMedia: 'Evidence Media',
+            imageProof: 'Image Proof',
+            videoDemo: 'Video Demo',
+            digitalLocation: 'Digital Location',
+            exactPageUrl: 'Exact Page URL',
+            pageUrlPlaceholder: 'https://app.client.com/specific-route',
+            developerRecommendations: 'Developer Recommendations',
+            remediationSteps: 'Remediation Steps',
+            remediationPlaceholder: 'Specific guidance for the development team to resolve this issue...',
+            existingEvidence: 'Existing Evidence',
+            cancel: 'Cancel',
+            updateFinding: 'Update Finding',
+            commitFinding: 'Commit Finding',
+            reportPreview: 'Accessibility Report Preview',
+            previewDescription: 'This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.',
+            english: 'English',
+            arabic: '???????',
+            printPdf: 'Print / Save PDF'
+          },
+    [isArabic],
+  );
+
+  const severityLabel = React.useCallback((severity: ProjectReportEntrySeverity) => {
+    if (isArabic) {
+      return severity === 'HIGH' ? copy.high : severity === 'MEDIUM' ? copy.medium : severity === 'LOW' ? copy.low : '????';
+    }
+    return severityCopy[severity] || severity;
+  }, [copy.high, copy.low, copy.medium, isArabic]);
+
+  const evidenceActionLabel = React.useCallback((media: ProjectReportEntryMedia) => {
+    if (isArabic) {
+      if (media.mediaType === 'IMAGE') return '??? ??????';
+      if (media.mediaType === 'VIDEO') return '??? ???????';
+      return '??? ??????';
+    }
+    return mediaActionLabel(media);
+  }, [isArabic]);
 
   const [loading, setLoading] = React.useState(true);
   const [report, setReport] = React.useState<ProjectReport | null>(null);
@@ -286,11 +446,11 @@ export const ProjectReportWorkspace: React.FC = () => {
   };
 
   if (loading) {
-    return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">Loading accessibility report...</p></GlassCard>;
+    return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">{copy.loadingReport}</p></GlassCard>;
   }
 
   if (!report) {
-    return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">Accessibility report not found.</p></GlassCard>;
+    return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">{copy.reportNotFound}</p></GlassCard>;
   }
 
   return (
@@ -307,11 +467,11 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Badge variant="neutral">{report.visibility}</Badge>
             </div>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {report.template.name} / Tool version {report.templateVersion.versionNumber} / Performed by {report.performedBy?.name || 'Unknown'}
+              {report.template.name} / {copy.reportVersion} {report.templateVersion.versionNumber} / {copy.performedBy} {report.performedBy?.name || copy.unknown}
             </p>
             {isClientUser && (
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Client access is read-only. Only published client-visible accessibility reports are available here.
+                {copy.clientReadOnly}
               </p>
             )}
           </div>
@@ -319,59 +479,59 @@ export const ProjectReportWorkspace: React.FC = () => {
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={handlePreview} disabled={previewLoading}>
-            <Eye className="mr-2 h-4 w-4" /> {previewLoading ? 'Loading Preview...' : 'Preview Report'}
+            <Eye className="mr-2 h-4 w-4" /> {previewLoading ? copy.loadingPreview : copy.previewReport}
           </Button>
           {(report.exports?.length || 0) > 0 && (
             <Button variant="outline" onClick={handleDownloadLatestExport}>
-              <Download className="mr-2 h-4 w-4" /> Download Latest Export
+              <Download className="mr-2 h-4 w-4" /> {copy.downloadLatestExport}
             </Button>
           )}
           {canEditReport && (
             <Select value={report.status} onChange={(event) => handleStatusChange(event.target.value as ProjectReport['status'])} className="min-w-[180px]">
-              <option value="DRAFT">DRAFT</option>
-              <option value="IN_REVIEW">IN_REVIEW</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="PUBLISHED">PUBLISHED</option>
-              <option value="ARCHIVED">ARCHIVED</option>
+              <option value="DRAFT">{isArabic ? 'مسودة' : 'DRAFT'}</option>
+              <option value="IN_REVIEW">{isArabic ? 'قيد المراجعة' : 'IN_REVIEW'}</option>
+              <option value="APPROVED">{isArabic ? 'معتمد' : 'APPROVED'}</option>
+              <option value="PUBLISHED">{isArabic ? 'منشور' : 'PUBLISHED'}</option>
+              <option value="ARCHIVED">{isArabic ? 'مؤرشف' : 'ARCHIVED'}</option>
             </Select>
           )}
           {canEditEntries && (
             <Button onClick={() => openEntryModal()}>
-              <Plus className="mr-2 h-4 w-4" /> Add Finding
+              <Plus className="mr-2 h-4 w-4" /> {copy.addFinding}
             </Button>
           )}
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total Findings</p><p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{summaryCounts.total}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">High</p><p className="mt-2 text-3xl font-bold text-rose-600">{summaryCounts.high}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Medium</p><p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.medium}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Low</p><p className="mt-2 text-3xl font-bold text-emerald-500">{summaryCounts.low}</p></GlassCard>
+        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.totalFindings}</p><p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{summaryCounts.total}</p></GlassCard>
+        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.high}</p><p className="mt-2 text-3xl font-bold text-rose-600">{summaryCounts.high}</p></GlassCard>
+        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.medium}</p><p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.medium}</p></GlassCard>
+        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.low}</p><p className="mt-2 text-3xl font-bold text-emerald-500">{summaryCounts.low}</p></GlassCard>
       </div>
 
       {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.recommendationsSummary ? (
         <GlassCard>
           <div className="mb-4 flex items-center gap-2">
             <Bot className="h-5 w-5 text-cyan-500" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">AI Report Summary</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{copy.aiReportSummary}</h2>
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             {(report.summaryJson as any)?.introduction && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">Introduction</h3>
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.introduction}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).introduction}</p>
               </div>
             )}
             {(report.summaryJson as any)?.executiveSummary && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">Executive Summary</h3>
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.executiveSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).executiveSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.recommendationsSummary && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">Recommendations Summary</h3>
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.recommendationsSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).recommendationsSummary}</p>
               </div>
             )}
@@ -382,23 +542,23 @@ export const ProjectReportWorkspace: React.FC = () => {
       <GlassCard>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Findings List</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{copy.findingsList}</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Fixed accessibility findings structure from the assigned tool. Categories and subcategories stay aligned with the product definition.
+              {copy.findingsListDescription}
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="relative min-w-[220px]">
-              <Input placeholder="Search findings" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-10" />
+              <Input placeholder={copy.searchFindings} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-10" />
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             </div>
             <Select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as 'ALL' | ProjectReportEntrySeverity)}>
-              <option value="ALL">All severities</option>
-              {SEVERITIES.map((severity) => <option key={severity} value={severity}>{severityCopy[severity]}</option>)}
+              <option value="ALL">{copy.allSeverities}</option>
+              {SEVERITIES.map((severity) => <option key={severity} value={severity}>{severityLabel(severity)}</option>)}
             </Select>
             <Select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'ALL' | AccessibilityAuditMainCategory)}>
-              <option value="ALL">All categories</option>
-              {availableCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              <option value="ALL">{copy.allCategories}</option>
+              {availableCategories.map((category) => <option key={category} value={category}>{getAccessibilityCategoryLabel(category, uiLocale)}</option>)}
             </Select>
           </div>
         </div>
@@ -407,14 +567,14 @@ export const ProjectReportWorkspace: React.FC = () => {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
               <tr>
-                <th className="pb-3 pr-4">Service Name</th>
-                <th className="pb-3 pr-4">Issue Title</th>
-                <th className="pb-3 pr-4">Severity</th>
-                <th className="pb-3 pr-4">Category</th>
-                <th className="pb-3 pr-4">Subcategory</th>
-                <th className="pb-3 pr-4">Page URL</th>
-                <th className="pb-3 pr-4">Media</th>
-                {canEditEntries && <th className="pb-3 text-right">Actions</th>}
+                <th className="pb-3 pr-4">{copy.serviceName}</th>
+                <th className="pb-3 pr-4">{copy.issueTitle}</th>
+                <th className="pb-3 pr-4">{copy.severity}</th>
+                <th className="pb-3 pr-4">{copy.category}</th>
+                <th className="pb-3 pr-4">{copy.subcategory}</th>
+                <th className="pb-3 pr-4">{copy.pageUrl}</th>
+                <th className="pb-3 pr-4">{copy.media}</th>
+                {canEditEntries && <th className="pb-3 text-right">{copy.actions}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -426,17 +586,17 @@ export const ProjectReportWorkspace: React.FC = () => {
                       <p className="font-medium text-slate-900 dark:text-white">{entry.issueTitle}</p>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{entry.issueDescription}</p>
                     </td>
-                    <td className="py-4 pr-4"><Badge variant={severityBadgeVariant[(entry.severity || 'MEDIUM') as ProjectReportEntrySeverity]}>{severityCopy[(entry.severity || 'MEDIUM') as ProjectReportEntrySeverity]}</Badge></td>
-                    <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.category || '-'}</td>
-                    <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.subcategory || '-'}</td>
+                    <td className="py-4 pr-4"><Badge variant={severityBadgeVariant[(entry.severity || 'MEDIUM') as ProjectReportEntrySeverity]}>{severityLabel((entry.severity || 'MEDIUM') as ProjectReportEntrySeverity)}</Badge></td>
+                    <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.category ? getAccessibilityCategoryLabel(entry.category, uiLocale) : '-'}</td>
+                    <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.category && entry.subcategory ? getAccessibilitySubcategoryLabel(entry.category, entry.subcategory, uiLocale) : entry.subcategory || '-'}</td>
                     <td className="py-4 pr-4">
-                      {entry.pageUrl ? <a href={entry.pageUrl} target="_blank" rel="noreferrer" className="font-medium text-cyan-600 hover:underline dark:text-cyan-400">Click Here</a> : <span className="text-slate-500">-</span>}
+                      {entry.pageUrl ? <a href={entry.pageUrl} target="_blank" rel="noreferrer" className="font-medium text-cyan-600 hover:underline dark:text-cyan-400">{copy.clickHere}</a> : <span className="text-slate-500">-</span>}
                     </td>
                     <td className="py-4 pr-4">
                       <div className="flex flex-wrap gap-2">
                         {(entry.media || []).length > 0 ? (entry.media || []).map((media) => (
                           <button key={media.id} type="button" onClick={() => handleOpenEvidence(media)} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 transition-colors hover:border-cyan-400 hover:text-cyan-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-cyan-300">
-                            {mediaActionLabel(media)}
+                            {evidenceActionLabel(media)}
                           </button>
                         )) : <span className="text-slate-500">-</span>}
                       </div>
@@ -458,8 +618,8 @@ export const ProjectReportWorkspace: React.FC = () => {
                             <div key={media.id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
                               {media.mediaType === 'VIDEO' ? <Video className="h-4 w-4 text-cyan-500" /> : <FileImage className="h-4 w-4 text-cyan-500" />}
                               <span className="text-xs text-slate-700 dark:text-slate-300">{media.fileAsset.filename || media.fileAsset.name}</span>
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenEvidence(media)}>{mediaActionLabel(media)}</Button>
-                              {canEditEntries && <button type="button" className="text-xs text-rose-500" onClick={() => handleDeleteEvidence(entry, media)}>Remove</button>}
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEvidence(media)}>{evidenceActionLabel(media)}</Button>
+                              {canEditEntries && <button type="button" className="text-xs text-rose-500" onClick={() => handleDeleteEvidence(entry, media)}>{copy.remove}</button>}
                             </div>
                           ))}
                         </div>
@@ -472,7 +632,7 @@ export const ProjectReportWorkspace: React.FC = () => {
                 <tr>
                   <td colSpan={canEditEntries ? 8 : 7} className="py-12 text-center text-slate-500 dark:text-slate-400">
                     <FileText className="mx-auto mb-3 h-10 w-10 opacity-30" />
-                    No findings match the current filters yet.
+                    {copy.noFindings}
                   </td>
                 </tr>
               )}
@@ -481,27 +641,27 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
       </GlassCard>
 
-      <Modal isOpen={entryModalOpen} onClose={() => setEntryModalOpen(false)} title={editingEntry ? 'Edit Accessibility Finding' : 'New Accessibility Observation'} maxWidth="max-w-5xl">
+      <Modal isOpen={entryModalOpen} onClose={() => setEntryModalOpen(false)} title={editingEntry ? copy.editFinding : copy.newObservation} maxWidth="max-w-5xl">
         <form className="space-y-8" onSubmit={handleSaveEntry}>
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-blue-600">
-              <span className="h-6 w-1 rounded-full bg-blue-500" /> Basic Information
+              <span className="h-6 w-1 rounded-full bg-blue-500" /> {copy.basicInformation}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Input label="Service Name / Module" placeholder="e.g., Mobile Checkout Flow" value={entryDraft.serviceName} onChange={(event) => setEntryDraft((current) => ({ ...current, serviceName: event.target.value }))} required />
-              <Input label="Issue Title" placeholder="Short descriptive summary of the problem" value={entryDraft.issueTitle} onChange={(event) => setEntryDraft((current) => ({ ...current, issueTitle: event.target.value }))} required />
+              <Input label={copy.serviceName} placeholder={copy.servicePlaceholder} value={entryDraft.serviceName} onChange={(event) => setEntryDraft((current) => ({ ...current, serviceName: event.target.value }))} required />
+              <Input label={copy.issueTitle} placeholder={copy.issueTitlePlaceholder} value={entryDraft.issueTitle} onChange={(event) => setEntryDraft((current) => ({ ...current, issueTitle: event.target.value }))} required />
             </div>
-            <TextArea label="Issue Description" placeholder="Detailed breakdown of the accessibility barrier..." value={entryDraft.issueDescription} onChange={(event) => setEntryDraft((current) => ({ ...current, issueDescription: event.target.value }))} required />
+            <TextArea label={copy.issueDescription} placeholder={copy.issueDescriptionPlaceholder} value={entryDraft.issueDescription} onChange={(event) => setEntryDraft((current) => ({ ...current, issueDescription: event.target.value }))} required />
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-orange-500">
-              <span className="h-6 w-1 rounded-full bg-orange-500" /> Severity Classification
+              <span className="h-6 w-1 rounded-full bg-orange-500" /> {copy.severityClassification}
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               {SEVERITIES.map((severity) => (
                 <button key={severity} type="button" onClick={() => setEntryDraft((current) => ({ ...current, severity }))} className={`rounded-2xl border px-4 py-5 text-center text-sm font-bold uppercase tracking-[0.28em] transition-all ${entryDraft.severity === severity ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-500/10 dark:text-blue-300' : 'border-slate-200 text-slate-500 hover:border-blue-300 dark:border-slate-700 dark:text-slate-300'}`}>
-                  {severityCopy[severity]}
+                  {severityLabel(severity)}
                 </button>
               ))}
             </div>
@@ -509,37 +669,37 @@ export const ProjectReportWorkspace: React.FC = () => {
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-fuchsia-500">
-              <span className="h-6 w-1 rounded-full bg-fuchsia-500" /> Accessibility Category
+              <span className="h-6 w-1 rounded-full bg-fuchsia-500" /> {copy.accessibilityCategory}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Select label="Main Category" value={entryDraft.category} onChange={(event) => setEntryDraft((current) => ({ ...current, category: event.target.value as AccessibilityAuditMainCategory, subcategory: '' }))} required>
-                <option value="">Select Category</option>
-                {availableCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              <Select label={copy.mainCategory} value={entryDraft.category} onChange={(event) => setEntryDraft((current) => ({ ...current, category: event.target.value as AccessibilityAuditMainCategory, subcategory: '' }))} required>
+                <option value="">{copy.selectCategory}</option>
+                {availableCategories.map((category) => <option key={category} value={category}>{getAccessibilityCategoryLabel(category, uiLocale)}</option>)}
               </Select>
-              <Select label="Subcategory" value={entryDraft.subcategory} onChange={(event) => setEntryDraft((current) => ({ ...current, subcategory: event.target.value }))} required>
-                <option value="">Select Sub-Category</option>
-                {subcategoryOptions.map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}
+              <Select label={copy.subcategory} value={entryDraft.subcategory} onChange={(event) => setEntryDraft((current) => ({ ...current, subcategory: event.target.value }))} required>
+                <option value="">{copy.selectSubcategory}</option>
+                {subcategoryOptions.map((subcategory) => <option key={subcategory} value={subcategory}>{getAccessibilitySubcategoryLabel(entryDraft.category, subcategory, uiLocale)}</option>)}
               </Select>
             </div>
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-emerald-500">
-              <span className="h-6 w-1 rounded-full bg-emerald-500" /> Evidence Media
+              <span className="h-6 w-1 rounded-full bg-emerald-500" /> {copy.evidenceMedia}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Image Proof</label>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">{copy.imageProof}</label>
                 <label className="flex min-h-[56px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 text-sm font-semibold text-slate-500 transition-all hover:border-cyan-400 hover:text-cyan-600 dark:border-slate-700 dark:text-slate-300">
                   <input type="file" accept="image/*" className="hidden" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
-                  <Upload className="mr-2 h-4 w-4" /> {imageFile ? imageFile.name : 'Image Proof'}
+                  <Upload className="mr-2 h-4 w-4" /> {imageFile ? imageFile.name : copy.imageProof}
                 </label>
               </div>
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Video Demo</label>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">{copy.videoDemo}</label>
                 <label className="flex min-h-[56px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 text-sm font-semibold text-slate-500 transition-all hover:border-cyan-400 hover:text-cyan-600 dark:border-slate-700 dark:text-slate-300">
                   <input type="file" accept="video/*" className="hidden" onChange={(event) => setVideoFile(event.target.files?.[0] || null)} />
-                  <Video className="mr-2 h-4 w-4" /> {videoFile ? videoFile.name : 'Video Demo'}
+                  <Video className="mr-2 h-4 w-4" /> {videoFile ? videoFile.name : copy.videoDemo}
                 </label>
               </div>
             </div>
@@ -547,27 +707,27 @@ export const ProjectReportWorkspace: React.FC = () => {
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-cyan-500">
-              <span className="h-6 w-1 rounded-full bg-cyan-500" /> Digital Location
+              <span className="h-6 w-1 rounded-full bg-cyan-500" /> {copy.digitalLocation}
             </div>
-            <Input label="Exact Page URL" placeholder="https://app.client.com/specific-route" value={entryDraft.pageUrl} onChange={(event) => setEntryDraft((current) => ({ ...current, pageUrl: event.target.value }))} required />
+            <Input label={copy.exactPageUrl} placeholder={copy.pageUrlPlaceholder} value={entryDraft.pageUrl} onChange={(event) => setEntryDraft((current) => ({ ...current, pageUrl: event.target.value }))} required />
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-indigo-500">
-              <span className="h-6 w-1 rounded-full bg-indigo-500" /> Developer Recommendations
+              <span className="h-6 w-1 rounded-full bg-indigo-500" /> {copy.developerRecommendations}
             </div>
-            <TextArea label="Remediation Steps" placeholder="Specific guidance for the development team to resolve this issue..." value={entryDraft.recommendation} onChange={(event) => setEntryDraft((current) => ({ ...current, recommendation: event.target.value }))} required />
+            <TextArea label={copy.remediationSteps} placeholder={copy.remediationPlaceholder} value={entryDraft.recommendation} onChange={(event) => setEntryDraft((current) => ({ ...current, recommendation: event.target.value }))} required />
           </section>
 
           {editingEntry && (editingEntry.media || []).length > 0 && (
             <section className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Existing Evidence</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{copy.existingEvidence}</h3>
               <div className="flex flex-wrap gap-3">
                 {(editingEntry.media || []).map((media) => (
                   <div key={media.id} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs dark:border-slate-700">
                     {media.mediaType === 'VIDEO' ? <Video className="h-4 w-4 text-cyan-500" /> : <FileImage className="h-4 w-4 text-cyan-500" />}
                     <span>{media.fileAsset.filename || media.fileAsset.name}</span>
-                    <button type="button" className="text-rose-500" onClick={() => handleDeleteEvidence(editingEntry, media)}>Remove</button>
+                    <button type="button" className="text-rose-500" onClick={() => handleDeleteEvidence(editingEntry, media)}>{copy.remove}</button>
                   </div>
                 ))}
               </div>
@@ -575,31 +735,31 @@ export const ProjectReportWorkspace: React.FC = () => {
           )}
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
-            <Button type="button" variant="ghost" onClick={() => setEntryModalOpen(false)}>Cancel</Button>
-            <Button type="submit">{editingEntry ? 'Update Finding' : 'Commit Finding'}</Button>
+            <Button type="button" variant="ghost" onClick={() => setEntryModalOpen(false)}>{copy.cancel}</Button>
+            <Button type="submit">{editingEntry ? copy.updateFinding : copy.commitFinding}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={previewModalOpen} onClose={() => setPreviewModalOpen(false)} title="Accessibility Report Preview" maxWidth="max-w-6xl">
+      <Modal isOpen={previewModalOpen} onClose={() => setPreviewModalOpen(false)} title={copy.reportPreview} maxWidth="max-w-6xl">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.
+              {copy.previewDescription}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant={previewLocale === 'en' ? 'primary' : 'outline'} onClick={() => handlePreview('en')}>
-                English
+                {copy.english}
               </Button>
               <Button type="button" size="sm" variant={previewLocale === 'ar' ? 'primary' : 'outline'} onClick={() => handlePreview('ar')}>
-                العربية
+                {copy.arabic}
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={handlePrintPreview}>
-                Print / Save PDF
+                {copy.printPdf}
               </Button>
             </div>
           </div>
-          <iframe id="project-report-preview-frame" title="Accessibility Report Preview" className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />
+          <iframe id="project-report-preview-frame" title={copy.reportPreview} className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />
         </div>
       </Modal>
     </div>
@@ -607,3 +767,8 @@ export const ProjectReportWorkspace: React.FC = () => {
 };
 
 export default ProjectReportWorkspace;
+
+
+
+
+
