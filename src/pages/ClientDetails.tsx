@@ -53,7 +53,15 @@ export const ClientDetails: React.FC = () => {
         };
     }, [clientId]);
 
-    const loadData = async (requestedClientId: string, isCurrent: () => boolean) => {
+    const loadData = async (
+        requestedClientId: string | undefined = clientId,
+        isCurrent: () => boolean = () => true
+    ) => {
+        if (!requestedClientId) {
+            setLoading(false);
+            return;
+        }
+
         const c = await api.clients.get(requestedClientId);
         if (!isCurrent()) return;
         setClient(c);
