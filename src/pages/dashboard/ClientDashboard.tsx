@@ -18,11 +18,8 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
    useEffect(() => {
       const load = async () => {
          if (user) {
-            const client = await api.clients.getMyClient(user.id);
-            if (client) {
-               const data = await api.dashboard.getClientStats();
-               setStats(data);
-            }
+            const data = await api.dashboard.getClientStats();
+            setStats(data);
          }
          setLoading(false);
       };

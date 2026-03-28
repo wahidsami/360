@@ -71,7 +71,7 @@ export const ClientDetails: React.FC = () => {
             return;
         }
 
-        const [p, m, f, a] = await Promise.all([
+        const [p, m, f, a] = await Promise.allSettled([
             api.projects.getByClient(requestedClientId),
             api.clients.getMembers(requestedClientId),
             api.clients.getFiles(requestedClientId),
@@ -79,10 +79,10 @@ export const ClientDetails: React.FC = () => {
         ]);
 
         if (!isCurrent()) return;
-        setProjects(p);
-        setMembers(m);
-        setFiles(f);
-        setActivity(a);
+        setProjects(p.status === 'fulfilled' ? p.value : []);
+        setMembers(m.status === 'fulfilled' ? m.value : []);
+        setFiles(f.status === 'fulfilled' ? f.value : []);
+        setActivity(a.status === 'fulfilled' ? a.value : []);
         setLoading(false);
     };
 
