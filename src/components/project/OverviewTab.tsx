@@ -216,7 +216,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
     const canSee = (id: string) => allowedTabs.includes(id);
     const { user } = useAuth();
     const clientRoles = [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER];
-    const isClient = user && clientRoles.includes(user.role);
+    const isClient = !!user && clientRoles.includes(user.role);
 
     return (
         <div className="relative">
@@ -230,7 +230,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
 
             {isOpen && (
                 <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {canSee('tasks') && (
+                    {canSee('tasks') && !isClient && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
                             <PlusCircle className="w-4 h-4 text-emerald-500" /> {t('add_task')}
                         </button>
@@ -246,7 +246,7 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                         </button>
                     )}
 
-                    {canSee('tasks') && overdueCount > 0 && (
+                    {canSee('tasks') && !isClient && overdueCount > 0 && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-lg transition-colors mt-1 border border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/5">
                             <span>✅</span> Complete Overdue ({overdueCount})
                         </button>

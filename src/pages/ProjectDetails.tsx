@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Sparkles } from 'lucide-react';
@@ -25,6 +25,7 @@ export const ProjectDetails: React.FC = () => {
   const { openAI, setContext } = useAI();
   const [activeTab, setActiveTab] = useState('overview');
   const [isPending, startTransition] = React.useTransition();
+  const latestLoadRef = useRef(0);
 
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -44,6 +45,7 @@ export const ProjectDetails: React.FC = () => {
   const [isOverviewMetaLoading, setIsOverviewMetaLoading] = useState(false);
   const [hasLoadedOverviewMeta, setHasLoadedOverviewMeta] = useState(false);
   const [isOverviewMetaStale, setIsOverviewMetaStale] = useState(false);
+  const [isLoadingProject, setIsLoadingProject] = useState(true);
 
   const resolvedWorkspace = React.useMemo(() => {
     if (!user) {
@@ -104,12 +106,29 @@ export const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     if (projectId) {
+      const requestId = latestLoadRef.current + 1;
+      latestLoadRef.current = requestId;
+
       setContext({ projectId });
+      setIsLoadingProject(true);
+      setProject(null);
+      setClient(null);
+      setMilestones([]);
+      setUpdates([]);
+      setEnvironments([]);
+      setFinancials({ invoices: [] });
+      setDiscussions([]);
+      setActivity([]);
+      setFiles([]);
+      setMembers([]);
+      setFindings([]);
+      setReports([]);
+      setTasks([]);
       setReadiness(null);
       setMetrics(null);
       setHasLoadedOverviewMeta(false);
       setIsOverviewMetaStale(false);
-      loadData();
+      loadData(projectId, requestId);
     }
     return () => setContext({});
   }, [projectId, setContext]);
@@ -184,50 +203,69 @@ export const ProjectDetails: React.FC = () => {
     }, 300);
   };
 
-  const loadData = useCallback(async () => {
-    if (!projectId) return;
-    const p = await api.projects.get(projectId);
-    if (p) {
+  const loadData = useCallback(async (requestedProjectId: string | undefined = projectId, requestId: number = latestLoadRef.current) => {
+    if (!requestedProjectId) {
+      setIsLoadingProject(false);
+      return;
+    }
+
+    try {
+      const p = await api.projects.get(requestedProjectId);
+      if (requestId !== latestLoadRef.current) return;
+
+      if (!p) {
+        setIsLoadingProject(false);
+        return;
+      }
+
       startTransition(() => {
         setProject(p);
       });
-      const c = await api.clients.get(p.clientId);
+
+      const c = await api.clients.get(p.clientId).catch((error) => {
+        console.error('Client failed', error);
+        return null;
+      });
+      if (requestId !== latestLoadRef.current) return;
+
       startTransition(() => {
         setClient(c || null);
       });
 
-      // Parallel fetch with error handling
-      try {
-        const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
-          api.projects.getMilestones(projectId).catch(e => { console.error('Milestones failed', e); return []; }),
-          api.projects.getUpdates(projectId).catch(e => { console.error('Updates failed', e); return []; }),
-          api.projects.getEnvironments(projectId).catch(e => { console.error('Environments failed', e); return []; }),
-          api.projects.getFinancials(projectId).catch(e => { console.error('Financials failed', e); return { invoices: [] }; }),
-          api.projects.getDiscussions(projectId).catch(e => { console.error('Discussions failed', e); return []; }),
-          api.projects.getActivity(projectId).catch(e => { console.error('Activity failed', e); return []; }),
-          api.projects.getFiles(projectId).catch(e => { console.error('Files failed', e); return []; }),
-          api.projects.getMembers(projectId).catch(e => { console.error('Members failed', e); return []; }),
-          api.projects.getFindings(projectId).catch(e => { console.error('Findings failed', e); return []; }),
-          api.projects.getReports(projectId).catch(e => { console.error('Reports failed', e); return []; }),
-          api.projects.getTasks(projectId).catch(e => { console.error('Tasks failed', e); return []; })
-        ]);
+      const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
+        api.projects.getMilestones(requestedProjectId).catch(e => { console.error('Milestones failed', e); return []; }),
+        api.projects.getUpdates(requestedProjectId).catch(e => { console.error('Updates failed', e); return []; }),
+        api.projects.getEnvironments(requestedProjectId).catch(e => { console.error('Environments failed', e); return []; }),
+        api.projects.getFinancials(requestedProjectId).catch(e => { console.error('Financials failed', e); return { invoices: [] }; }),
+        api.projects.getDiscussions(requestedProjectId).catch(e => { console.error('Discussions failed', e); return []; }),
+        api.projects.getActivity(requestedProjectId).catch(e => { console.error('Activity failed', e); return []; }),
+        api.projects.getFiles(requestedProjectId).catch(e => { console.error('Files failed', e); return []; }),
+        api.projects.getMembers(requestedProjectId).catch(e => { console.error('Members failed', e); return []; }),
+        api.projects.getFindings(requestedProjectId).catch(e => { console.error('Findings failed', e); return []; }),
+        api.projects.getReports(requestedProjectId).catch(e => { console.error('Reports failed', e); return []; }),
+        api.projects.getTasks(requestedProjectId).catch(e => { console.error('Tasks failed', e); return []; })
+      ]);
+      if (requestId !== latestLoadRef.current) return;
 
-        startTransition(() => {
-          setMilestones(m);
-          setUpdates(u);
-          setEnvironments(e);
-          setFinancials(f as any);
-          setDiscussions(th as any);
-          setActivity(act);
-          setFiles(fl);
-          setMembers(mem);
-          setFindings(fnd);
-          setReports(rep);
-          setTasks(tsk);
-        });
-
-      } catch (error) {
-        console.error("Critical error loading project data", error);
+      startTransition(() => {
+        setMilestones(m);
+        setUpdates(u);
+        setEnvironments(e);
+        setFinancials(f as any);
+        setDiscussions(th as any);
+        setActivity(act);
+        setFiles(fl);
+        setMembers(mem);
+        setFindings(fnd);
+        setReports(rep);
+        setTasks(tsk);
+      });
+    } catch (error) {
+      if (requestId !== latestLoadRef.current) return;
+      console.error("Critical error loading project data", error);
+    } finally {
+      if (requestId === latestLoadRef.current) {
+        setIsLoadingProject(false);
       }
     }
   }, [projectId]);
@@ -448,7 +486,8 @@ export const ProjectDetails: React.FC = () => {
     }
   };
 
-  if (!project) return <div className="p-10 text-center text-slate-500">{t('loading_mission_data')}</div>;
+  if (isLoadingProject) return <div className="p-10 text-center text-slate-500">{t('loading_mission_data')}</div>;
+  if (!project) return <div className="p-10 text-center text-slate-500">Project not found.</div>;
 
   return (
     <div className="space-y-6">
