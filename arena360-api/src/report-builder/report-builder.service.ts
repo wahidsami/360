@@ -1099,7 +1099,6 @@ export class ReportBuilderService {
       '<h2>' + this.escapeHtml(labels.closingTitle) + '</h2>' +
       '<p>' + this.escapeHtml(labels.closingThanks) + '</p>' +
       '<p>' + this.escapeHtml(labels.closingBody) + '</p>' +
-      '<p>' + this.escapeHtml(this.normalizeDisplayText(report.client.name)) + '</p>' +
       '</section>' +
       '</div></div>' +
       '</div>' +

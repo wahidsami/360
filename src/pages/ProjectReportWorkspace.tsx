@@ -402,12 +402,18 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handlePreview = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
+  const resolveExportLocale = React.useCallback(
+    (value?: unknown): AccessibilityAuditOutputLocale => (value === 'ar' ? 'ar' : 'en'),
+    [],
+  );
+
+  const handlePreview = React.useCallback(async (locale?: unknown) => {
     if (!reportId) return;
     setPreviewLoading(true);
     try {
-      const html = await api.reportBuilderProjects.getPreviewHtml(reportId, locale);
-      setPreviewLocale(locale);
+      const nextLocale = resolveExportLocale(locale ?? previewLocale);
+      const html = await api.reportBuilderProjects.getPreviewHtml(reportId, nextLocale);
+      setPreviewLocale(nextLocale);
       setPreviewHtml(html);
       setPreviewModalOpen(true);
     } catch (error) {
@@ -416,7 +422,7 @@ export const ProjectReportWorkspace: React.FC = () => {
     } finally {
       setPreviewLoading(false);
     }
-  };
+  }, [previewLocale, reportId, resolveExportLocale]);
 
   const handleGenerateAiSummary = async () => {
     if (!reportId) return;
@@ -433,11 +439,12 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
-  const handleExportPdf = async (locale: AccessibilityAuditOutputLocale = previewLocale) => {
+  const handleExportPdf = React.useCallback(async (locale?: unknown) => {
     if (!reportId) return;
     setExportingPdf(true);
     try {
-      const result = await api.reportBuilderProjects.exportPdf(reportId, locale);
+      const nextLocale = resolveExportLocale(locale ?? previewLocale);
+      const result = await api.reportBuilderProjects.exportPdf(reportId, nextLocale);
       await loadData();
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
@@ -449,7 +456,7 @@ export const ProjectReportWorkspace: React.FC = () => {
     } finally {
       setExportingPdf(false);
     }
-  };
+  }, [isArabic, loadData, previewLocale, reportId, resolveExportLocale]);
 
   const handleDownloadLatestExport = async () => {
     if (!reportId) return;
@@ -507,7 +514,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handlePreview} disabled={previewLoading}>
+          <Button variant="outline" onClick={() => handlePreview(previewLocale)} disabled={previewLoading}>
             <Eye className="mr-2 h-4 w-4" /> {previewLoading ? copy.loadingPreview : copy.previewReport}
           </Button>
           {canGenerateExports && (
