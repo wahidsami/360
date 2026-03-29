@@ -2397,6 +2397,34 @@ export class ReportBuilderService {
     });
   }
 
+  async listAccessibleProjectReports(user: UserWithRoles) {
+    return this.prisma.projectReport.findMany({
+      where: {
+        orgId: user.orgId,
+        deletedAt: null,
+        template: {
+          code: this.canonicalAccessibilityTemplateCode,
+          category: 'ACCESSIBILITY',
+        },
+        project: ScopeUtils.projectScope(user),
+      },
+      include: {
+        project: { select: { id: true, name: true } },
+        client: { select: { id: true, name: true } },
+        template: true,
+        templateVersion: true,
+        performedBy: { select: { id: true, name: true, email: true, role: true } },
+        exports: {
+          include: { fileAsset: true },
+          orderBy: { exportVersion: 'desc' },
+          take: 1,
+        },
+        _count: { select: { entries: true, exports: true } },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
   async getLatestProjectReportExportDownload(reportId: string, user: UserWithRoles) {
     await this.ensureProjectReportAccess(reportId, user);
     const latestExport = await this.prisma.projectReportExport.findFirst({

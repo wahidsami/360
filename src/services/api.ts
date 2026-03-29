@@ -1507,6 +1507,9 @@ export const api = {
     listAvailableTemplates: async (projectId: string): Promise<ClientReportTemplateAssignment[]> => {
       return fetchApi(`/projects/${projectId}/report-builder/templates`);
     },
+    listAccessibleReports: async (): Promise<ProjectReport[]> => {
+      return fetchApi('/project-reports');
+    },
     listProjectReports: async (projectId: string): Promise<ProjectReport[]> => {
       return fetchApi(`/projects/${projectId}/project-reports`);
     },

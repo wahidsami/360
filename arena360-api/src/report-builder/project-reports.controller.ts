@@ -43,6 +43,11 @@ export class ProjectReportsController {
     return this.service.listClientVisibleReports(req.user);
   }
 
+  @Get('project-reports')
+  listAccessibleProjectReports(@Request() req: any) {
+    return this.service.listAccessibleProjectReports(req.user);
+  }
+
   @Get('projects/:projectId/project-reports')
   listProjectReports(@Request() req: any, @Param('projectId') projectId: string) {
     return this.service.listProjectReports(projectId, req.user);
