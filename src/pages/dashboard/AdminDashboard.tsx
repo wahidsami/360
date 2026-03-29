@@ -17,7 +17,7 @@ import {
   RadialBarChart,
   RadialBar,
 } from 'recharts';
-import { GlassCard, KpiCard, Badge, Button, Modal } from '@/components/ui/UIComponents';
+import { GlassCard, Badge, Button, Modal } from '@/components/ui/UIComponents';
 import { ToolsPanel } from '@/components/ToolsPanel';
 import { api } from '@/services/api';
 import { Role, Project, ProjectUpdate } from '@/types';
@@ -85,6 +85,24 @@ const prettifyLabel = (value: string) =>
     .replace(/_/g, ' ')
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const MiniSparkline: React.FC<{ values: number[]; stroke: string; fill: string }> = ({ values, stroke, fill }) => {
+  const data = values.map((value, index) => ({ index, value }));
+
+  if (data.length === 0) {
+    return <div className="h-14 w-24" />;
+  }
+
+  return (
+    <div className="h-14 w-24">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+          <Area type="monotone" dataKey="value" stroke={stroke} strokeWidth={2.5} fill={fill} fillOpacity={0.25} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
 export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
   const { t } = useTranslation();
@@ -157,6 +175,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
   const topPerformer = complianceSeries[0] || null;
   const lowestPerformer = complianceSeries.length > 0 ? complianceSeries[complianceSeries.length - 1] : null;
+  const complianceChartHeight = Math.max(220, complianceSeries.length * 52);
 
   const findingsSeverityData = useMemo(
     () =>
@@ -210,6 +229,26 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     ].filter((item) => item.value > 0);
   }, [stats?.auditedClients, stats?.totalClients, t]);
 
+  const coverageSpark = useMemo(
+    () => [stats?.auditedClients ?? 0, Math.max((stats?.totalClients ?? 0) - (stats?.auditedClients ?? 0), 0), stats?.totalClients ?? 0],
+    [stats?.auditedClients, stats?.totalClients],
+  );
+
+  const complianceSpark = useMemo(
+    () => complianceSeries.map((item) => item.compliancePercentage),
+    [complianceSeries],
+  );
+
+  const reviewedSpark = useMemo(
+    () => findingsStatusData.map((item) => item.count),
+    [findingsStatusData],
+  );
+
+  const attentionSpark = useMemo(
+    () => complianceSeries.map((item) => item.needsAttentionChecks),
+    [complianceSeries],
+  );
+
   const chartAxisColor = '#94a3b8';
   const chartGridColor = 'rgba(148, 163, 184, 0.12)';
   const tooltipStyle = {
@@ -261,35 +300,80 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
       </div>
 
       {has('kpi-cards') && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <KpiCard
-            compact
-            label={t('audit_coverage')}
-            value={`${coveragePercentage}%`}
-            helperText={`${stats.auditedClients ?? 0} / ${stats.totalClients ?? 0} ${t('clients_audited_short')}`}
-            icon={<Users />}
-          />
-          <KpiCard
-            compact
-            label={t('average_compliance')}
-            value={`${stats.averageCompliance ?? 0}%`}
-            helperText={t('across_audited_clients')}
-            icon={<Activity />}
-          />
-          <KpiCard
-            compact
-            label={t('reviewed_checks')}
-            value={stats.scoredChecks ?? 0}
-            helperText={t('pass_fail_partial_checks')}
-            icon={<CheckCircle2 />}
-          />
-          <KpiCard
-            compact
-            label={t('checks_needing_attention')}
-            value={stats.needsAttentionChecks ?? 0}
-            helperText={t('failed_and_partial_checks')}
-            icon={<ShieldAlert />}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="group relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-400/12 blur-2xl" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200/90">{t('audit_coverage')}</p>
+                <p className="mt-2 text-3xl font-black text-white">{coveragePercentage}%</p>
+                <p className="mt-1 text-xs text-slate-300">{stats.auditedClients ?? 0} / {stats.totalClients ?? 0} {t('clients_audited_short')}</p>
+              </div>
+              <div className="rounded-2xl bg-cyan-500/12 p-3 text-cyan-300">
+                <Users className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800/90">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${coveragePercentage}%` }} />
+              </div>
+              <MiniSparkline values={coverageSpark} stroke="#22d3ee" fill="#22d3ee" />
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-violet-500/10">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-violet-400/12 blur-2xl" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-violet-200/90">{t('average_compliance')}</p>
+                <p className="mt-2 text-3xl font-black text-white">{stats.averageCompliance ?? 0}%</p>
+                <p className="mt-1 text-xs text-slate-300">{t('across_audited_clients')}</p>
+              </div>
+              <div className="rounded-2xl bg-violet-500/12 p-3 text-violet-300">
+                <Activity className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <Badge variant="neutral" size="sm" className="border-violet-400/20 bg-violet-500/8 text-violet-200">{stats.auditedClients ?? 0} {t('audited_clients').toLowerCase()}</Badge>
+              <MiniSparkline values={complianceSpark} stroke="#8b5cf6" fill="#8b5cf6" />
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald-500/10">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-400/12 blur-2xl" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-200/90">{t('reviewed_checks')}</p>
+                <p className="mt-2 text-3xl font-black text-white">{stats.scoredChecks ?? 0}</p>
+                <p className="mt-1 text-xs text-slate-300">{t('pass_fail_partial_checks')}</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-300">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <Badge variant="neutral" size="sm" className="border-emerald-400/20 bg-emerald-500/8 text-emerald-200">{stats.scoredChecks ?? 0} {t('total_label')}</Badge>
+              <MiniSparkline values={reviewedSpark} stroke="#22c55e" fill="#22c55e" />
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-amber-500/10">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/12 blur-2xl" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-200/90">{t('checks_needing_attention')}</p>
+                <p className="mt-2 text-3xl font-black text-white">{stats.needsAttentionChecks ?? 0}</p>
+                <p className="mt-1 text-xs text-slate-300">{t('failed_and_partial_checks')}</p>
+              </div>
+              <div className="rounded-2xl bg-amber-500/12 p-3 text-amber-300">
+                <ShieldAlert className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <Badge variant="neutral" size="sm" className="border-amber-400/20 bg-amber-500/8 text-amber-200">{stats.needsAttentionChecks ?? 0} {t('flagged_label')}</Badge>
+              <MiniSparkline values={attentionSpark} stroke="#f59e0b" fill="#f59e0b" />
+            </div>
+          </div>
         </div>
       )}
 
@@ -305,7 +389,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             {complianceSeries.length > 0 ? (
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_240px]">
                 <div className="rounded-3xl border border-slate-200/40 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_45%)] p-3 dark:border-slate-800/70 dark:bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_48%)]">
-                  <div className="h-[340px] w-full min-h-[300px]">
+                  <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
                         <defs>
@@ -372,7 +456,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   </div>
                   {topPerformer && (
                     <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-300">Top Client</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-300">{t('top_client')}</p>
                       <p className="mt-2 text-lg font-black text-white">{topPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('client_compliance_score')}</span>
@@ -382,7 +466,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   )}
                   {lowestPerformer && (
                     <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-300">Needs Focus</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-300">{t('needs_focus')}</p>
                       <p className="mt-2 text-lg font-black text-white">{lowestPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('checks_needing_attention')}</span>
@@ -474,7 +558,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <GlassCard className="xl:col-span-4 overflow-hidden" title={t('findings_status_overview')}>
           {findingsStatusData.length > 0 ? (
-            <div className="h-[280px] w-full">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={findingsStatusData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
@@ -496,7 +580,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
         <GlassCard className="xl:col-span-4 overflow-hidden" title={t('portfolio_health_snapshot')}>
           {portfolioHealthData.length > 0 ? (
-            <div className="h-[280px] w-full">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={portfolioHealthData} layout="vertical" margin={{ top: 8, right: 16, left: 12, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.2} />
@@ -518,7 +602,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
         {has('revenue-chart') && (
           <GlassCard className="xl:col-span-4 overflow-hidden" title={t('revenue_velocity')}>
-            <div className="h-[280px] w-full">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueSeries}>
                   <defs>
