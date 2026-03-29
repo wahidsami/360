@@ -287,11 +287,13 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                 <td className="p-4 text-slate-300">{f.assignedTo?.name || 'Unassigned'}</td>
                 <td className="p-4 text-slate-400 text-xs">{f.updatedAt ? new Date(f.updatedAt).toLocaleDateString() : '-'}</td>
                 <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex justify-end gap-2 opacity-100 md:opacity-85 md:group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-cyan-400"
+                      className="h-9 w-9 p-0 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-200 shadow-sm hover:border-cyan-500/40 hover:bg-slate-700 hover:text-cyan-300"
+                      title="View finding"
+                      aria-label="View finding"
                       onClick={() => navigate(`/app/findings/${f.id}`)}
                     >
                       <Eye className="w-4 h-4" />
@@ -299,7 +301,9 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-rose-400"
+                      className="h-9 w-9 p-0 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-200 shadow-sm hover:border-rose-500/40 hover:bg-slate-700 hover:text-rose-300"
+                      title="Delete finding"
+                      aria-label="Delete finding"
                       onClick={() => handleDeleteFinding(f)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -307,7 +311,9 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                      className="h-9 w-9 p-0 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-200 shadow-sm hover:border-slate-500/60 hover:bg-slate-700 hover:text-white"
+                      title="Open finding details"
+                      aria-label="Open finding details"
                       onClick={() => navigate(`/app/findings/${f.id}`)}
                     >
                       <ArrowRight className="w-4 h-4" />
