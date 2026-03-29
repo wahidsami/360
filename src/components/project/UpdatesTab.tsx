@@ -9,9 +9,10 @@ import { formatDistanceToNow } from 'date-fns';
 interface UpdatesTabProps {
     updates: ProjectUpdate[];
     onPost: (update: Partial<ProjectUpdate>) => Promise<void>;
+    canPost?: boolean;
 }
 
-export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
+export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost, canPost = false }) => {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -38,11 +39,11 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">{t('project_timeline')}</h3>
-                <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                {canPost ? (
                     <Button onClick={() => setIsModalOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" /> {t('post_update')}
                     </Button>
-                </PermissionGate>
+                ) : null}
             </div>
 
             <div className="relative border-l border-slate-700 ml-4 space-y-8">
@@ -79,11 +80,11 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost }) => {
                     <div className="ml-6 py-16 text-center bg-slate-800/10 border border-dashed border-slate-800 rounded-xl px-4">
                         <MessageSquare className="w-10 h-10 mx-auto mb-3 text-slate-700" />
                         <p className="text-slate-500 italic text-sm">{t('no_project_updates')}</p>
-                        <PermissionGate permission={Permission.MANAGE_PROJECTS}>
+                        {canPost ? (
                             <Button variant="ghost" size="sm" className="mt-4 text-cyan-500" onClick={() => setIsModalOpen(true)}>
                                 <Plus className="w-3 h-3 mr-2" /> {t('post_an_update')}
                             </Button>
-                        </PermissionGate>
+                        ) : null}
                     </div>
                 )}
             </div>

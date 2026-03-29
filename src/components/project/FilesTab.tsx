@@ -12,9 +12,11 @@ interface FilesTabProps {
     onUpload: (file: File, metadata: { name: string; category: string; visibility: string }) => Promise<void>;
     onDownload?: (fileId: string, download?: boolean) => Promise<string | undefined>;
     onDelete?: (fileId: string) => Promise<void>;
+    canUpload?: boolean;
+    canDelete?: boolean;
 }
 
-export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload, onDelete }) => {
+export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload, onDelete, canUpload = false, canDelete = false }) => {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -132,11 +134,11 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">{t('project_files')}</h3>
-                <PermissionGate permission={Permission.MANAGE_TASKS}>
+                {canUpload ? (
                     <Button onClick={() => setIsModalOpen(true)}>
                         <Upload className="w-4 h-4 mr-2" /> {t('upload_file')}
                     </Button>
-                </PermissionGate>
+                ) : null}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -176,7 +178,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                             >
                                 <Eye className="w-4 h-4" />
                             </button>
-                            {onDelete && file.scopeType !== 'CLIENT' && (
+                            {onDelete && canDelete && file.scopeType !== 'CLIENT' && (
                                 <button
                                     onClick={() => handleDelete(file)}
                                     disabled={downloadingId === file.id}

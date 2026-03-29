@@ -55,8 +55,17 @@ export const ProjectDetails: React.FC = () => {
     const roleVisibleTabIds = PermissionsService.getVisibleTabs(user.role)
       .filter((tabId): tabId is ProjectTabId => PROJECT_TAB_DEFINITIONS.some((definition) => definition.id === tabId));
 
+    const interactiveWorkspaceTabs = new Set(
+      Array.isArray(project?.workspaceConfig?.tabsJson)
+        ? project.workspaceConfig.tabsJson
+            .filter((tab) => tab.state === 'visible_interactive')
+            .map((tab) => tab.tabId as ProjectTabId)
+        : [],
+    );
+
     const roleReadOnlyTabIds = PROJECT_TAB_DEFINITIONS
       .filter((definition) => PermissionsService.isTabReadOnly(user.role, definition.id))
+      .filter((definition) => !interactiveWorkspaceTabs.has(definition.id))
       .map((definition) => definition.id);
 
     return resolveProjectWorkspace({
@@ -75,6 +84,9 @@ export const ProjectDetails: React.FC = () => {
         : null,
     });
   }, [project?.workspaceConfig, user?.role]);
+
+  const tabStateMap = resolvedWorkspace.tabStates;
+  const canInteractWithTab = React.useCallback((tabId: ProjectTabId) => tabStateMap[tabId] === 'visible_interactive', [tabStateMap]);
 
   // --- Role-Based Tab Selection ---
   const visibleTabs = resolvedWorkspace.visibleTabs;
@@ -653,8 +665,17 @@ export const ProjectDetails: React.FC = () => {
             {activeTab === 'sprints' && projectId && <SprintsTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} onUpsertTask={handleUpsertTask} />}
             {activeTab === 'recurring' && projectId && <RecurringTasksTab projectId={projectId} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} />}
             {activeTab === 'milestones' && <MilestonesTab milestones={milestones} onUpsert={handleUpsertMilestone} onDelete={handleDeleteMilestone} />}
-            {activeTab === 'updates' && <UpdatesTab updates={updates} onPost={handlePostUpdate} />}
-            {activeTab === 'files' && <FilesTab files={files} onUpload={handleUploadFile} onDownload={handleDownloadFile} onDelete={handleDeleteFile} />}
+            {activeTab === 'updates' && <UpdatesTab updates={updates} onPost={handlePostUpdate} canPost={canInteractWithTab('updates')} />}
+            {activeTab === 'files' && (
+              <FilesTab
+                files={files}
+                onUpload={handleUploadFile}
+                onDownload={handleDownloadFile}
+                onDelete={handleDeleteFile}
+                canUpload={canInteractWithTab('files')}
+                canDelete={can(Permission.MANAGE_TASKS)}
+              />
+            )}
             {activeTab === 'team' && <TeamTab members={members} onUpdateRole={handleUpdateRole} onAdd={handleAddMember} onRemove={handleRemoveMember} />}
             {activeTab === 'findings' && <FindingsTab findings={findings} projectId={projectId!} onRefresh={handleRefreshFindings} />}
             {activeTab === 'reports' && <ReportsTab reports={reports} projectName={project?.name} onRefresh={loadData} />}
@@ -668,6 +689,7 @@ export const ProjectDetails: React.FC = () => {
               onGetReplies={handleGetReplies}
               onCreateReply={handleCreateReply}
               onDeleteReply={handleDeleteReply}
+              canCreate={canInteractWithTab('discussions')}
             />}
             {activeTab === 'activity' && <ActivityTab activity={activity} onRefresh={loadData} />}
           </React.Suspense>

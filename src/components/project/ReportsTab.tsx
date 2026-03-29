@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, FileText, Plus } from 'lucide-react';
+import { ArrowRight, Download, FileText, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -202,6 +202,23 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
     [activeAssignments, copy.assignToolFirst, copy.createError, copy.createSuccess, draft, loadData, navigate, onRefresh, projectId],
   );
 
+  const handleDownloadLatest = React.useCallback(
+    async (reportId: string) => {
+      try {
+        const result = await api.reportBuilderProjects.getLatestExport(reportId);
+        if (result?.url) {
+          window.open(result.url, '_blank', 'noopener,noreferrer');
+          return;
+        }
+        toast.error(isArabic ? 'لا توجد نسخة مُصدّرة متاحة بعد.' : 'No exported file is available yet.');
+      } catch (error: any) {
+        console.error(error);
+        toast.error(error?.message || (isArabic ? 'فشل تنزيل آخر نسخة.' : 'Failed to download the latest export.'));
+      }
+    },
+    [isArabic],
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -289,7 +306,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                   <p>{copy.performedBy}: {report.performedBy?.name || copy.unknown}</p>
                   <p>{copy.findings}: {report._count?.entries ?? 0}</p>
                 </div>
-                <div className="mt-5 flex justify-end">
+                <div className="mt-5 flex justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleDownloadLatest(report.id)}>
+                    <Download className="mr-2 h-4 w-4" /> {isArabic ? 'تنزيل آخر نسخة' : 'Download Latest'}
+                  </Button>
                   <Button size="sm" onClick={() => navigate(`/app/projects/${projectId}/report-builder/${report.id}`)}>
                     {copy.openReport} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

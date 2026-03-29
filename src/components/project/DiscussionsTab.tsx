@@ -21,6 +21,7 @@ interface DiscussionsTabProps {
     onGetReplies: (discussionId: string) => Promise<DiscussionReply[]>;
     onCreateReply: (discussionId: string, body: string) => Promise<void>;
     onDeleteReply: (discussionId: string, replyId: string) => Promise<void>;
+    canCreate?: boolean;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -708,6 +709,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     onGetReplies,
     onCreateReply,
     onDeleteReply,
+    canCreate = false,
 }) => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -768,9 +770,11 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                         <span className="text-slate-600 text-sm">·</span>
                         <span className="text-slate-500 text-sm">{t('threads_count', { count: discussions.length })}</span>
                     </div>
-                    <Button onClick={() => setIsModalOpen(true)} className="text-sm py-1.5 px-4">
-                        <Plus className="w-4 h-4 mr-1.5" /> {t('new_thread')}
-                    </Button>
+                    {canCreate ? (
+                        <Button onClick={() => setIsModalOpen(true)} className="text-sm py-1.5 px-4">
+                            <Plus className="w-4 h-4 mr-1.5" /> {t('new_thread')}
+                        </Button>
+                    ) : null}
                 </div>
 
                 {/* Message feed */}
@@ -782,9 +786,11 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                             </div>
                             <p className="text-slate-300 font-semibold">{t('no_threads_yet')}</p>
                             <p className="text-slate-600 text-sm mt-1 max-w-xs">{t('start_discussion_desc')}</p>
-                            <Button className="mt-5" onClick={() => setIsModalOpen(true)}>
-                                <Plus className="w-4 h-4 mr-2" /> {t('start_a_thread')}
-                            </Button>
+                            {canCreate ? (
+                                <Button className="mt-5" onClick={() => setIsModalOpen(true)}>
+                                    <Plus className="w-4 h-4 mr-2" /> {t('start_a_thread')}
+                                </Button>
+                            ) : null}
                         </div>
                     ) : (
                         grouped.map(group => (
@@ -860,19 +866,21 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                 </div>
 
                 {/* Bottom compose area */}
-                <div className="px-4 py-3 border-t border-slate-800 flex-shrink-0">
-                    <div
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-3 border border-slate-700 rounded-xl px-4 py-2.5 bg-slate-800/30 hover:border-slate-600 cursor-pointer transition-colors"
-                    >
-                        <Avatar name={user?.name || 'You'} size="xs" />
-                        <span className="text-slate-500 text-sm">Start a new thread...</span>
-                        <div className="ml-auto flex items-center gap-1 text-slate-600">
-                            <Smile className="w-4 h-4" />
-                            <span className="font-bold text-sm">@</span>
+                {canCreate ? (
+                    <div className="px-4 py-3 border-t border-slate-800 flex-shrink-0">
+                        <div
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-3 border border-slate-700 rounded-xl px-4 py-2.5 bg-slate-800/30 hover:border-slate-600 cursor-pointer transition-colors"
+                        >
+                            <Avatar name={user?.name || 'You'} size="xs" />
+                            <span className="text-slate-500 text-sm">Start a new thread...</span>
+                            <div className="ml-auto flex items-center gap-1 text-slate-600">
+                                <Smile className="w-4 h-4" />
+                                <span className="font-bold text-sm">@</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                ) : null}
             </div>
 
             {/* ── Right: Thread Panel ── */}
@@ -892,7 +900,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
             )}
 
             {/* New Thread Modal */}
-            {isModalOpen && (
+            {isModalOpen && canCreate && (
                 <NewThreadModal
                     onClose={() => setIsModalOpen(false)}
                     onSubmit={onCreateThread}
