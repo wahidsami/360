@@ -253,6 +253,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     () => revenueSeries.some((point: { amount: number }) => Number(point.amount) > 0),
     [revenueSeries],
   );
+  const paidRevenueTotal = Number(stats?.revenue || 0);
+  const outstandingRevenueTotal = Number(analytics?.financial.totalOutstanding || 0);
   const showFindingsStatusChart = findingsStatusData.length > 1;
   const showPortfolioHealthChart = portfolioHealthData.length > 1;
 
@@ -723,8 +725,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('findings_status_overview')} onClick={() => navigate('/app/findings')}>
+      <div className="grid grid-cols-1 xl:grid-cols-12 items-stretch gap-6">
+        <GlassCard className="xl:col-span-4 h-full overflow-hidden cursor-pointer" title={t('findings_status_overview')} onClick={() => navigate('/app/findings')}>
           {findingsStatusData.length > 0 ? (
             showFindingsStatusChart ? (
               <div className="h-[220px] w-full">
@@ -765,7 +767,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
           )}
         </GlassCard>
 
-        <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('portfolio_health_snapshot')} onClick={() => navigate('/app/projects')}>
+        <GlassCard className="xl:col-span-4 h-full overflow-hidden cursor-pointer" title={t('portfolio_health_snapshot')} onClick={() => navigate('/app/projects')}>
           {portfolioHealthData.length > 0 ? (
             showPortfolioHealthChart ? (
               <div className="h-[220px] w-full">
@@ -804,7 +806,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         </GlassCard>
 
         {has('revenue-chart') && (
-          <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('revenue_velocity')} onClick={() => navigate('/app/reports')}>
+          <GlassCard className="xl:col-span-4 h-full overflow-hidden cursor-pointer" title={t('revenue_velocity')} onClick={() => navigate('/app/reports')}>
             {revenueHasHistory ? (
               <div className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -826,13 +828,14 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             ) : (
               <div className="grid gap-3">
                 <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('revenue')}</p>
-                  <p className="mt-2 text-3xl font-black text-white">{formatCurrency(Number(stats.revenue || 0), 'SAR')}</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('paid_revenue')}</p>
+                  <p className="mt-2 text-3xl font-black text-white">{formatCurrency(paidRevenueTotal, 'SAR')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{t('revenue_from_paid_invoices')}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('total_outstanding')}</p>
-                  <p className="mt-2 text-2xl font-black text-white">{formatCurrency(Number(analytics?.financial.totalOutstanding || 0), 'SAR')}</p>
-                  <p className="mt-1 text-xs text-slate-400">{t('no_paid_invoices_yet')}</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('outstanding_invoices')}</p>
+                  <p className="mt-2 text-2xl font-black text-white">{formatCurrency(outstandingRevenueTotal, 'SAR')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{t('outstanding_invoice_balance')}</p>
                 </div>
               </div>
             )}
@@ -842,9 +845,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
       {has('tools-panel') && <ToolsPanel role={role} />}
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 items-stretch gap-6">
         {has('latest-updates') && (
-          <GlassCard className="xl:col-span-5" title={t('latest_updates')}>
+          <GlassCard className="xl:col-span-5 h-full overflow-hidden" title={t('latest_updates')}>
             <div className="space-y-5">
               {(stats.latestUpdates as ProjectUpdate[]).length > 0 ? (
                 (stats.latestUpdates as ProjectUpdate[]).map((update) => (
@@ -869,7 +872,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         )}
 
         {has('projects-at-risk') && (
-          <GlassCard className="xl:col-span-4" title={t('projects_at_risk')}>
+          <GlassCard className="xl:col-span-4 h-full overflow-hidden" title={t('projects_at_risk')}>
             <div className="space-y-4">
               {(stats.projectsAtRisk as Project[]).length > 0 ? (
                 (stats.projectsAtRisk as Project[]).map((project) => (
@@ -919,8 +922,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         )}
 
         {has('pending-approvals') && (
-          <GlassCard className="xl:col-span-3" title={t('pending_approvals')}>
-            <div className="flex h-full min-h-[220px] flex-col justify-between rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
+          <GlassCard className="xl:col-span-3 h-full overflow-hidden" title={t('pending_approvals')}>
+            <div className="flex h-full min-h-[220px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{t('awaiting_verification')}</p>
@@ -930,9 +933,11 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   <FileText className="h-5 w-5" />
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
+              <div className="mt-auto pt-5">
+                <div className="rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
                 <p className="text-xs text-slate-400">{t('latest_updates')}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-200">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+                </div>
               </div>
             </div>
           </GlassCard>

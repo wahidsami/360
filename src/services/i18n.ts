@@ -269,6 +269,10 @@ const resources = {
       "report_activity": "Report Activity",
       "open_report": "Open Report",
       "no_paid_invoices_yet": "No paid invoices yet in the current window.",
+      "paid_revenue": "Paid Revenue",
+      "revenue_from_paid_invoices": "Based on invoices marked as paid.",
+      "outstanding_invoices": "Outstanding Invoices",
+      "outstanding_invoice_balance": "Open balance from issued and overdue invoices.",
       "top_client": "Top Client",
       "needs_focus": "Needs Focus",
       "total_label": "total",
@@ -993,6 +997,10 @@ const resources = {
       "report_activity": "نشاط التقارير",
       "open_report": "فتح التقرير",
       "no_paid_invoices_yet": "لا توجد فواتير مدفوعة بعد ضمن الفترة الحالية.",
+      "paid_revenue": "الإيرادات المدفوعة",
+      "revenue_from_paid_invoices": "مبنية على الفواتير التي تم تعليمها كمدفوعة.",
+      "outstanding_invoices": "الفواتير المستحقة",
+      "outstanding_invoice_balance": "الرصيد المفتوح من الفواتير الصادرة والمتأخرة.",
       "top_client": "أفضل عميل",
       "needs_focus": "يحتاج تركيزًا",
       "total_label": "إجمالي",
@@ -1469,3 +1477,4 @@ i18n
   });
 
 export default i18n;
+
