@@ -43,7 +43,7 @@ export class UsersService {
         }
 
         try {
-            const { permissions, ...restUserData } = userData as CreateUserDto & { permissions?: string[] };
+            const { permissions, clientId, ...restUserData } = userData as CreateUserDto & { permissions?: string[] };
             const user = await this.prisma.user.create({
                 data: {
                     ...restUserData,
