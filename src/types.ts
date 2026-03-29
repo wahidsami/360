@@ -48,6 +48,12 @@ export interface User {
   twoFactorEnabled?: boolean;
 }
 
+export interface CreateUserResult {
+  user: User;
+  inviteLink?: string;
+  expiresAt?: string;
+}
+
 export type ClientStatus = 'active' | 'inactive' | 'archived';
 
 export interface ClientBillingProfile {

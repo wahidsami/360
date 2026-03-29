@@ -192,8 +192,8 @@ export const UsersAdmin: React.FC = () => {
 
   // Filtering
   const filteredUsers = users.filter(u => {
-    const matchSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
   });
@@ -210,14 +210,14 @@ export const UsersAdmin: React.FC = () => {
         clientId: newUser.role.startsWith('CLIENT_') ? newUser.clientId : undefined,
         avatar: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`
       } as any);
-      setUsers([...users, created as User]);
+      setUsers((current) => [...current, created.user]);
       setModalOpen(false);
       setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
 
       // Show invite result
-      if ((created as any).inviteLink) {
+      if (created.inviteLink) {
         toast.success(`${copy.inviteSent} ${newUser.email}`);
-        setInviteResult({ link: (created as any).inviteLink, email: newUser.email });
+        setInviteResult({ link: created.inviteLink, email: newUser.email });
       } else {
         toast.success(copy.createUserSuccess);
       }

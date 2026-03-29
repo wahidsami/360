@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Client, Project, User, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility, ProjectWorkspaceConfigDraft, ClientWorkspaceTemplateAssignment, ProjectWorkspaceTemplate, WorkspaceAudienceType, WorkspaceTemplateStatus } from '../types';
+import { Client, Project, User, CreateUserResult, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility, ProjectWorkspaceConfigDraft, ClientWorkspaceTemplateAssignment, ProjectWorkspaceTemplate, WorkspaceAudienceType, WorkspaceTemplateStatus } from '../types';
 import toast from 'react-hot-toast';
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
@@ -1297,7 +1297,7 @@ export const api = {
     list: async (): Promise<User[]> => {
       return fetchApi('/admin/users');
     },
-    create: async (payload: Partial<User> & { password?: string; permissions?: string[] }): Promise<User> => {
+    create: async (payload: Partial<User> & { password?: string; permissions?: string[] }): Promise<CreateUserResult> => {
       return fetchApi('/admin/users', {
         method: 'POST',
         body: JSON.stringify(payload)
