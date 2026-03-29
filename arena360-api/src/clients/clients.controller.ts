@@ -35,6 +35,11 @@ export class ClientsController {
         return this.clientsService.archive(id, req.user);
     }
 
+    @Patch(':id/restore')
+    restore(@Request() req: any, @Param('id') id: string) {
+        return this.clientsService.restore(id, req.user);
+    }
+
     @Delete(':id')
     remove(@Request() req: any, @Param('id') id: string) {
         return this.clientsService.remove(id, req.user);

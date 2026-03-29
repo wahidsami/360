@@ -342,6 +342,9 @@ export const api = {
     archive: async (id: string): Promise<void> => {
       await fetchApi(`/clients/${id}/archive`, { method: 'PATCH' });
     },
+    restore: async (id: string): Promise<void> => {
+      await fetchApi(`/clients/${id}/restore`, { method: 'PATCH' });
+    },
     delete: async (id: string): Promise<void> => {
       await fetchApi(`/clients/${id}`, { method: 'DELETE' });
     },

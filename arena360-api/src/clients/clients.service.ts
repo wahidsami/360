@@ -148,6 +148,14 @@ export class ClientsService {
         });
     }
 
+    async restore(id: string, user: UserWithRoles) {
+        await this.findOne(id, user);
+        return this.prisma.client.update({
+            where: { id },
+            data: { status: 'ACTIVE' }
+        });
+    }
+
     // --- Membership ---
     async getMembers(clientId: string) {
         return this.prisma.clientMember.findMany({

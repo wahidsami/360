@@ -53,7 +53,7 @@ export class DashboardService {
         // Aggregate stats within user's org
         const [totalClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals, accessibilityReports] = await Promise.all([
             this.prisma.client.count({
-                where: { orgId: user.orgId, status: { not: 'ARCHIVED' } }
+                where: { orgId: user.orgId, deletedAt: null, status: { not: 'ARCHIVED' } }
             }),
             this.prisma.project.findMany({
                 where: { orgId: user.orgId },

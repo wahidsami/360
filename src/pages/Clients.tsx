@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Edit, Archive, Filter, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import { Client, Permission, Project } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, Input, Select } from '../components/ui/UIComponents';
@@ -76,6 +76,14 @@ export const ClientList: React.FC = () => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to completely delete this client?')) {
       await api.clients.delete(id);
+      loadData();
+    }
+  };
+
+  const handleRestore = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(t('confirm_restore_client'))) {
+      await api.clients.restore(id);
       loadData();
     }
   };
@@ -174,9 +182,17 @@ export const ClientList: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-6">
-                      <Badge variant={client.status === 'active' ? 'success' : 'neutral'}>
-                        {t(client.status).toUpperCase()}
-                      </Badge>
+                        <Badge
+                          variant={
+                            client.status === 'active'
+                              ? 'success'
+                              : client.status === 'archived'
+                                ? 'warning'
+                                : 'neutral'
+                          }
+                        >
+                          {t(client.status).toUpperCase()}
+                        </Badge>
                     </td>
                     <td className="p-6">
                       <span className="font-mono text-cyan-400 font-bold">{getActiveProjectCount(client.id)}</span>
@@ -198,9 +214,15 @@ export const ClientList: React.FC = () => {
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clients/${client.id}/edit`)}>
                             <Edit className="w-4 h-4 text-slate-400 hover:text-amber-400" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={(e) => handleArchive(client.id, e)}>
-                            <Archive className="w-4 h-4 text-slate-400 hover:text-amber-400" />
-                          </Button>
+                          {client.status === 'archived' ? (
+                            <Button variant="ghost" size="sm" onClick={(e) => handleRestore(client.id, e)} title={t('restore_client')}>
+                              <RotateCcw className="w-4 h-4 text-slate-400 hover:text-emerald-400" />
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" onClick={(e) => handleArchive(client.id, e)} title={t('archive')}>
+                              <Archive className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="sm" onClick={(e) => handleDelete(client.id, e)}>
                             <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
                           </Button>
