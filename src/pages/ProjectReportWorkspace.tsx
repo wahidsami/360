@@ -152,6 +152,8 @@ export const ProjectReportWorkspace: React.FC = () => {
             severityClassification: 'تصنيف الشدة',
             accessibilityCategory: 'تصنيف إمكانية الوصول',
             mainCategory: 'التصنيف الرئيسي',
+            subcategoryLabelOptional: 'التصنيف الفرعي (اختياري)',
+            subcategoryHelpOptional: 'يمكن ترك التصنيف الفرعي فارغًا عندما تكون النتيجة إيجابية أو غير منطبقة أو غير مختبرة.',
             selectCategory: 'اختر التصنيف',
             selectSubcategory: 'اختر التصنيف الفرعي',
             evidenceMedia: 'وسائط الإثبات',
@@ -249,6 +251,8 @@ export const ProjectReportWorkspace: React.FC = () => {
             severityClassification: 'Severity Classification',
             accessibilityCategory: 'Accessibility Category',
             mainCategory: 'Main Category',
+            subcategoryLabelOptional: 'Subcategory (Optional)',
+            subcategoryHelpOptional: 'You can leave subcategory empty when the result is positive, not applicable, or not tested.',
             selectCategory: 'Select Category',
             selectSubcategory: 'Select Sub-Category',
             evidenceMedia: 'Evidence Media',
@@ -358,6 +362,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   const reportOutputLocale: ProjectReportOutputLocale = report?.outputLocale || getAccessibilityOutputLocale(report?.templateVersion);
   const entryNeedsSeverity = entryDraft.auditOutcome === 'FAIL' || entryDraft.auditOutcome === 'PARTIAL';
   const entryNeedsRecommendation = entryNeedsSeverity;
+  const entryNeedsSubcategory = entryNeedsSeverity;
 
   const filteredEntries = React.useMemo(() => {
     return entries.filter((entry) => {
@@ -996,10 +1001,15 @@ export const ProjectReportWorkspace: React.FC = () => {
                 <option value="">{copy.selectCategory}</option>
                 {availableCategories.map((category) => <option key={category} value={category}>{getAccessibilityCategoryLabel(category, uiLocale)}</option>)}
               </Select>
-              <Select label={copy.subcategory} value={entryDraft.subcategory} onChange={(event) => setEntryDraft((current) => ({ ...current, subcategory: event.target.value }))} required>
+              <div>
+                {!entryNeedsSubcategory && (
+                  <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{copy.subcategoryHelpOptional}</p>
+                )}
+                <Select label={entryNeedsSubcategory ? copy.subcategory : copy.subcategoryLabelOptional} value={entryDraft.subcategory} onChange={(event) => setEntryDraft((current) => ({ ...current, subcategory: event.target.value }))} required={entryNeedsSubcategory}>
                 <option value="">{copy.selectSubcategory}</option>
                 {subcategoryOptions.map((subcategory) => <option key={subcategory} value={subcategory}>{getAccessibilitySubcategoryLabel(entryDraft.category, subcategory, uiLocale)}</option>)}
-              </Select>
+                </Select>
+              </div>
             </div>
           </section>
 

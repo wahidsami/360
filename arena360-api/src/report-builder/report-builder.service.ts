@@ -226,6 +226,7 @@ export class ReportBuilderService {
     const auditOutcome = this.getAuditOutcome(input.rowDataJson);
     const requiresSeverity = auditOutcome === 'FAIL' || auditOutcome === 'PARTIAL';
     const requiresRecommendation = requiresSeverity;
+    const requiresSubcategory = requiresSeverity;
 
     if (!input.serviceName?.trim()) {
       throw new BadRequestException('Service name is required for accessibility audit results.');
@@ -242,8 +243,8 @@ export class ReportBuilderService {
     if (!input.category?.trim()) {
       throw new BadRequestException('Main category is required for accessibility audit results.');
     }
-    if (!input.subcategory?.trim()) {
-      throw new BadRequestException('Subcategory is required for accessibility audit results.');
+    if (requiresSubcategory && !input.subcategory?.trim()) {
+      throw new BadRequestException('Subcategory is required when an accessibility result has an issue or is partially working.');
     }
     if (!input.pageUrl?.trim()) {
       throw new BadRequestException('Page URL is required for accessibility audit results.');
