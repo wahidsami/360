@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
   Search, Plus, Shield,
-  Mail, Edit2, Power, CheckCircle, ExternalLink, Trash2
+  Mail, Edit2, Power, CheckCircle, ExternalLink, Trash2, ChevronDown, ChevronRight, RefreshCcw, Building2, Users, Link2
 } from 'lucide-react';
 import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/components/ui/UIComponents";
 import { Modal } from "@/components/ui/Modal";
@@ -112,6 +112,19 @@ export const UsersAdmin: React.FC = () => {
   const deleteUserConfirm = isArabic ? 'هل أنت متأكد من أنك تريد حذف هذا المستخدم؟' : 'Are you sure you want to delete this user?';
   const deleteUserFailed = isArabic ? 'فشل حذف المستخدم' : 'Failed to delete user';
   const deleteUserSuccess = isArabic ? 'تم حذف المستخدم' : 'User deleted successfully';
+  const resendInviteLabel = isArabic ? 'إعادة إرسال الدعوة' : 'Resend setup email';
+  const resendInviteFailed = isArabic ? 'فشل إعادة إرسال الدعوة' : 'Failed to resend setup email';
+  const resendInviteSent = isArabic ? 'تمت إعادة إرسال الدعوة إلى' : 'Setup email resent to';
+  const copyInviteLinkLabel = isArabic ? 'نسخ رابط الدعوة' : 'Copy invite link';
+  const copyInviteLinkFailed = isArabic ? 'فشل نسخ رابط الدعوة' : 'Failed to copy invite link';
+  const copyInviteLinkSuccess = isArabic ? 'تم نسخ رابط الدعوة للمستخدم' : 'Invite link copied for';
+  const internalUsersLabel = isArabic ? 'الفريق الداخلي' : 'Internal Team';
+  const clientAccountsLabel = isArabic ? 'حسابات العميل' : 'Client Accounts';
+  const invitePendingLabel = isArabic ? 'الدعوة معلقة' : 'Invite pending';
+  const inviteExpiredLabel = isArabic ? 'الدعوة منتهية' : 'Invite expired';
+  const setupCompleteLabel = isArabic ? 'تم إعداد الحساب' : 'Setup complete';
+  const directAccessLabel = isArabic ? 'وصول مباشر' : 'Direct access';
+  const noClientGroupLabel = isArabic ? 'مستخدمون بدون عميل' : 'Client users without assignment';
 
   const permissionLabels = React.useMemo(
     () =>
@@ -168,22 +181,36 @@ export const UsersAdmin: React.FC = () => {
   // State
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    internal: true,
+  });
 
-  React.useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [usersData, clientsData] = await Promise.all([
-          api.users.list(),
-          api.clients.list()
-        ]);
-        setUsers(usersData);
-        setClients(clientsData);
-      } catch (e) {
-        console.error("Failed to load data", e);
-      }
-    };
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      const [usersData, clientsData] = await Promise.all([
+        api.users.list(),
+        api.clients.list()
+      ]);
+      setUsers(usersData);
+      setClients(clientsData);
+      setExpandedGroups((current) => {
+        const next = { ...current };
+        for (const user of usersData) {
+          const primaryClientId = user.clientMemberships?.[0]?.clientId;
+          if (primaryClientId && !(primaryClientId in next)) {
+            next[primaryClientId] = true;
+          }
+        }
+        return next;
+      });
+    } catch (e) {
+      console.error("Failed to load data", e);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [isModalOpen, setModalOpen] = useState(false);
@@ -195,15 +222,81 @@ export const UsersAdmin: React.FC = () => {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editClientId, setEditClientId] = useState('');
 
-  // Filtering
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = useMemo(() => users.filter((u) => {
     const matchSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
-  });
+  }), [roleFilter, searchTerm, users]);
 
-  // Handlers
+  const groupedUsers = useMemo(() => {
+    const groups: Array<{ key: string; label: string; type: 'internal' | 'client'; users: User[]; client?: Client | null }> = [];
+    const internalUsers = filteredUsers.filter((user) => !user.clientMemberships?.length || !user.role.startsWith('CLIENT_'));
+
+    groups.push({
+      key: 'internal',
+      label: internalUsersLabel,
+      type: 'internal',
+      users: internalUsers,
+      client: null,
+    });
+
+    const clientGroups = new Map<string, { key: string; label: string; type: 'client'; users: User[]; client?: Client | null }>();
+
+    filteredUsers.forEach((user) => {
+      if (!user.role.startsWith('CLIENT_')) {
+        return;
+      }
+
+      const primaryMembership = user.clientMemberships?.[0];
+      const key = primaryMembership?.clientId || 'unassigned-client-users';
+      const label = primaryMembership?.client?.name || noClientGroupLabel;
+      const client = primaryMembership?.client || clients.find((entry) => entry.id === primaryMembership?.clientId) || null;
+
+      if (!clientGroups.has(key)) {
+        clientGroups.set(key, {
+          key,
+          label,
+          type: 'client',
+          users: [],
+          client,
+        });
+      }
+
+      clientGroups.get(key)!.users.push(user);
+    });
+
+    return groups.concat(Array.from(clientGroups.values()).sort((a, b) => a.label.localeCompare(b.label)));
+  }, [clients, filteredUsers, internalUsersLabel, noClientGroupLabel]);
+
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups((current) => ({
+      ...current,
+      [groupKey]: !(current[groupKey] ?? true),
+    }));
+  };
+
+  const openEditUser = (user: User) => {
+    setEditUser(user);
+    setEditRole(user.role as Role);
+    setEditIsActive(user.isActive ?? true);
+    setEditPermissions(user.customPermissions || []);
+    setEditClientId(user.clientMemberships?.[0]?.clientId || '');
+  };
+
+  const getInviteBadge = (user: User) => {
+    if (user.invitePending) {
+      return { label: invitePendingLabel, variant: 'warning' as const };
+    }
+    if (user.inviteExpired) {
+      return { label: inviteExpiredLabel, variant: 'danger' as const };
+    }
+    if (user.hasAcceptedInvite) {
+      return { label: setupCompleteLabel, variant: 'success' as const };
+    }
+    return { label: directAccessLabel, variant: 'neutral' as const };
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -215,11 +308,10 @@ export const UsersAdmin: React.FC = () => {
         clientId: newUser.role.startsWith('CLIENT_') ? newUser.clientId : undefined,
         avatar: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`
       } as any);
-      setUsers((current) => [...current, created.user]);
+      await loadData();
       setModalOpen(false);
       setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
 
-      // Show invite result
       if (created.inviteLink) {
         toast.success(`${copy.inviteSent} ${newUser.email}`);
         setInviteResult({ link: created.inviteLink, email: newUser.email });
@@ -236,12 +328,36 @@ export const UsersAdmin: React.FC = () => {
     if (!confirm(deleteUserConfirm)) return;
     try {
       await api.users.delete(user.id);
-      setUsers((current) => current.filter((u) => u.id !== user.id));
+      await loadData();
       if (editUser?.id === user.id) setEditUser(null);
       toast.success(deleteUserSuccess);
     } catch (e) {
       console.error('Failed to delete user', e);
       toast.error(deleteUserFailed);
+    }
+  };
+
+  const handleResendInvite = async (user: User) => {
+    try {
+      const result = await api.users.resendInvite(user.id);
+      await loadData();
+      toast.success(`${resendInviteSent} ${user.email}`);
+      setInviteResult({ link: result.inviteLink, email: user.email });
+    } catch (e) {
+      console.error('Failed to resend invite', e);
+      toast.error(resendInviteFailed);
+    }
+  };
+
+  const handleCopyInviteLink = async (user: User) => {
+    try {
+      const result = await api.users.resendInvite(user.id);
+      await navigator.clipboard.writeText(result.inviteLink);
+      await loadData();
+      toast.success(`${copyInviteLinkSuccess} ${user.email}`);
+    } catch (e) {
+      console.error('Failed to copy invite link', e);
+      toast.error(copyInviteLinkFailed);
     }
   };
 
@@ -289,85 +405,158 @@ export const UsersAdmin: React.FC = () => {
         </div>
       </GlassCard>
 
-      {/* Users Table */}
-      <GlassCard className="p-0 overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
-            <tr>
-              <th className="p-4 font-medium">{copy.identity}</th>
-              <th className="p-4 font-medium">{copy.role}</th>
-              <th className="p-4 font-medium">{copy.status}</th>
-              <th className="p-4 font-medium">{copy.lastLogin}</th>
-              <th className="p-4 font-medium text-right">{copy.actions}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {filteredUsers.map(user => (
-              <tr key={user.id} className="hover:bg-slate-800/30 transition-colors group">
-                <td className="p-4">
+      {filteredUsers.length === 0 ? (
+        <GlassCard className="text-center text-slate-500">{copy.noUsers}</GlassCard>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <Building2 className="w-4 h-4" />
+            <span>{clientAccountsLabel}</span>
+          </div>
+
+          {groupedUsers.map((group) => {
+            const isExpanded = expandedGroups[group.key] ?? true;
+
+            return (
+              <GlassCard key={group.key} className="p-0 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.key)}
+                  className="flex w-full items-center justify-between gap-3 border-b border-slate-200/60 bg-slate-50/80 px-5 py-4 text-left transition-colors hover:bg-slate-100/80 dark:border-slate-800/60 dark:bg-slate-900/40 dark:hover:bg-slate-800/40"
+                >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                      alt={user.name}
-                      className="w-9 h-9 rounded-full border border-slate-600 object-cover"
-                    />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
+                      {group.type === 'internal' ? <Users className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}
+                    </div>
                     <div>
-                      <p className="font-medium text-slate-200">{user.name}</p>
-                      <div className="flex flex-col gap-0.5">
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <Mail className="w-3 h-3" /> {user.email}
-                        </p>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-600 font-mono">
-                          <span>ID: {user.id}</span>
-                          <CopyButton value={user.id} className="scale-75 origin-left" />
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{group.label}</p>
+                        <Badge variant={group.type === 'internal' ? 'info' : 'warning'} size="sm">
+                          {group.users.length}
+                        </Badge>
                       </div>
+                      {group.client && (
+                        <p className="text-xs text-slate-500">{group.client.email || group.client.status}</p>
+                      )}
                     </div>
                   </div>
-                </td>
-                <td className="p-4">
-                  <Badge variant={getRoleBadgeVariant(user.role)}>
-                    {roleLabel(user.role)}
-                  </Badge>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                    <span className="text-slate-300">{copy.active}</span>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <span className="text-xs">{group.users.length}</span>
+                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </div>
-                </td>
-                <td className="p-4 text-slate-400">
-                  {new Date().toLocaleDateString()} <span className="text-xs opacity-50">14:20</span>
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                        setEditUser(user);
-                        setEditRole(user.role as Role);
-                        setEditIsActive(user.isActive ?? true);
-                        setEditPermissions(user.customPermissions || []);
-                        setEditClientId((user as any).clientMemberships?.[0]?.clientId || '');
-                      }} title={copy.editRolePermissions}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    <Button variant="ghost" size="sm" title={copy.disableAccount} className="hover:text-rose-400">
-                      <Power className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" title={deleteUserLabel} className="hover:text-rose-400" onClick={() => handleDeleteUser(user)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                </button>
+
+                {isExpanded && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
+                        <tr>
+                          <th className="p-4 font-medium">{copy.identity}</th>
+                          <th className="p-4 font-medium">{copy.role}</th>
+                          <th className="p-4 font-medium">{copy.status}</th>
+                          <th className="p-4 font-medium">{copy.lastLogin}</th>
+                          <th className="p-4 font-medium text-right">{copy.actions}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {group.users.map((user) => {
+                          const inviteBadge = getInviteBadge(user);
+                          return (
+                            <tr key={user.id} className="hover:bg-slate-800/30 transition-colors group">
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                                    alt={user.name}
+                                    className="w-9 h-9 rounded-full border border-slate-600 object-cover"
+                                  />
+                                  <div>
+                                    <p className="font-medium text-slate-200">{user.name}</p>
+                                    <div className="flex flex-col gap-1">
+                                      <p className="text-xs text-slate-500 flex items-center gap-1">
+                                        <Mail className="w-3 h-3" /> {user.email}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <Badge variant={inviteBadge.variant} size="sm">{inviteBadge.label}</Badge>
+                                        {user.clientMemberships && user.clientMemberships.length > 1 && (
+                                          <Badge variant="neutral" size="sm">+{user.clientMemberships.length - 1} more</Badge>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1 text-[10px] text-slate-600 font-mono">
+                                        <span>ID: {user.id}</span>
+                                        <CopyButton value={user.id} className="scale-75 origin-left" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex flex-col gap-2">
+                                  <Badge variant={getRoleBadgeVariant(user.role)}>
+                                    {roleLabel(user.role)}
+                                  </Badge>
+                                  {!!user.clientMemberships?.length && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {user.clientMemberships.map((membership) => (
+                                        <Badge key={membership.id} variant="neutral" size="sm">
+                                          {membership.client.name}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle className={`w-4 h-4 ${user.isActive === false ? 'text-slate-500' : 'text-emerald-500'}`} />
+                                    <span className="text-slate-300">{user.isActive === false ? copy.inactive : copy.active}</span>
+                                  </div>
+                                  {user.latestInvite && (
+                                    <p className="text-xs text-slate-500">
+                                      {new Date(user.latestInvite.expiresAt).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4 text-slate-400">
+                                {user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : '-'}
+                              </td>
+                              <td className="p-4 text-right">
+                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button variant="ghost" size="sm" onClick={() => openEditUser(user)} title={copy.editRolePermissions}>
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  {!user.hasAcceptedInvite && (
+                                    <>
+                                      <Button variant="ghost" size="sm" title={copyInviteLinkLabel} onClick={() => handleCopyInviteLink(user)}>
+                                        <Link2 className="w-4 h-4" />
+                                      </Button>
+                                      <Button variant="ghost" size="sm" title={resendInviteLabel} onClick={() => handleResendInvite(user)}>
+                                        <RefreshCcw className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                  <Button variant="ghost" size="sm" title={copy.disableAccount} className="hover:text-rose-400">
+                                    <Power className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" title={deleteUserLabel} className="hover:text-rose-400" onClick={() => handleDeleteUser(user)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                </td>
-              </tr>
-            ))}
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">{copy.noUsers}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </GlassCard>
+                )}
+              </GlassCard>
+            );
+          })}
+        </div>
+      )}
 
       {/* Edit User Modal */}
       <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title={editUser ? (isArabic ? `تعديل المستخدم: ${editUser.name}` : `Edit User: ${editUser.name}`) : ''}>
@@ -451,6 +640,18 @@ export const UsersAdmin: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
+              {editUser && !editUser.hasAcceptedInvite && (
+                <>
+                  <Button type="button" variant="ghost" onClick={() => handleCopyInviteLink(editUser)}>
+                    <Link2 className="w-4 h-4 mr-2" />
+                    {copyInviteLinkLabel}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => handleResendInvite(editUser)}>
+                    <RefreshCcw className="w-4 h-4 mr-2" />
+                    {resendInviteLabel}
+                  </Button>
+                </>
+              )}
               <Button type="button" variant="ghost" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteUser(editUser)}>
                 <Trash2 className="w-4 h-4 mr-2" />
                 {deleteUserLabel}
@@ -459,18 +660,15 @@ export const UsersAdmin: React.FC = () => {
               <Button type="button" onClick={async () => {
                 if (!editUser) return;
                 try {
-                  const updated = await api.users.update(editUser.id, {
+                  await api.users.update(editUser.id, {
                     role: editRole,
                     isActive: editIsActive,
                     permissions: editPermissions,
                     ...(editRole.startsWith('CLIENT_') && editClientId ? { clientId: editClientId } : {}),
                   } as any);
-                  setUsers(users.map(u => u.id === editUser.id
-                    ? { ...u, role: editRole, isActive: editIsActive, customPermissions: editPermissions }
-                    : u
-                  ));
+                  await loadData();
                   setEditUser(null);
-                  toast.success(isArabic ? `تم تحديث الملف الشخصي للمستخدم ${editUser.name}` : `${editUser.name}${copy.profileUpdatedSuffix}`);
+                  toast.success(isArabic ? `${editUser.name} تم تحديث ملفه الشخصي` : `${editUser.name}${copy.profileUpdatedSuffix}`);
                 } catch (e) {
                   toast.error(copy.updateFailed);
                 }
@@ -594,3 +792,4 @@ export const UsersAdmin: React.FC = () => {
 };
 
 export default UsersAdmin;
+

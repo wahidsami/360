@@ -43,15 +43,44 @@ export interface User {
   email: string;
   role: Role;
   avatar?: string;
+  isActive?: boolean;
+  orgId?: string;
+  createdAt?: string;
+  updatedAt?: string;
   /** Extra permissions beyond role defaults (e.g. MANAGE_CLIENTS, VIEW_FINANCIALS) */
   customPermissions?: string[];
   twoFactorEnabled?: boolean;
+  clientMemberships?: Array<{
+    id: string;
+    clientId: string;
+    role: Role;
+    createdAt: string;
+    client: {
+      id: string;
+      name: string;
+      status: ClientStatus;
+    };
+  }>;
+  latestInvite?: {
+    id: string;
+    createdAt: string;
+    expiresAt: string;
+    usedAt?: string | null;
+  } | null;
+  hasAcceptedInvite?: boolean;
+  invitePending?: boolean;
+  inviteExpired?: boolean;
 }
 
 export interface CreateUserResult {
   user: User;
   inviteLink?: string;
   expiresAt?: string;
+}
+
+export interface ResendInviteResult {
+  inviteLink: string;
+  expiresAt: string;
 }
 
 export type ClientStatus = 'active' | 'inactive' | 'archived';

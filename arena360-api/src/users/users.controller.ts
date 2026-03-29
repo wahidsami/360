@@ -38,6 +38,12 @@ export class UsersController {
         return this.usersService.updatePermissions(id, dto.permissions);
     }
 
+    @Post(':id/resend-invite')
+    @Roles(GlobalRole.SUPER_ADMIN, GlobalRole.OPS, GlobalRole.PM, GlobalRole.DEV)
+    resendInvite(@Param('id') id: string, @Request() req: any) {
+        return this.usersService.resendInvite(id, req.user?.orgId, req.user?.id);
+    }
+
     @Delete(':id')
     @Roles(GlobalRole.SUPER_ADMIN)
     remove(@Param('id') id: string, @Request() req: any) {
