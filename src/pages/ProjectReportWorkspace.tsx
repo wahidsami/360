@@ -580,6 +580,14 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   }, [canGenerateExports, isArabic, loadData, previewLocale, reportId, resolveExportLocale]);
 
+  const handleGoBack = React.useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(`/app/projects/${projectId}`);
+  }, [navigate, projectId]);
+
   const handleDownloadLatestExport = async () => {
     if (!reportId) return;
     try {
@@ -629,9 +637,9 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex gap-3">
-          <Button variant="ghost" onClick={() => navigate(`/app/projects/${projectId}`)}>
+          <Button variant="ghost" onClick={handleGoBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -744,28 +752,28 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
-        <GlassCard>
+      <div className="grid gap-3 md:grid-cols-5">
+        <GlassCard className="p-4 md:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.complianceScore}</p>
-          <p className="mt-2 text-3xl font-bold text-cyan-600">{summaryCounts.compliance}%</p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'عنصرًا تم تقييمه' : 'scored checks'}</p>
+          <p className="mt-2 text-2xl font-bold text-cyan-600 md:text-[1.75rem]">{summaryCounts.compliance}%</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'عنصرًا تم تقييمه' : 'scored checks'}</p>
         </GlassCard>
-        <GlassCard>
+        <GlassCard className="p-4 md:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">{summaryCounts.pass}</p>
+          <p className="mt-2 text-2xl font-bold text-emerald-600 md:text-[1.75rem]">{summaryCounts.pass}</p>
         </GlassCard>
-        <GlassCard>
+        <GlassCard className="p-4 md:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.needsAttention}</p>
-          <p className="mt-2 text-3xl font-bold text-rose-600">{summaryCounts.fail}</p>
+          <p className="mt-2 text-2xl font-bold text-rose-600 md:text-[1.75rem]">{summaryCounts.fail}</p>
         </GlassCard>
-        <GlassCard>
+        <GlassCard className="p-4 md:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.partialChecks}</p>
-          <p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.partial}</p>
+          <p className="mt-2 text-2xl font-bold text-amber-500 md:text-[1.75rem]">{summaryCounts.partial}</p>
         </GlassCard>
-        <GlassCard>
+        <GlassCard className="p-4 md:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-700 dark:text-slate-200">{summaryCounts.notTested}</p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-2xl font-bold text-slate-700 dark:text-slate-200 md:text-[1.75rem]">{summaryCounts.notTested}</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
             {summaryCounts.notApplicable} {isArabic ? 'غير منطبق' : 'not applicable'}
           </p>
         </GlassCard>
