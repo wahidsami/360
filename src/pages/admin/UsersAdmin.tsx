@@ -108,6 +108,11 @@ export const UsersAdmin: React.FC = () => {
     [isArabic],
   );
 
+  const deleteUserLabel = isArabic ? 'حذف المستخدم' : 'Delete User';
+  const deleteUserConfirm = isArabic ? 'هل أنت متأكد من أنك تريد حذف هذا المستخدم؟' : 'Are you sure you want to delete this user?';
+  const deleteUserFailed = isArabic ? 'فشل حذف المستخدم' : 'Failed to delete user';
+  const deleteUserSuccess = isArabic ? 'تم حذف المستخدم' : 'User deleted successfully';
+
   const permissionLabels = React.useMemo(
     () =>
       isArabic
@@ -190,25 +195,6 @@ export const UsersAdmin: React.FC = () => {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editClientId, setEditClientId] = useState('');
 
-  const handleDeleteUser = async (user: User) => {
-    const confirmed = window.confirm(
-      `Delete ${user.name} (${user.email})?\n\nThis only works for users without activity history. This action cannot be undone.`
-    );
-    if (!confirmed) return;
-
-    try {
-      await api.users.delete(user.id);
-      setUsers((current) => current.filter((item) => item.id !== user.id));
-      if (editUser?.id === user.id) {
-        setEditUser(null);
-      }
-      toast.success(`${user.name} deleted`);
-    } catch (e) {
-      console.error('Failed to delete user', e);
-      toast.error(e instanceof Error ? e.message : 'Failed to delete user');
-    }
-  };
-
   // Filtering
   const filteredUsers = users.filter(u => {
     const matchSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -243,6 +229,19 @@ export const UsersAdmin: React.FC = () => {
     } catch (e) {
       console.error("Failed to create user", e);
       toast.error(copy.createUserFailed);
+    }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    if (!confirm(deleteUserConfirm)) return;
+    try {
+      await api.users.delete(user.id);
+      setUsers((current) => current.filter((u) => u.id !== user.id));
+      if (editUser?.id === user.id) setEditUser(null);
+      toast.success(deleteUserSuccess);
+    } catch (e) {
+      console.error('Failed to delete user', e);
+      toast.error(deleteUserFailed);
     }
   };
 
@@ -354,14 +353,7 @@ export const UsersAdmin: React.FC = () => {
                     <Button variant="ghost" size="sm" title={copy.disableAccount} className="hover:text-rose-400">
                       <Power className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      title="Delete user"
-                      className="hover:text-rose-400"
-                      onClick={() => handleDeleteUser(user)}
-                      disabled={user.role === Role.SUPER_ADMIN}
-                    >
+                    <Button variant="ghost" size="sm" title={deleteUserLabel} className="hover:text-rose-400" onClick={() => handleDeleteUser(user)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -459,14 +451,9 @@ export const UsersAdmin: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-rose-400 hover:text-rose-300"
-                onClick={() => handleDeleteUser(editUser)}
-                disabled={editUser.role === Role.SUPER_ADMIN}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Delete User
+              <Button type="button" variant="ghost" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteUser(editUser)}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                {deleteUserLabel}
               </Button>
               <Button type="button" variant="ghost" onClick={() => setEditUser(null)}>{t('cancel')}</Button>
               <Button type="button" onClick={async () => {

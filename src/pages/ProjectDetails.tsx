@@ -440,24 +440,36 @@ export const ProjectDetails: React.FC = () => {
     } else {
       await api.projects.createTask(projectId, t);
     }
-    const newTasks = await api.projects.getTasks(projectId);
+    const [newTasks, newMilestones] = await Promise.all([
+      api.projects.getTasks(projectId),
+      api.projects.getMilestones(projectId),
+    ]);
     setTasks(newTasks);
+    setMilestones(newMilestones);
     refreshReadiness();
   };
 
   const handleDeleteTask = async (id: string) => {
     if (!projectId) return;
     await api.projects.deleteTask(projectId, id);
-    const newTasks = await api.projects.getTasks(projectId);
+    const [newTasks, newMilestones] = await Promise.all([
+      api.projects.getTasks(projectId),
+      api.projects.getMilestones(projectId),
+    ]);
     setTasks(newTasks);
+    setMilestones(newMilestones);
     refreshReadiness();
   };
 
   const handleMoveTask = async (id: string, status: any) => {
     if (!projectId) return;
     await api.projects.moveTaskStatus(projectId, id, status);
-    const newTasks = await api.projects.getTasks(projectId);
+    const [newTasks, newMilestones] = await Promise.all([
+      api.projects.getTasks(projectId),
+      api.projects.getMilestones(projectId),
+    ]);
     setTasks(newTasks);
+    setMilestones(newMilestones);
     refreshReadiness();
   };
 

@@ -17,6 +17,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMilestone, setEditingMilestone] = useState<Partial<Milestone> | null>(null);
     const [expandedMilestones, setExpandedMilestones] = useState<Record<string, boolean>>({});
+    const editingMilestoneHasTasks = (editingMilestone?.tasks?.length || 0) > 0;
 
     const toggleMilestone = (id: string) => {
         setExpandedMilestones(prev => ({ ...prev, [id]: !prev[id] }));
@@ -229,10 +230,17 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                         </Select>
                     </div>
                     <Input name="description" label={t('description')} defaultValue={editingMilestone?.description} />
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('progress_percent')}</label>
-                        <input name="percentComplete" type="range" min="0" max="100" className="w-full" defaultValue={editingMilestone?.percentComplete || 0} />
-                    </div>
+                    {editingMilestone?.id && !editingMilestoneHasTasks && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('progress_percent')}</label>
+                            <input name="percentComplete" type="range" min="0" max="100" className="w-full" defaultValue={editingMilestone?.percentComplete || 0} />
+                        </div>
+                    )}
+                    {editingMilestone?.id && editingMilestoneHasTasks && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {t('milestone_progress_task_driven')}
+                        </p>
+                    )}
                     <div className="flex justify-end gap-3 mt-6">
                         <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
                         <Button type="submit" variant="primary">{t('save_milestone')}</Button>
