@@ -507,7 +507,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {has('client-compliance') && (
-          <GlassCard className="xl:col-span-9 overflow-hidden" title={t('client_compliance_comparison')}>
+          <GlassCard className={`xl:col-span-9 overflow-hidden ${useCompactComplianceLayout ? 'self-start' : ''}`} title={t('client_compliance_comparison')}>
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <Badge variant="info" size="sm">{t('average_compliance')}: {stats.averageCompliance ?? 0}%</Badge>
               <Badge variant="neutral" size="sm">{t('audited_clients')}: {stats.auditedClients ?? 0}</Badge>
@@ -924,20 +924,21 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
         {has('pending-approvals') && (
           <GlassCard className="xl:col-span-3 h-full overflow-hidden" title={t('pending_approvals')}>
-            <div className="flex h-full min-h-[220px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
+            <div className="flex h-full min-h-[168px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{t('awaiting_verification')}</p>
-                  <div className="mt-3 text-6xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
+                  <div className="mt-3 text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
                 </div>
                 <div className="rounded-2xl bg-cyan-500/12 p-3 text-cyan-300">
                   <FileText className="h-5 w-5" />
                 </div>
               </div>
-              <div className="mt-auto pt-5">
-                <div className="rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
-                <p className="text-xs text-slate-400">{t('latest_updates')}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-200">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+              <div className="mt-5 rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
                 </div>
               </div>
             </div>
