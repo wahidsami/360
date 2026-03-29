@@ -923,6 +923,7 @@ model ProjectReport {
   templateVersion   ReportBuilderTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
   title             String
   description       String?
+  outputLocale      String                   @default("en")
   status            ProjectReportStatus      @default(DRAFT)
   visibility        ProjectReportVisibility  @default(INTERNAL)
   performedById     String
@@ -943,6 +944,7 @@ model ProjectReport {
   @@index([templateId])
   @@index([templateVersionId])
   @@index([status])
+  @@index([outputLocale])
 }
 
 model ProjectReportEntry {
@@ -1003,6 +1005,7 @@ model ProjectReportExport {
   projectReportId String
   projectReport   ProjectReport             @relation(fields: [projectReportId], references: [id], onDelete: Cascade)
   format          ProjectReportExportFormat @default(PDF)
+  outputLocale    String                    @default("en")
   fileAssetId     String?
   fileAsset       FileAsset?                @relation(fields: [fileAssetId], references: [id], onDelete: SetNull)
   exportVersion   Int                       @default(1)
@@ -1013,6 +1016,7 @@ model ProjectReportExport {
   @@index([orgId])
   @@index([projectReportId])
   @@index([format])
+  @@index([outputLocale])
 }
 
 model Contract {

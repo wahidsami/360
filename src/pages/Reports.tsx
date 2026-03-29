@@ -170,7 +170,7 @@ export const Reports: React.FC = () => {
   }, [isClientReportsUser, isInternalReportsUser, loadReports, user]);
 
   const openPreview = useCallback(
-    async (report: ProjectReport, locale: AccessibilityAuditOutputLocale = previewLocale) => {
+    async (report: ProjectReport, locale: AccessibilityAuditOutputLocale = report.outputLocale || previewLocale) => {
       try {
         const html = await api.reportBuilderProjects.getPreviewHtml(report.id, locale);
         setPreviewHtml(html);
@@ -315,6 +315,7 @@ export const Reports: React.FC = () => {
                         <Badge variant="neutral">
                           {report.visibility === 'CLIENT' ? copy.visibilityClient : copy.visibilityInternal}
                         </Badge>
+                        <Badge variant="neutral">{(report.outputLocale || 'en').toUpperCase()}</Badge>
                       </div>
                       <p className="text-sm text-slate-400">
                         {copy.project}: {report.project?.name || copy.unknown} / {copy.client}: {report.client?.name || copy.unknown}
@@ -327,7 +328,7 @@ export const Reports: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={() => openPreview(report, previewLocale)}>
+                      <Button variant="outline" onClick={() => openPreview(report, report.outputLocale || previewLocale)}>
                         <Eye className="mr-2 h-4 w-4" /> {copy.preview}
                       </Button>
                       <Button variant="outline" onClick={() => navigate(`/app/projects/${report.projectId}/report-builder/${report.id}`)}>

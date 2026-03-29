@@ -15,7 +15,7 @@ import {
   getAccessibilitySubcategoryLabel,
   resolveAccessibilityTaxonomy,
 } from '@/features/accessibility/accessibilityAuditConfig';
-import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, ReportBuilderTemplateVersion, Role } from '@/types';
+import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportOutputLocale, ReportBuilderTemplateVersion, Role } from '@/types';
 
 const SEVERITIES: ProjectReportEntrySeverity[] = ['HIGH', 'MEDIUM', 'LOW'];
 const DEFAULT_ENTRY_STATUS: ProjectReportEntryStatus = 'OPEN';
@@ -292,6 +292,7 @@ export const ProjectReportWorkspace: React.FC = () => {
     [taxonomy.categories],
   );
   const subcategoryOptions = entryDraft.category ? taxonomy.subcategories[entryDraft.category] || [] : [];
+  const reportOutputLocale: ProjectReportOutputLocale = report?.outputLocale || getAccessibilityOutputLocale(report?.templateVersion);
 
   const filteredEntries = React.useMemo(() => {
     return entries.filter((entry) => {
@@ -325,6 +326,7 @@ export const ProjectReportWorkspace: React.FC = () => {
       ]);
       setReport(reportData);
       setEntries(entryData);
+      setPreviewLocale(reportData.outputLocale || getAccessibilityOutputLocale(reportData.templateVersion));
     } catch (error) {
       console.error(error);
       toast.error('Failed to load accessibility report.');
@@ -336,11 +338,6 @@ export const ProjectReportWorkspace: React.FC = () => {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
-
-  React.useEffect(() => {
-    if (!report?.templateVersion) return;
-    setPreviewLocale(getAccessibilityOutputLocale(report.templateVersion));
-  }, [report?.templateVersion]);
 
   const openEntryModal = (entry?: ProjectReportEntry) => {
     if (entry) {
@@ -517,6 +514,19 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
   };
 
+  const handleOutputLocaleChange = async (locale: ProjectReportOutputLocale) => {
+    if (!reportId || !canEditReport || !report || report.outputLocale === locale) return;
+    try {
+      const updated = await api.reportBuilderProjects.updateProjectReport(reportId, { outputLocale: locale });
+      setReport(updated);
+      setPreviewLocale(locale);
+      toast.success(isArabic ? 'تم تحديث لغة التقرير.' : 'Report language updated.');
+    } catch (error) {
+      console.error(error);
+      toast.error(isArabic ? 'تعذر تحديث لغة التقرير.' : 'Failed to update report language.');
+    }
+  };
+
   if (loading) {
     return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">{copy.loadingReport}</p></GlassCard>;
   }
@@ -552,6 +562,7 @@ export const ProjectReportWorkspace: React.FC = () => {
                 {reportStatusLabel(report.status)}
               </Badge>
               <Badge variant="neutral">{report.visibility}</Badge>
+              <Badge variant="neutral">{reportOutputLocale.toUpperCase()}</Badge>
             </div>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               {report.template.name} / {copy.reportVersion} {report.templateVersion.versionNumber} / {copy.performedBy} {report.performedBy?.name || copy.unknown}
@@ -563,6 +574,28 @@ export const ProjectReportWorkspace: React.FC = () => {
             )}
           </div>
         </div>
+
+        <div className="flex flex-col gap-3 lg:items-end">
+          {!isClientUser && canEditReport && (
+            <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">
+                {isArabic ? 'لغة التقرير' : 'Report Language'}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {isArabic
+                  ? 'احفظ لغة الإخراج التي سيُراجع ويُنشر ويُصدر بها هذا التقرير.'
+                  : 'Save the output language this report should be reviewed, published, and exported in.'}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant={reportOutputLocale === 'en' ? 'primary' : 'outline'} onClick={() => handleOutputLocaleChange('en')}>
+                  {copy.english}
+                </Button>
+                <Button type="button" size="sm" variant={reportOutputLocale === 'ar' ? 'primary' : 'outline'} onClick={() => handleOutputLocaleChange('ar')}>
+                  {copy.arabic}
+                </Button>
+              </div>
+            </div>
+          )}
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => handlePreview(previewLocale)} disabled={previewLoading}>
@@ -618,6 +651,7 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Plus className="mr-2 h-4 w-4" /> {copy.addFinding}
             </Button>
           )}
+        </div>
         </div>
       </div>
 

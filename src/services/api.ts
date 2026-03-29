@@ -1523,6 +1523,7 @@ export const api = {
         templateVersionId: string;
         title: string;
         description?: string;
+        outputLocale?: 'en' | 'ar';
         visibility?: ProjectReportVisibility;
         performedById?: string;
       },
@@ -1540,6 +1541,7 @@ export const api = {
       payload: Partial<{
         title: string;
         description: string;
+        outputLocale: 'en' | 'ar';
         status: ProjectReportStatus;
         visibility: ProjectReportVisibility;
         performedById: string;

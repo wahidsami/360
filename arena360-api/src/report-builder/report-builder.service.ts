@@ -528,6 +528,29 @@ export class ReportBuilderService {
     } as const;
   }
 
+  private resolveReportOutputLocale(
+    report?: { outputLocale?: string | null; templateVersion?: { schemaJson?: any; pdfConfigJson?: any } | null } | null,
+    localeOverride?: string,
+  ) {
+    const normalized = this.normalizePreviewLocale(localeOverride);
+    if (normalized) {
+      return {
+        locale: normalized,
+        direction: this.resolvePreviewDirection(normalized),
+      } as const;
+    }
+
+    const savedLocale = this.normalizePreviewLocale(report?.outputLocale);
+    if (savedLocale) {
+      return {
+        locale: savedLocale,
+        direction: this.resolvePreviewDirection(savedLocale),
+      } as const;
+    }
+
+    return this.getTemplateLocale(report?.templateVersion);
+  }
+
   private getPreviewLocaleConfig(
     version?: { schemaJson?: any; pdfConfigJson?: any } | null,
     localeOverride?: string,
@@ -1627,7 +1650,7 @@ export class ReportBuilderService {
 
   private async renderProjectReportHtml(reportId: string, user: UserWithRoles, localeOverride?: string) {
     const previewData = await this.buildProjectReportPreviewData(reportId, user);
-    const localeConfig = this.getPreviewLocaleConfig(previewData.report?.templateVersion, localeOverride);
+    const localeConfig = this.resolveReportOutputLocale(previewData.report, localeOverride);
     return this.renderReportHtml({
       ...previewData,
       locale: localeConfig.locale,
@@ -1976,6 +1999,9 @@ export class ReportBuilderService {
         templateVersionId: dto.templateVersionId,
         isActive: true,
       },
+      include: {
+        templateVersion: true,
+      },
     });
     if (!assignment) {
       throw new ForbiddenException('Tool version is not assigned to this project client');
@@ -1988,6 +2014,8 @@ export class ReportBuilderService {
     });
     if (!performer) throw new NotFoundException('Selected performer not found');
 
+    const outputLocale = this.normalizePreviewLocale(dto.outputLocale) || this.getTemplateLocale(assignment.templateVersion).locale;
+
     const report = await this.prisma.projectReport.create({
       data: {
         orgId: user.orgId,
@@ -1997,6 +2025,7 @@ export class ReportBuilderService {
         templateVersionId: dto.templateVersionId,
         title: dto.title.trim(),
         description: dto.description?.trim(),
+        outputLocale,
         visibility: dto.visibility ?? 'INTERNAL',
         performedById,
       },
@@ -2014,8 +2043,8 @@ export class ReportBuilderService {
       entityType: 'project_report',
       entityId: report.id,
       description: `Project report "${report.title}" created from tool "${report.template.name}".`,
-      metadata: { reportId: report.id, templateVersionId: report.templateVersionId, visibility: report.visibility },
-    });
+        metadata: { reportId: report.id, templateVersionId: report.templateVersionId, visibility: report.visibility, outputLocale: report.outputLocale },
+      });
     return report;
   }
 
@@ -2050,12 +2079,14 @@ export class ReportBuilderService {
     }
 
     const publishedAt = dto.status === 'PUBLISHED' ? new Date() : undefined;
+    const outputLocale = dto.outputLocale != null ? this.normalizePreviewLocale(dto.outputLocale) : undefined;
 
     const report = await this.prisma.projectReport.update({
       where: { id: reportId },
       data: {
         ...(dto.title != null && { title: dto.title.trim() }),
         ...(dto.description !== undefined && { description: dto.description?.trim() || null }),
+        ...(outputLocale && { outputLocale }),
         ...(dto.status != null && { status: dto.status }),
         ...(dto.visibility != null && { visibility: dto.visibility }),
         ...(dto.status === 'PUBLISHED' && { visibility: 'CLIENT' }),
@@ -2091,6 +2122,7 @@ export class ReportBuilderService {
         previousStatus: current.status,
         nextStatus: report.status,
         visibility: report.visibility,
+        outputLocale: report.outputLocale,
       },
     });
     return report;
@@ -2505,17 +2537,30 @@ export class ReportBuilderService {
   }
 
   async getLatestProjectReportExportDownload(reportId: string, user: UserWithRoles) {
-    await this.ensureProjectReportAccess(reportId, user);
-    const latestExport = await this.prisma.projectReportExport.findFirst({
+    const report = await this.ensureProjectReportAccess(reportId, user);
+    let latestExport = await this.prisma.projectReportExport.findFirst({
       where: {
         projectReportId: reportId,
         orgId: user.orgId,
+        outputLocale: this.normalizePreviewLocale(report.outputLocale) || 'en',
       },
       include: {
         fileAsset: true,
       },
       orderBy: { exportVersion: 'desc' },
     });
+    if (!latestExport) {
+      latestExport = await this.prisma.projectReportExport.findFirst({
+        where: {
+          projectReportId: reportId,
+          orgId: user.orgId,
+        },
+        include: {
+          fileAsset: true,
+        },
+        orderBy: { exportVersion: 'desc' },
+      });
+    }
     if (!latestExport?.fileAsset) throw new NotFoundException('No exported file available');
     return {
       url: await this.storage.getSignedUrl(latestExport.fileAsset.storageKey, 3600, true),
@@ -2525,7 +2570,7 @@ export class ReportBuilderService {
 
   async exportProjectReportPdf(reportId: string, user: UserWithRoles, localeOverride?: string) {
     const { report } = await this.buildProjectReportPreviewData(reportId, user);
-    const localeConfig = this.getPreviewLocaleConfig(report.templateVersion, localeOverride);
+    const localeConfig = this.resolveReportOutputLocale(report, localeOverride);
     const html = await this.renderProjectReportHtml(reportId, user, localeOverride);
     const browser = await this.launchPdfBrowser();
 
@@ -2581,6 +2626,7 @@ export class ReportBuilderService {
           orgId: user.orgId,
           projectReportId: reportId,
           format: 'PDF',
+          outputLocale: localeConfig.locale,
           fileAssetId: fileAsset.id,
           exportVersion: (latestExport?.exportVersion ?? 0) + 1,
           generatedById: user.id,

@@ -8,12 +8,14 @@ import {
   ClientReportTemplateAssignment,
   Permission,
   ProjectReport,
+  ProjectReportOutputLocale,
   ProjectReportVisibility,
   Report,
   Role,
 } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
+import { getAccessibilityOutputLocale } from '@/features/accessibility/accessibilityAuditConfig';
 import { Badge, Button, GlassCard, Input, Modal } from '../ui/UIComponents';
 import { PermissionGate } from '../PermissionGate';
 
@@ -66,8 +68,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
       selectTool: 'Select tool',
       reportTitle: 'Report title',
       visibility: 'Visibility',
+      reportLanguage: 'Report language',
+      languageHelp: 'Save the language this report will be reviewed, published, and exported in.',
       internal: 'Internal',
       client: 'Client',
+      english: 'English',
+      arabic: 'العربية',
       scopeNotes: 'Scope notes',
       scopePlaceholder: 'Audit scope, environment notes, or delivery context',
       createModalHelp: 'This screen only uses the new accessibility audit workflow. Older generic report creation paths are removed.',
@@ -107,6 +113,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
     title: '',
     description: '',
     visibility: 'INTERNAL' as ProjectReportVisibility,
+    outputLocale: (isArabic ? 'ar' : 'en') as ProjectReportOutputLocale,
   });
 
   const canCreateReports = hasPermission(Permission.CREATE_PROJECT_REPORTS);
@@ -156,6 +163,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
           ...current,
           assignmentId: defaultAssignment.id,
           title: current.title || buildDefaultReportTitle(),
+          outputLocale: getAccessibilityOutputLocale(defaultAssignment.templateVersion),
         }));
       }
     } catch (error) {
@@ -186,6 +194,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
           title: draft.title.trim(),
           description: draft.description.trim() || undefined,
           visibility: draft.visibility,
+          outputLocale: draft.outputLocale,
         });
         toast.success(copy.createSuccess);
         setCreateOpen(false);
@@ -243,6 +252,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                 <Badge variant="neutral">{report.visibility === 'CLIENT' ? copy.client : copy.internal}</Badge>
               )}
               <Badge variant="warning">v{report.templateVersion.versionNumber}</Badge>
+              <Badge variant="neutral">{(report.outputLocale || 'en').toUpperCase()}</Badge>
             </div>
             <div>
               <h4 className="text-lg font-bold text-white">{report.title}</h4>
@@ -325,6 +335,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                         ...current,
                         assignmentId: assignment.id,
                         title: buildDefaultReportTitle(),
+                        outputLocale: getAccessibilityOutputLocale(assignment.templateVersion),
                       }))
                     }
                     className={`w-full rounded-xl border p-3 text-left transition-all ${
@@ -366,10 +377,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                 value={draft.assignmentId}
                 onChange={(event) => {
                   const nextAssignmentId = event.target.value;
+                  const nextAssignment = activeAssignments.find((assignment) => assignment.id === nextAssignmentId);
                   setDraft((current) => ({
                     ...current,
                     assignmentId: nextAssignmentId,
                     title: buildDefaultReportTitle(),
+                    outputLocale: nextAssignment ? getAccessibilityOutputLocale(nextAssignment.templateVersion) : current.outputLocale,
                   }));
                 }}
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2.5 text-white"
@@ -401,6 +414,20 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                 <option value="INTERNAL">{copy.internal}</option>
                 <option value="CLIENT">{copy.client}</option>
               </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-300">{copy.reportLanguage}</label>
+              <select
+                value={draft.outputLocale}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, outputLocale: event.target.value as ProjectReportOutputLocale }))
+                }
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2.5 text-white"
+              >
+                <option value="en">{copy.english}</option>
+                <option value="ar">{copy.arabic}</option>
+              </select>
+              <p className="mt-2 text-xs text-slate-500">{copy.languageHelp}</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-300">{copy.scopeNotes}</label>

@@ -119,6 +119,10 @@ export class CreateProjectReportDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  outputLocale?: string;
+
+  @IsOptional()
   @IsEnum(ProjectReportVisibility)
   visibility?: ProjectReportVisibility;
 
@@ -135,6 +139,10 @@ export class UpdateProjectReportDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  outputLocale?: string;
 
   @IsOptional()
   @IsEnum(ProjectReportStatus)

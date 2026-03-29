@@ -227,6 +227,7 @@ export interface ClientReportTemplateAssignment {
 
 export type ProjectReportStatus = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED';
 export type ProjectReportVisibility = 'INTERNAL' | 'CLIENT';
+export type ProjectReportOutputLocale = 'en' | 'ar';
 export type ProjectReportEntrySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ProjectReportEntryStatus = 'OPEN' | 'ACCEPTED' | 'FIXED' | 'VERIFIED' | 'DISMISSED';
 
@@ -265,6 +266,7 @@ export interface ProjectReport {
   templateVersionId: string;
   title: string;
   description?: string | null;
+  outputLocale: ProjectReportOutputLocale;
   status: ProjectReportStatus;
   visibility: ProjectReportVisibility;
   summaryJson?: Record<string, unknown> | null;
@@ -277,7 +279,7 @@ export interface ProjectReport {
   template: Pick<ReportBuilderTemplate, 'id' | 'name' | 'code' | 'category' | 'status'>;
   templateVersion: ReportBuilderTemplateVersion;
   performedBy?: Pick<User, 'id' | 'name' | 'email' | 'role'>;
-  exports?: Array<{ id: string; exportVersion: number; fileAsset?: FileAsset | null }>;
+  exports?: Array<{ id: string; exportVersion: number; outputLocale: ProjectReportOutputLocale; fileAsset?: FileAsset | null }>;
   _count?: {
     entries: number;
     exports: number;
