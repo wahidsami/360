@@ -118,8 +118,8 @@ export const PROJECT_TAB_DEFINITIONS: ProjectTabDefinition[] = [
     templateConfigurable: true,
     supportsClientWorkspace: true,
     audienceType: 'mixed',
-    defaultClientState: 'hidden',
-    notes: 'Primary tab. Can be enabled for collaborative clients without affecting other tabs.',
+    defaultClientState: 'visible_read_only',
+    notes: 'Primary tab. Enabled by default so both internal teams and clients have a shared discussion surface from project start.',
   },
   {
     id: 'tasks',

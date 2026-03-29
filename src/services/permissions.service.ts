@@ -14,13 +14,13 @@ export class PermissionsService {
             'timeline', 'sprints', 'reports', 'time',
             'recurring', 'files', 'team', 'financials', 'testing', 'activity', 'automations', 'compliance'],
 
-        [Role.DEV]: ['overview', 'tasks', 'milestones', 'timeline', 'sprints',
+        [Role.DEV]: ['overview', 'discussions', 'tasks', 'milestones', 'timeline', 'sprints',
             'reports', 'time', 'recurring', 'files', 'testing', 'activity'],
 
-        [Role.QA]: ['overview', 'tasks', 'milestones', 'timeline', 'sprints',
+        [Role.QA]: ['overview', 'discussions', 'tasks', 'milestones', 'timeline', 'sprints',
             'reports', 'time', 'recurring', 'files', 'testing', 'activity'],
 
-        [Role.FINANCE]: ['overview', 'financials', 'reports', 'files', 'activity'],
+        [Role.FINANCE]: ['overview', 'discussions', 'financials', 'reports', 'files', 'activity'],
 
         [Role.CLIENT_OWNER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'financials'],
         [Role.CLIENT_MANAGER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files'],

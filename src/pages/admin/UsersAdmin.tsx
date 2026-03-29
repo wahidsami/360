@@ -127,6 +127,14 @@ export const UsersAdmin: React.FC = () => {
   const setupCompleteLabel = isArabic ? 'تم إعداد الحساب' : 'Setup complete';
   const directAccessLabel = isArabic ? 'وصول مباشر' : 'Direct access';
   const noClientGroupLabel = isArabic ? 'مستخدمون بدون عميل' : 'Client users without assignment';
+  const allClientsLabel = 'All Clients';
+  const internalOnlyLabel = 'Internal Only';
+  const filterByClientLabel = 'Filter by client';
+  const clearFiltersLabel = 'Clear Filters';
+  const expandAllLabel = 'Expand All';
+  const collapseAllLabel = 'Collapse All';
+  const filteredUsersLabel = 'filtered users';
+  const visibleGroupsLabel = 'visible groups';
 
   const permissionLabels = React.useMemo(
     () =>
@@ -215,6 +223,7 @@ export const UsersAdmin: React.FC = () => {
   }, [loadData]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
   const [isModalOpen, setModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
@@ -224,12 +233,30 @@ export const UsersAdmin: React.FC = () => {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editClientId, setEditClientId] = useState('');
 
+  const clientFilterOptions = useMemo(
+    () => [...clients].sort((a, b) => a.name.localeCompare(b.name)),
+    [clients],
+  );
+
   const filteredUsers = useMemo(() => users.filter((u) => {
     const matchSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
-    return matchSearch && matchRole;
-  }), [roleFilter, searchTerm, users]);
+    const primaryClientId = u.clientMemberships?.[0]?.clientId || '';
+    const hasClientMembership = Boolean(u.clientMemberships?.length);
+    const isClientUser = u.role.startsWith('CLIENT_');
+
+    let matchClient = true;
+    if (clientFilter === 'internal') {
+      matchClient = !isClientUser || !hasClientMembership;
+    } else if (clientFilter === 'unassigned-client-users') {
+      matchClient = isClientUser && !primaryClientId;
+    } else if (clientFilter !== 'all') {
+      matchClient = u.clientMemberships?.some((membership) => membership.clientId === clientFilter) || false;
+    }
+
+    return matchSearch && matchRole && matchClient;
+  }), [clientFilter, roleFilter, searchTerm, users]);
 
   const groupedUsers = useMemo(() => {
     const groups: Array<{ key: string; label: string; type: 'internal' | 'client'; users: User[]; client?: Client | null }> = [];
@@ -270,6 +297,26 @@ export const UsersAdmin: React.FC = () => {
 
     return groups.concat(Array.from(clientGroups.values()).sort((a, b) => a.label.localeCompare(b.label)));
   }, [clients, filteredUsers, internalUsersLabel, noClientGroupLabel]);
+
+  const expandAllGroups = useCallback(() => {
+    setExpandedGroups(
+      groupedUsers.reduce<Record<string, boolean>>((next, group) => {
+        next[group.key] = true;
+        return next;
+      }, {}),
+    );
+  }, [groupedUsers]);
+
+  const collapseAllGroups = useCallback(() => {
+    setExpandedGroups(
+      groupedUsers.reduce<Record<string, boolean>>((next, group) => {
+        next[group.key] = false;
+        return next;
+      }, {}),
+    );
+  }, [groupedUsers]);
+
+  const hasActiveFilters = searchTerm.trim().length > 0 || roleFilter !== 'all' || clientFilter !== 'all';
 
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups((current) => ({
@@ -398,23 +445,63 @@ export const UsersAdmin: React.FC = () => {
 
       {/* Filters */}
       <GlassCard className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <Input
-              placeholder={copy.searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+              <Input
+                placeholder={copy.searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="w-full md:w-56">
+              <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                <option value="all">{copy.allRoles}</option>
+                {Object.values(Role).map(r => (
+                  <option key={r} value={r}>{roleLabel(r)}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="w-full md:w-64">
+              <Select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
+                <option value="all">{filterByClientLabel}: {allClientsLabel}</option>
+                <option value="internal">{internalOnlyLabel}</option>
+                <option value="unassigned-client-users">{noClientGroupLabel}</option>
+                {clientFilterOptions.map((client) => (
+                  <option key={client.id} value={client.id}>{client.name}</option>
+                ))}
+              </Select>
+            </div>
           </div>
-          <div className="w-full md:w-64">
-            <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-              <option value="all">{copy.allRoles}</option>
-              {Object.values(Role).map(r => (
-                <option key={r} value={r}>{roleLabel(r)}</option>
-              ))}
-            </Select>
+
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <Badge variant="neutral" size="sm">{filteredUsers.length} {filteredUsersLabel}</Badge>
+              <Badge variant="neutral" size="sm">{groupedUsers.length} {visibleGroupsLabel}</Badge>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setRoleFilter('all');
+                    setClientFilter('all');
+                  }}
+                >
+                  {clearFiltersLabel}
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={expandAllGroups}>
+                {expandAllLabel}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAllGroups}>
+                {collapseAllLabel}
+              </Button>
+            </div>
           </div>
         </div>
       </GlassCard>
@@ -537,7 +624,7 @@ export const UsersAdmin: React.FC = () => {
                                 {user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : '-'}
                               </td>
                               <td className="p-4 text-right">
-                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                   <Button variant="ghost" size="sm" onClick={() => openEditUser(user)} title={copy.editRolePermissions}>
                                     <Edit2 className="w-4 h-4" />
                                   </Button>
