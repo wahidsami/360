@@ -20,7 +20,7 @@ export class PermissionsService {
         [Role.QA]: ['overview', 'discussions', 'tasks', 'milestones', 'timeline', 'sprints',
             'reports', 'time', 'recurring', 'files', 'testing', 'activity'],
 
-        [Role.FINANCE]: ['overview', 'discussions', 'financials', 'reports', 'files', 'activity'],
+        [Role.FINANCE]: ['overview', 'financials', 'reports', 'files', 'activity'],
 
         [Role.CLIENT_OWNER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'financials'],
         [Role.CLIENT_MANAGER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files'],

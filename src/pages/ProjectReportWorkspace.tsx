@@ -476,7 +476,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   };
 
   const handleExportPdf = React.useCallback(async (locale?: unknown) => {
-    if (!reportId) return;
+    if (!reportId || !canGenerateExports) return;
     setExportingPdf(true);
     try {
       const nextLocale = resolveExportLocale(locale ?? previewLocale);
@@ -492,7 +492,7 @@ export const ProjectReportWorkspace: React.FC = () => {
     } finally {
       setExportingPdf(false);
     }
-  }, [isArabic, loadData, previewLocale, reportId, resolveExportLocale]);
+  }, [canGenerateExports, isArabic, loadData, previewLocale, reportId, resolveExportLocale]);
 
   const handleDownloadLatestExport = async () => {
     if (!reportId) return;
@@ -879,9 +879,11 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Button type="button" size="sm" variant={previewLocale === 'ar' ? 'primary' : 'outline'} onClick={() => handlePreview('ar')}>
                 {copy.arabic}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
-                {exportingPdf ? exportInProgressLabel : exportPdfLabel}
-              </Button>
+              {canGenerateExports && (
+                <Button type="button" size="sm" variant="outline" onClick={() => handleExportPdf(previewLocale)} disabled={exportingPdf}>
+                  {exportingPdf ? exportInProgressLabel : exportPdfLabel}
+                </Button>
+              )}
             </div>
           </div>
           <iframe id="project-report-preview-frame" title={copy.reportPreview} className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800" srcDoc={previewHtml} />

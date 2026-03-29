@@ -15,7 +15,8 @@ export const ClientDetails: React.FC = () => {
     const { t } = useTranslation();
     const { clientId } = useParams();
     const navigate = useNavigate();
-    const { can } = useAuth();
+    const { can, user } = useAuth();
+    const isClientPortalUser = !!user && user.role.startsWith('CLIENT_');
 
     const [client, setClient] = useState<Client | undefined>();
     const [projects, setProjects] = useState<Project[]>([]);
@@ -76,7 +77,7 @@ export const ClientDetails: React.FC = () => {
             api.projects.getByClient(requestedClientId),
             api.clients.getMembers(requestedClientId),
             api.clients.getFiles(requestedClientId),
-            api.clients.getActivity(requestedClientId)
+            isClientPortalUser ? Promise.resolve([]) : api.clients.getActivity(requestedClientId)
         ]);
 
         if (!isCurrent()) return;
@@ -178,7 +179,7 @@ export const ClientDetails: React.FC = () => {
         { id: 'members', label: t('members') },
         ...(can(Permission.VIEW_FINANCIALS) ? [{ id: 'financials', label: t('financials') }] : []),
         { id: 'files', label: t('files') },
-        { id: 'activity', label: t('activity') },
+        ...(!isClientPortalUser ? [{ id: 'activity', label: t('activity') }] : []),
     ];
 
     return (
@@ -294,22 +295,24 @@ export const ClientDetails: React.FC = () => {
                                 </PermissionGate>
                             </div>
 
-                            <GlassCard title="Recent Activity">
-                                <div className="space-y-4">
-                                    {activity.slice(0, 3).map(act => (
-                                        <div key={act.id} className="flex gap-4 items-start">
-                                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs border border-slate-700">
-                                                {act.userName.charAt(0)}
+                            {!isClientPortalUser && (
+                                <GlassCard title="Recent Activity">
+                                    <div className="space-y-4">
+                                        {activity.slice(0, 3).map(act => (
+                                            <div key={act.id} className="flex gap-4 items-start">
+                                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs border border-slate-700">
+                                                    {act.userName.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-slate-200">{act.description}</p>
+                                                    <p className="text-xs text-slate-500">{new Date(act.timestamp).toLocaleString()}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-slate-200">{act.description}</p>
-                                                <p className="text-xs text-slate-500">{new Date(act.timestamp).toLocaleString()}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {activity.length === 0 && <p className="text-slate-500 text-sm italic">{t('no_activity')}</p>}
-                                </div>
-                            </GlassCard>
+                                        ))}
+                                        {activity.length === 0 && <p className="text-slate-500 text-sm italic">{t('no_activity')}</p>}
+                                    </div>
+                                </GlassCard>
+                            )}
                         </div>
                     </div>
                 )}

@@ -72,6 +72,22 @@ export class ReportBuilderService {
     return locale === 'ar' ? 'rtl' : 'ltr';
   }
 
+  private async resolveClientLogoUrl(logoId: string | null | undefined) {
+    if (!logoId) return undefined;
+    if (logoId.startsWith('http')) return logoId;
+
+    try {
+      const file = await this.prisma.fileAsset.findUnique({
+        where: { id: logoId },
+      });
+      if (!file) return undefined;
+      return await this.storage.getSignedUrl(file.storageKey, 3600, false);
+    } catch (error) {
+      this.logger.warn(`Failed to resolve client logo for report rendering: ${error?.message || error}`);
+      return undefined;
+    }
+  }
+
   private normalizeAccessibilityToken(value?: string | null) {
     return String(value || '')
       .trim()
@@ -832,6 +848,8 @@ export class ReportBuilderService {
     });
     if (!report) throw new NotFoundException('Project report not found');
 
+    const clientLogoUrl = await this.resolveClientLogoUrl(report.client?.logo);
+
     const entries = await Promise.all(
       report.entries.map(async (entry) => ({
         ...entry,
@@ -844,7 +862,18 @@ export class ReportBuilderService {
       })),
     );
 
-    return { report, entries };
+    return {
+      report: {
+        ...report,
+        client: report.client
+          ? {
+              ...report.client,
+              logo: clientLogoUrl || null,
+            }
+          : report.client,
+      },
+      entries,
+    };
   }
 
   private renderReportHtml(previewData: { report: any; entries: any[]; locale?: 'ar' | 'en'; direction?: 'rtl' | 'ltr' }) {

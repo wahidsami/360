@@ -87,6 +87,13 @@ export const ProjectDetails: React.FC = () => {
 
   const tabStateMap = resolvedWorkspace.tabStates;
   const canInteractWithTab = React.useCallback((tabId: ProjectTabId) => tabStateMap[tabId] === 'visible_interactive', [tabStateMap]);
+  const hiddenOverviewSections = React.useMemo(() => {
+    const sections = [...resolvedWorkspace.hiddenOverviewSections];
+    if (user && isInternalRole(user.role) === false && !sections.includes('readiness_checklist')) {
+      sections.push('readiness_checklist');
+    }
+    return sections;
+  }, [resolvedWorkspace.hiddenOverviewSections, user]);
 
   // --- Role-Based Tab Selection ---
   const visibleTabs = resolvedWorkspace.visibleTabs;
@@ -631,7 +638,7 @@ export const ProjectDetails: React.FC = () => {
                   readiness={readiness}
                   metrics={metrics}
                   activity={activity}
-                  hiddenOverviewSections={resolvedWorkspace.hiddenOverviewSections}
+                  hiddenOverviewSections={hiddenOverviewSections}
                 />
                 {isOverviewMetaLoading && (
                   <div className="pointer-events-none absolute right-6 top-10 z-10 w-[320px] max-w-[calc(100%-3rem)]">
