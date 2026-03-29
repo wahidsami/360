@@ -1,4 +1,4 @@
-﻿ALTER TABLE "ProjectReport"
+ALTER TABLE "ProjectReport"
 ADD COLUMN "outputLocale" TEXT NOT NULL DEFAULT 'en';
 
 UPDATE "ProjectReport" pr
