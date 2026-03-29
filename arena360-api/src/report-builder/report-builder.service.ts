@@ -218,33 +218,38 @@ export class ReportBuilderService {
       subcategory?: string | null;
       pageUrl?: string | null;
       recommendation?: string | null;
+      rowDataJson?: Record<string, unknown> | null;
     },
   ) {
     if (report.template?.category !== 'ACCESSIBILITY') return;
 
+    const auditOutcome = this.getAuditOutcome(input.rowDataJson);
+    const requiresSeverity = auditOutcome === 'FAIL' || auditOutcome === 'PARTIAL';
+    const requiresRecommendation = requiresSeverity;
+
     if (!input.serviceName?.trim()) {
-      throw new BadRequestException('Service name is required for accessibility findings.');
+      throw new BadRequestException('Service name is required for accessibility audit results.');
     }
     if (!input.issueTitle?.trim()) {
-      throw new BadRequestException('Issue title is required for accessibility findings.');
+      throw new BadRequestException('Title is required for accessibility audit results.');
     }
     if (!input.issueDescription?.trim()) {
-      throw new BadRequestException('Issue description is required for accessibility findings.');
+      throw new BadRequestException('Description is required for accessibility audit results.');
     }
-    if (!input.severity) {
-      throw new BadRequestException('Severity is required for accessibility findings.');
+    if (requiresSeverity && !input.severity) {
+      throw new BadRequestException('Severity is required when an accessibility result has an issue or is partially working.');
     }
     if (!input.category?.trim()) {
-      throw new BadRequestException('Main category is required for accessibility findings.');
+      throw new BadRequestException('Main category is required for accessibility audit results.');
     }
     if (!input.subcategory?.trim()) {
-      throw new BadRequestException('Subcategory is required for accessibility findings.');
+      throw new BadRequestException('Subcategory is required for accessibility audit results.');
     }
     if (!input.pageUrl?.trim()) {
-      throw new BadRequestException('Page URL is required for accessibility findings.');
+      throw new BadRequestException('Page URL is required for accessibility audit results.');
     }
-    if (!input.recommendation?.trim()) {
-      throw new BadRequestException('Recommendations are required for accessibility findings.');
+    if (requiresRecommendation && !input.recommendation?.trim()) {
+      throw new BadRequestException('Recommendations are required when an accessibility result needs follow-up.');
     }
 
     if (input.severity === 'CRITICAL') {
@@ -573,11 +578,11 @@ export class ReportBuilderService {
         introduction: 'Introduction',
         executiveSummary: 'Statistics summary',
         recommendationSummary: 'Recommendations summary',
-        findingsTag: 'Detailed issues log',
-        findingsTitle: 'Issues table',
-        noEntries: 'No findings have been added yet.',
+        findingsTag: 'Detailed audit log',
+        findingsTitle: 'Audit results table',
+        noEntries: 'No audit results have been added yet.',
         footerNote:
-          'This report is generated from the structured accessibility findings pipeline and exported directly to PDF from the server.',
+          'This report is generated from the structured accessibility audit pipeline and exported directly to PDF from the server.',
         closingTag: 'End cover',
         closingTitle: 'Thank you',
         closingBody:
@@ -588,6 +593,13 @@ export class ReportBuilderService {
         reportDate: 'Report date',
         performedBy: 'Performed by',
         createdBy: 'Auditor',
+        outcome: 'Result',
+        compliancePercentage: 'Compliance percentage',
+        workingChecks: 'Working checks',
+        needsAttention: 'Needs attention',
+        partiallyWorking: 'Partially working',
+        notTested: 'Not tested',
+        notApplicable: 'Not applicable',
         totalIssues: 'Total issues',
         clickHere: 'Click here',
         viewImage: 'View Image',
@@ -603,6 +615,11 @@ export class ReportBuilderService {
         statisticsTitle: 'Statistical snapshot',
         severityBreakdown: 'Issues by severity',
         categoryBreakdown: 'Issues by category',
+        strengthsTitle: "What's working",
+        strengthsBody: 'The following checks passed or were recorded as working correctly.',
+        needsAttentionTitle: 'What needs attention',
+        needsAttentionBody: 'The following checks failed or are only partially working and should be prioritized for follow-up.',
+        coverageTitle: 'Audit coverage',
         scopeTitle: 'Audit scope',
         scopeBody: 'This audit reviews the recorded services, pages, and interface flows documented in the structured findings below.',
         methodologyTitle: 'Methodology',
@@ -638,6 +655,13 @@ export class ReportBuilderService {
       reportDate: 'تاريخ التقرير',
       performedBy: '\u062A\u0645 \u0627\u0644\u062A\u0646\u0641\u064A\u0630 \u0628\u0648\u0627\u0633\u0637\u0629',
       createdBy: 'المدقق',
+      outcome: '\u0627\u0644\u0646\u062A\u064A\u062C\u0629',
+      compliancePercentage: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0627\u0645\u062A\u062B\u0627\u0644',
+      workingChecks: '\u0645\u0627 \u064A\u0639\u0645\u0644 \u0628\u0634\u0643\u0644 \u0635\u062D\u064A\u062D',
+      needsAttention: '\u064A\u062D\u062A\u0627\u062C \u0645\u0639\u0627\u0644\u062C\u0629',
+      partiallyWorking: '\u064A\u0639\u0645\u0644 \u062C\u0632\u0626\u064A\u0627',
+      notTested: '\u0644\u0645 \u064A\u062A\u0645 \u0627\u062E\u062A\u0628\u0627\u0631\u0647',
+      notApplicable: '\u063A\u064A\u0631 \u0645\u0646\u0637\u0628\u0642',
       totalIssues: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0645\u0644\u0627\u062D\u0638\u0627\u062A',
       clickHere: '\u0627\u0636\u063A\u0637 \u0647\u0646\u0627',
       viewImage: '\u0639\u0631\u0636 \u0627\u0644\u0635\u0648\u0631\u0629',
@@ -653,6 +677,11 @@ export class ReportBuilderService {
       statisticsTitle: 'اللقطة الإحصائية',
       severityBreakdown: 'الملاحظات حسب الشدة',
       categoryBreakdown: 'الملاحظات حسب التصنيف',
+      strengthsTitle: '\u0645\u0627 \u064A\u0639\u0645\u0644 \u0628\u0634\u0643\u0644 \u062C\u064A\u062F',
+      strengthsBody: '\u0627\u0644\u0628\u0646\u0648\u062F \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u062A\u0645 \u062A\u0623\u0643\u064A\u062F \u0623\u0646\u0647\u0627 \u062A\u0639\u0645\u0644 \u0628\u0634\u0643\u0644 \u0635\u062D\u064A\u062D.',
+      needsAttentionTitle: '\u0645\u0627 \u064A\u062D\u062A\u0627\u062C \u0645\u0639\u0627\u0644\u062C\u0629',
+      needsAttentionBody: '\u0627\u0644\u0628\u0646\u0648\u062F \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u0641\u0634\u0644\u062A \u0623\u0648 \u062A\u0639\u0645\u0644 \u062C\u0632\u0626\u064A\u0627 \u0648\u064A\u062C\u0628 \u0645\u062A\u0627\u0628\u0639\u062A\u0647\u0627.',
+      coverageTitle: '\u0646\u0637\u0627\u0642 \u0627\u0644\u062A\u062F\u0642\u064A\u0642',
       scopeTitle: 'نطاق التدقيق',
       scopeBody: 'يغطي هذا التدقيق الخدمات والصفحات وتدفقات الاستخدام الموثقة ضمن الملاحظات المنظمة الواردة أدناه.',
       methodologyTitle: 'منهجية العمل',
@@ -722,6 +751,75 @@ export class ReportBuilderService {
     return labels[normalized] || normalized;
   }
 
+  private getAuditOutcome(rowDataJson?: Record<string, unknown> | null) {
+    const candidate = rowDataJson?.auditOutcome;
+    if (
+      candidate === 'PASS' ||
+      candidate === 'FAIL' ||
+      candidate === 'PARTIAL' ||
+      candidate === 'NOT_APPLICABLE' ||
+      candidate === 'NOT_TESTED'
+    ) {
+      return candidate;
+    }
+    return 'FAIL';
+  }
+
+  private getAuditOutcomeLabel(outcome: string | null | undefined, locale: 'ar' | 'en') {
+    const normalized = this.getAuditOutcome({ auditOutcome: outcome || undefined });
+    if (locale === 'ar') {
+      if (normalized === 'PASS') return 'يعمل بشكل صحيح';
+      if (normalized === 'PARTIAL') return 'يعمل جزئيا';
+      if (normalized === 'NOT_APPLICABLE') return 'غير منطبق';
+      if (normalized === 'NOT_TESTED') return 'لم يتم اختباره';
+      return 'يحتاج معالجة';
+    }
+
+    if (normalized === 'PASS') return 'Working';
+    if (normalized === 'PARTIAL') return 'Partially working';
+    if (normalized === 'NOT_APPLICABLE') return 'Not applicable';
+    if (normalized === 'NOT_TESTED') return 'Not tested';
+    return 'Needs attention';
+  }
+
+  private getAuditMetrics(entries: Array<{ severity?: string | null; rowDataJson?: Record<string, unknown> | null }>) {
+    const counts = entries.reduce(
+      (acc, entry) => {
+        const outcome = this.getAuditOutcome(entry.rowDataJson);
+        acc.total += 1;
+        if (outcome === 'PASS') acc.pass += 1;
+        if (outcome === 'FAIL') acc.fail += 1;
+        if (outcome === 'PARTIAL') acc.partial += 1;
+        if (outcome === 'NOT_APPLICABLE') acc.notApplicable += 1;
+        if (outcome === 'NOT_TESTED') acc.notTested += 1;
+        if (entry.severity === 'HIGH') acc.high += 1;
+        if (entry.severity === 'MEDIUM') acc.medium += 1;
+        if (entry.severity === 'LOW') acc.low += 1;
+        if (entry.severity === 'CRITICAL') acc.critical += 1;
+        return acc;
+      },
+      {
+        total: 0,
+        pass: 0,
+        fail: 0,
+        partial: 0,
+        notApplicable: 0,
+        notTested: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        critical: 0,
+      },
+    );
+    const scoredChecks = counts.pass + counts.fail + counts.partial;
+    const compliancePercentage = scoredChecks > 0 ? Math.round(((counts.pass + counts.partial * 0.5) / scoredChecks) * 100) : 0;
+    return {
+      ...counts,
+      scoredChecks,
+      compliancePercentage,
+    };
+  }
+
   private buildRecommendationBullets(summaryText: string | null | undefined, entries: Array<{ recommendation?: string | null }>, locale: 'ar' | 'en') {
     const directBullets = this.normalizeDisplayText(summaryText)
       .split(/\n+/)
@@ -743,6 +841,14 @@ export class ReportBuilderService {
 
     if (deduped.length > 0) {
       return deduped;
+    }
+
+    if (entries.length === 0) {
+      return [
+        locale === 'ar'
+          ? '\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0634\u0643\u0644\u0627\u062A \u0645\u0641\u062A\u0648\u062D\u0629 \u0645\u0648\u062B\u0642\u0629 \u062D\u0627\u0644\u064A\u0627. \u064A\u0648\u0635\u0649 \u0628\u0627\u0644\u062D\u0641\u0627\u0638 \u0639\u0644\u0649 \u0627\u0644\u0645\u0633\u062A\u0648\u0649 \u0627\u0644\u062D\u0627\u0644\u064A \u0648\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0627\u062E\u062A\u0628\u0627\u0631 \u0628\u0639\u062F \u0623\u064A \u062A\u063A\u064A\u064A\u0631\u0627\u062A \u0643\u0628\u064A\u0631\u0629.'
+          : 'No open issues are currently documented. Maintain the current accessibility baseline and retest after major changes.',
+      ];
     }
 
     return [
@@ -797,6 +903,14 @@ export class ReportBuilderService {
             locale === 'ar'
               ? '\u064A\u0645\u0643\u0646 \u0644\u0644\u0625\u062F\u0627\u0631\u0629 \u0645\u0639\u0627\u064A\u0646\u0629 \u0627\u0644\u0642\u0627\u0644\u0628 \u0642\u0628\u0644 \u062A\u0639\u064A\u064A\u0646\u0647 \u0644\u0644\u0639\u0645\u064A\u0644 \u0644\u0636\u0645\u0627\u0646 \u0623\u0646 \u0634\u0643\u0644 \u0627\u0644\u062A\u0635\u062F\u064A\u0631 \u064A\u0637\u0627\u0628\u0642 \u0627\u0644\u062A\u0648\u0642\u0639\u0627\u062A.'
               : 'Admins can review the output here before assigning the tool to a client, so the exported PDF style is predictable.',
+          strengthsSummary:
+            locale === 'ar'
+              ? '\u064A\u0648\u0636\u062D \u0647\u0630\u0627 \u0627\u0644\u0646\u0645\u0648\u0630\u062C \u0643\u064A\u0641 \u062A\u0638\u0647\u0631 \u0627\u0644\u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u062A\u064A \u062A\u0639\u0645\u0644 \u0628\u0634\u0643\u0644 \u062C\u064A\u062F \u062F\u0627\u062E\u0644 \u0627\u0644\u062A\u0642\u0631\u064A\u0631.'
+              : 'This sample also demonstrates how positive audit outcomes appear inside the final report.',
+          complianceSummary:
+            locale === 'ar'
+              ? '\u062A\u062D\u062A\u0633\u0628 \u0646\u0633\u0628\u0629 \u0627\u0644\u0627\u0645\u062A\u062B\u0627\u0644 \u0645\u0646 \u0627\u0644\u0628\u0646\u0648\u062F \u0627\u0644\u0646\u0627\u062C\u062D\u0629 \u0648\u0627\u0644\u0628\u0646\u0648\u062F \u0627\u0644\u062C\u0632\u0626\u064A\u0629 \u0648\u0627\u0644\u0628\u0646\u0648\u062F \u0627\u0644\u062A\u064A \u0641\u0634\u0644\u062A \u0641\u0642\u0637.'
+              : 'Compliance is calculated from passed, failed, and partial checks only, while not-tested and not-applicable items stay visible but excluded from scoring.',
           recommendationsSummary:
             locale === 'ar'
               ? '\u064A\u0633\u062A\u0639\u0645\u0644 \u0647\u0630\u0627 \u0627\u0644\u0645\u062E\u0631\u062C \u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0628\u064A\u0627\u0646\u0627\u062A \u062A\u062C\u0631\u064A\u0628\u064A\u0629\u060C \u0623\u0645\u0627 \u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631 \u0627\u0644\u0641\u0639\u0644\u064A\u0629 \u0641\u062A\u0623\u062E\u0630 \u0645\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0634\u0631\u0648\u0639 \u0627\u0644\u062D\u0642\u064A\u0642\u064A\u0629.'
@@ -804,6 +918,20 @@ export class ReportBuilderService {
         },
       },
       entries: [
+        {
+          serviceName: locale === 'ar' ? '\u0627\u0644\u062A\u0646\u0642\u0644 \u0627\u0644\u0631\u0626\u064A\u0633\u064A' : 'Primary Navigation',
+          issueTitle: locale === 'ar' ? '\u0648\u0636\u0648\u062D \u0645\u0624\u0634\u0631 \u0627\u0644\u062A\u0631\u0643\u064A\u0632' : 'Visible focus indicator works correctly',
+          issueDescription:
+            locale === 'ar'
+              ? '\u062A\u0645 \u0627\u0644\u062A\u0623\u0643\u062F \u0623\u0646 \u0645\u0624\u0634\u0631 \u0627\u0644\u062A\u0631\u0643\u064A\u0632 \u0638\u0627\u0647\u0631 \u0628\u0634\u0643\u0644 \u0648\u0627\u0636\u062D \u0639\u0646\u062F \u0627\u0644\u062A\u0646\u0642\u0644 \u0628\u0644\u0648\u062D\u0629 \u0627\u0644\u0645\u0641\u0627\u062A\u064A\u062D.'
+              : 'Keyboard focus is clearly visible while moving through the main navigation.',
+          category: 'Keyboard & Navigation',
+          subcategory: 'Missing focus indicator',
+          pageUrl: 'https://example.com',
+          recommendation: '',
+          rowDataJson: { auditOutcome: 'PASS' },
+          media: [],
+        },
         {
           serviceName: locale === 'ar' ? '\u0634\u0627\u0634\u0629 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u062F\u062E\u0648\u0644' : 'Login Screen',
           issueTitle: locale === 'ar' ? '\u063A\u064A\u0627\u0628 \u062A\u0633\u0645\u064A\u0627\u062A \u0648\u0627\u0636\u062D\u0629 \u0644\u0644\u062D\u0642\u0648\u0644' : 'Missing clear field labels',
@@ -819,6 +947,7 @@ export class ReportBuilderService {
             locale === 'ar'
               ? '\u0623\u0636\u0641 \u062A\u0633\u0645\u064A\u0627\u062A \u0635\u0631\u064A\u062D\u0629 \u0648\u0623\u0648\u0635\u0627\u0641 aria-label \u0645\u0646\u0627\u0633\u0628\u0629 \u0644\u0643\u0644 \u062D\u0642\u0644.'
               : 'Add explicit field labels and matching aria-label attributes for each input.',
+          rowDataJson: { auditOutcome: 'FAIL' },
           media: [
             {
               id: 'sample-image-1',
@@ -919,7 +1048,15 @@ export class ReportBuilderService {
       this.normalizeDisplayText(report.description) ||
       labels.sampleDescription;
     const statisticsNarrative = this.normalizeDisplayText(summary.statisticsSummary || summary.executiveSummary);
-    const recommendationBullets = this.buildRecommendationBullets(summary.recommendationsSummary, entries, localeConfig.locale);
+    const strengthsNarrative = this.normalizeDisplayText((summary as any).strengthsSummary);
+    const complianceNarrative = this.normalizeDisplayText((summary as any).complianceSummary);
+    const auditMetrics = this.getAuditMetrics(entries);
+    const issueEntries = entries.filter((entry) => {
+      const outcome = this.getAuditOutcome(entry.rowDataJson);
+      return outcome === 'FAIL' || outcome === 'PARTIAL';
+    });
+    const passEntries = entries.filter((entry) => this.getAuditOutcome(entry.rowDataJson) === 'PASS');
+    const recommendationBullets = this.buildRecommendationBullets(summary.recommendationsSummary, issueEntries, localeConfig.locale);
     const scopeServices = Array.from(
       new Set(entries.map((entry) => this.normalizeDisplayText(entry.serviceName)).filter(Boolean)),
     );
@@ -931,31 +1068,28 @@ export class ReportBuilderService {
         : 'No services listed yet';
 
     const severityCounts = [
-      { label: labels.totalIssues, count: entries.length, tone: 'total' },
+      { label: labels.compliancePercentage, count: `${auditMetrics.compliancePercentage}%`, tone: 'total' },
       {
-        label: this.severityLabel('HIGH', localeConfig.locale),
-        count: entries.filter((entry) => entry.severity === 'HIGH').length,
+        label: labels.workingChecks,
+        count: auditMetrics.pass,
+        tone: 'low',
+      },
+      {
+        label: labels.needsAttention,
+        count: auditMetrics.fail,
         tone: 'high',
       },
       {
-        label: this.severityLabel('MEDIUM', localeConfig.locale),
-        count: entries.filter((entry) => entry.severity === 'MEDIUM').length,
+        label: labels.partiallyWorking,
+        count: auditMetrics.partial,
         tone: 'medium',
       },
       {
-        label: this.severityLabel('LOW', localeConfig.locale),
-        count: entries.filter((entry) => entry.severity === 'LOW').length,
-        tone: 'low',
+        label: labels.notTested,
+        count: auditMetrics.notTested,
+        tone: 'total',
       },
     ];
-    const criticalCount = entries.filter((entry) => entry.severity === 'CRITICAL').length;
-    if (criticalCount > 0) {
-      severityCounts.splice(1, 0, {
-        label: this.severityLabel('CRITICAL', localeConfig.locale),
-        count: criticalCount,
-        tone: 'high',
-      });
-    }
 
     const categoryCounts = Array.from(
       entries.reduce((map, entry) => {
@@ -971,9 +1105,28 @@ export class ReportBuilderService {
       }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 
+    const strengthsRows = passEntries.length
+      ? passEntries
+          .slice(0, 8)
+          .map((entry) => {
+            const serviceName = this.normalizeDisplayText(entry.serviceName);
+            const issueTitle = this.normalizeDisplayText(entry.issueTitle);
+            return `
+              <div class="bar-list-item">
+                <div class="bar-list-head">
+                  <span>${this.escapeHtml(issueTitle || '-') }</span>
+                  <strong>${this.escapeHtml(serviceName || labels.serviceName)}</strong>
+                </div>
+              </div>
+            `;
+          })
+          .join('')
+      : `<div class="empty-block">${this.escapeHtml(localeConfig.locale === 'ar' ? 'لم يتم تسجيل بنود ناجحة بعد.' : 'No working checks recorded yet.')}</div>`;
+
     const schemaVersion = report.templateVersion;
     const serviceHeader = this.getSchemaLabel(schemaVersion, 'serviceName', localeConfig.locale, labels.serviceName);
     const issueTitleHeader = this.getSchemaLabel(schemaVersion, 'issueTitle', localeConfig.locale, labels.issueTitle);
+    const outcomeHeader = labels.outcome;
     const severityHeader = this.getSchemaLabel(schemaVersion, 'severity', localeConfig.locale, labels.severity);
     const categoryHeader = this.getSchemaLabel(schemaVersion, 'category', localeConfig.locale, labels.category);
     const subcategoryHeader = this.getSchemaLabel(schemaVersion, 'subcategory', localeConfig.locale, labels.subcategory);
@@ -1040,6 +1193,11 @@ export class ReportBuilderService {
             const category = this.normalizeDisplayText(entry.category);
             const subcategory = this.normalizeDisplayText(entry.subcategory);
             const severityClass = (entry.severity || 'LOW').toLowerCase() === 'critical' ? 'high' : (entry.severity || 'LOW').toLowerCase();
+            const auditOutcome = this.getAuditOutcome(entry.rowDataJson);
+            const severityHtml = entry.severity
+              ? `<span class="severity-pill severity-pill--${severityClass}">${this.escapeHtml(this.severityLabel(entry.severity, localeConfig.locale))}</span>`
+              : '<span class="muted">-</span>';
+            const outcomeHtml = `<span class="severity-pill severity-pill--${auditOutcome === 'PASS' ? 'low' : auditOutcome === 'PARTIAL' ? 'medium' : auditOutcome === 'FAIL' ? 'high' : 'neutral'}">${this.escapeHtml(this.getAuditOutcomeLabel(auditOutcome, localeConfig.locale))}</span>`;
 
             return `
               <tr>
@@ -1049,7 +1207,8 @@ export class ReportBuilderService {
                   <div class="issue-title">${this.escapeHtml(issueTitle) || '-'}</div>
                   ${issueDescription ? `<div class="cell-note">${this.escapeHtml(issueDescription)}</div>` : ''}
                 </td>
-                <td><span class="severity-pill severity-pill--${severityClass}">${this.escapeHtml(this.severityLabel(entry.severity, localeConfig.locale))}</span></td>
+                <td>${outcomeHtml}</td>
+                <td>${severityHtml}</td>
                 <td>${this.escapeHtml(category) || '<span class="muted">-</span>'}</td>
                 <td>${this.escapeHtml(subcategory) || '<span class="muted">-</span>'}</td>
                 <td>${pageUrlHtml}</td>
@@ -1058,7 +1217,7 @@ export class ReportBuilderService {
             `;
           })
           .join('')
-      : `<tr><td colspan="8" class="empty-table">${this.escapeHtml(labels.noEntries)}</td></tr>`;
+      : `<tr><td colspan="9" class="empty-table">${this.escapeHtml(labels.noEntries)}</td></tr>`;
 
     const recommendationCards = recommendationBullets
       .map(
@@ -1377,6 +1536,10 @@ export class ReportBuilderService {
             background: var(--severity-low-bg);
             color: var(--severity-low);
           }
+          .severity-pill--neutral {
+            background: rgba(100, 116, 139, 0.14);
+            color: #475569;
+          }
           .inline-link {
             color: var(--primary);
             text-decoration: none;
@@ -1568,19 +1731,26 @@ export class ReportBuilderService {
                   <div class="span-7 section-stack">
                     <div class="metric-grid">${severityCards}</div>
                     ${
-                      statisticsNarrative
+                      statisticsNarrative || complianceNarrative
                         ? `
                           <div class="card">
                             <h3>${this.escapeHtml(labels.executiveSummary)}</h3>
-                            <p class="narrative" style="margin-top:12px;">${this.escapeHtml(statisticsNarrative).replace(/\n/g, '<br />')}</p>
+                            <p class="narrative" style="margin-top:12px;">${this.escapeHtml(statisticsNarrative || complianceNarrative).replace(/\n/g, '<br />')}</p>
                           </div>
                         `
                         : ''
                     }
                   </div>
-                  <div class="span-5 card">
-                    <h3>${this.escapeHtml(labels.categoryBreakdown)}</h3>
-                    <div style="margin-top:20px;">${categoryRows}</div>
+                  <div class="span-5 section-stack">
+                    <div class="card">
+                      <h3>${this.escapeHtml(labels.categoryBreakdown)}</h3>
+                      <div style="margin-top:20px;">${categoryRows}</div>
+                    </div>
+                    <div class="card">
+                      <h3>${this.escapeHtml(labels.strengthsTitle)}</h3>
+                      <p style="margin-top:12px;">${this.escapeHtml(strengthsNarrative || labels.strengthsBody)}</p>
+                      <div style="margin-top:20px;">${strengthsRows}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1599,12 +1769,13 @@ export class ReportBuilderService {
                       <tr>
                         <th style="width:5%">#</th>
                         <th style="width:12%">${this.escapeHtml(serviceHeader)}</th>
-                        <th style="width:23%">${this.escapeHtml(issueTitleHeader)}</th>
+                        <th style="width:21%">${this.escapeHtml(issueTitleHeader)}</th>
+                        <th style="width:12%">${this.escapeHtml(outcomeHeader)}</th>
                         <th style="width:10%">${this.escapeHtml(severityHeader)}</th>
                         <th style="width:12%">${this.escapeHtml(categoryHeader)}</th>
-                        <th style="width:14%">${this.escapeHtml(subcategoryHeader)}</th>
+                        <th style="width:12%">${this.escapeHtml(subcategoryHeader)}</th>
                         <th style="width:10%">${this.escapeHtml(pageUrlHeader)}</th>
-                        <th style="width:14%">${this.escapeHtml(evidenceHeader)}</th>
+                        <th style="width:16%">${this.escapeHtml(evidenceHeader)}</th>
                       </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
@@ -1622,6 +1793,15 @@ export class ReportBuilderService {
                 <div>
                   <div class="eyebrow">${this.escapeHtml(labels.recommendationSummary)}</div>
                   <h2>${this.escapeHtml(labels.recommendationsTitle)}</h2>
+                </div>
+                <div class="card">
+                  <h3>${this.escapeHtml(labels.needsAttentionTitle)}</h3>
+                  <p style="margin-top:12px;">${this.escapeHtml(complianceNarrative || labels.needsAttentionBody)}</p>
+                  <div class="pill-row">
+                    <span class="tag-pill">${this.escapeHtml(`${labels.needsAttention}: ${auditMetrics.fail}`)}</span>
+                    <span class="tag-pill">${this.escapeHtml(`${labels.partiallyWorking}: ${auditMetrics.partial}`)}</span>
+                    <span class="tag-pill">${this.escapeHtml(`${labels.notApplicable}: ${auditMetrics.notApplicable}`)}</span>
+                  </div>
                 </div>
                 <div class="recommendation-grid">${recommendationCards}</div>
               </div>
@@ -2222,6 +2402,7 @@ export class ReportBuilderService {
       subcategory: dto.subcategory ?? entry.subcategory,
       pageUrl: dto.pageUrl ?? entry.pageUrl,
       recommendation: dto.recommendation ?? entry.recommendation,
+      rowDataJson: dto.rowDataJson ?? (entry.rowDataJson as Record<string, unknown> | null),
     });
     const nextCategoryInput = dto.category ?? entry.category;
     const normalizedCategory =
@@ -2233,6 +2414,10 @@ export class ReportBuilderService {
       normalizedCategory && report.template?.category === 'ACCESSIBILITY'
         ? this.normalizeAccessibilitySubcategory(normalizedCategory, nextSubcategoryInput) || nextSubcategoryInput?.trim()
         : nextSubcategoryInput?.trim();
+    const nextAuditOutcome = this.getAuditOutcome(
+      dto.rowDataJson !== undefined ? (dto.rowDataJson as Record<string, unknown>) : ((entry.rowDataJson as Record<string, unknown> | null) || null),
+    );
+    const keepsIssueFields = nextAuditOutcome === 'FAIL' || nextAuditOutcome === 'PARTIAL';
 
     const updated = await this.prisma.projectReportEntry.update({
       where: { id: entryId },
@@ -2243,13 +2428,11 @@ export class ReportBuilderService {
         ...(dto.issueDescription !== undefined && {
           issueDescription: dto.issueDescription?.trim() || entry.issueDescription,
         }),
-        ...(dto.severity !== undefined && { severity: dto.severity }),
+        severity: keepsIssueFields ? (dto.severity ?? entry.severity) : null,
         ...(dto.category !== undefined && { category: normalizedCategory || null }),
         ...(dto.subcategory !== undefined && { subcategory: normalizedSubcategory || null }),
         ...(dto.pageUrl !== undefined && { pageUrl: dto.pageUrl?.trim() || null }),
-        ...(dto.recommendation !== undefined && {
-          recommendation: dto.recommendation?.trim() || null,
-        }),
+        recommendation: keepsIssueFields ? (dto.recommendation !== undefined ? dto.recommendation?.trim() || null : entry.recommendation) : null,
         ...(dto.status !== undefined && { status: dto.status }),
         ...(dto.rowDataJson !== undefined && { rowDataJson: dto.rowDataJson as object }),
         updatedById: user.id,
@@ -2656,3 +2839,4 @@ export class ReportBuilderService {
     }
   }
 }
+

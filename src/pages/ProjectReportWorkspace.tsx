@@ -15,15 +15,17 @@ import {
   getAccessibilitySubcategoryLabel,
   resolveAccessibilityTaxonomy,
 } from '@/features/accessibility/accessibilityAuditConfig';
-import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportOutputLocale, ReportBuilderTemplateVersion, Role } from '@/types';
+import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia, ProjectReportEntryOutcome, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportOutputLocale, ReportBuilderTemplateVersion, Role } from '@/types';
 
 const SEVERITIES: ProjectReportEntrySeverity[] = ['HIGH', 'MEDIUM', 'LOW'];
 const DEFAULT_ENTRY_STATUS: ProjectReportEntryStatus = 'OPEN';
+const AUDIT_OUTCOMES: ProjectReportEntryOutcome[] = ['PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE', 'NOT_TESTED'];
 
 const emptyEntryDraft = {
   serviceName: '',
   issueTitle: '',
   issueDescription: '',
+  auditOutcome: 'FAIL' as ProjectReportEntryOutcome,
   severity: 'MEDIUM' as ProjectReportEntrySeverity,
   category: '' as AccessibilityAuditMainCategory | '',
   subcategory: '',
@@ -59,6 +61,22 @@ const mediaActionLabel = (media: ProjectReportEntryMedia) => {
   return 'View Evidence';
 };
 
+const outcomeVariant: Record<ProjectReportEntryOutcome, 'success' | 'danger' | 'warning' | 'info' | 'neutral'> = {
+  PASS: 'success',
+  FAIL: 'danger',
+  PARTIAL: 'warning',
+  NOT_APPLICABLE: 'info',
+  NOT_TESTED: 'neutral',
+};
+
+const getAuditOutcome = (entry?: Pick<ProjectReportEntry, 'auditOutcome' | 'rowDataJson'> | null): ProjectReportEntryOutcome => {
+  const candidate = entry?.auditOutcome ?? entry?.rowDataJson?.auditOutcome;
+  if (candidate === 'PASS' || candidate === 'FAIL' || candidate === 'PARTIAL' || candidate === 'NOT_APPLICABLE' || candidate === 'NOT_TESTED') {
+    return candidate;
+  }
+  return 'FAIL';
+};
+
 const getVersionTaxonomy = (version?: ReportBuilderTemplateVersion | null) => resolveAccessibilityTaxonomy(version?.taxonomyJson);
 
 export const ProjectReportWorkspace: React.FC = () => {
@@ -82,22 +100,31 @@ export const ProjectReportWorkspace: React.FC = () => {
             loadingPreview: 'جاري تحميل المعاينة...',
             previewReport: 'معاينة التقرير',
             downloadLatestExport: 'تنزيل آخر نسخة',
-            addFinding: 'إضافة ملاحظة',
-            totalFindings: 'إجمالي الملاحظات',
+            addFinding: 'إضافة نتيجة تدقيق',
+            totalFindings: 'إجمالي النتائج',
+            complianceScore: 'نسبة الامتثال',
+            workingChecks: 'ما يعمل بشكل صحيح',
+            needsAttention: 'يحتاج معالجة',
+            partialChecks: 'يعمل جزئيا',
+            notTested: 'لم يتم اختباره',
             high: 'عالية',
             medium: 'متوسطة',
             low: 'منخفضة',
             aiReportSummary: 'ملخص التقرير بالذكاء الاصطناعي',
             introduction: 'المقدمة',
             executiveSummary: 'الملخص التنفيذي',
+            strengthsSummary: 'ما يعمل بشكل جيد',
+            complianceSummary: 'ملخص الامتثال',
             recommendationsSummary: 'ملخص التوصيات',
             findingsList: 'قائمة الملاحظات',
-            findingsListDescription: 'هيكل ثابت لملاحظات إمكانية الوصول وفق الأداة المعينة. تبقى التصنيفات والتصنيفات الفرعية متوافقة مع تعريف المنتج.',
+            findingsListDescription: 'سجل بسيط لنتائج التدقيق يوضح ما يعمل وما يحتاج معالجة، مع الحفاظ على نفس التصنيفات المعتمدة في الأداة.',
             searchFindings: 'ابحث في الملاحظات',
             allSeverities: 'كل مستويات الشدة',
+            allOutcomes: 'كل النتائج',
             allCategories: 'كل التصنيفات',
             serviceName: 'اسم الخدمة / الوحدة',
             issueTitle: 'عنوان المشكلة',
+            outcome: 'النتيجة',
             severity: 'الشدة',
             category: 'التصنيف',
             subcategory: 'التصنيف الفرعي',
@@ -107,13 +134,21 @@ export const ProjectReportWorkspace: React.FC = () => {
             clickHere: 'اضغط هنا',
             remove: 'إزالة',
             noFindings: 'لا توجد ملاحظات تطابق عوامل التصفية الحالية بعد.',
-            editFinding: 'تعديل ملاحظة إمكانية الوصول',
-            newObservation: 'ملاحظة إمكانية وصول جديدة',
+            editFinding: 'تعديل نتيجة التدقيق',
+            newObservation: 'نتيجة تدقيق جديدة',
             basicInformation: 'المعلومات الأساسية',
+            auditResult: 'نتيجة التدقيق',
+            auditResultHelp: 'اختر هل هذا الجزء يعمل بشكل صحيح أم يحتاج معالجة.',
+            outcomePass: 'يعمل بشكل صحيح',
+            outcomeFail: 'وجدنا مشكلة',
+            outcomePartial: 'يعمل جزئيا',
+            outcomeNotApplicable: 'غير منطبق',
+            outcomeNotTested: 'لم يتم اختباره',
             servicePlaceholder: 'مثال: تدفق الدفع عبر الجوال',
             issueTitlePlaceholder: 'وصف قصير وواضح للمشكلة',
             issueDescription: 'وصف المشكلة',
             issueDescriptionPlaceholder: 'شرح تفصيلي لعائق إمكانية الوصول...',
+            positiveNotePlaceholder: 'اكتب ببساطة ما الذي يعمل بشكل جيد هنا...',
             severityClassification: 'تصنيف الشدة',
             accessibilityCategory: 'تصنيف إمكانية الوصول',
             mainCategory: 'التصنيف الرئيسي',
@@ -128,6 +163,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             developerRecommendations: 'توصيات لفريق التطوير',
             remediationSteps: 'خطوات المعالجة',
             remediationPlaceholder: 'إرشادات محددة لفريق التطوير لمعالجة هذه المشكلة...',
+            recommendationOptionalHelp: 'يفضل كتابة خطوات المعالجة فقط عند وجود مشكلة أو حالة جزئية.',
             existingEvidence: 'الأدلة الحالية',
             cancel: 'إلغاء',
             updateFinding: 'تحديث الملاحظة',
@@ -161,22 +197,31 @@ export const ProjectReportWorkspace: React.FC = () => {
             loadingPreview: 'Loading Preview...',
             previewReport: 'Preview Report',
             downloadLatestExport: 'Download Latest Export',
-            addFinding: 'Add Finding',
-            totalFindings: 'Total Findings',
+            addFinding: 'Add Audit Result',
+            totalFindings: 'Total Results',
+            complianceScore: 'Compliance Score',
+            workingChecks: 'Working',
+            needsAttention: 'Needs Attention',
+            partialChecks: 'Partially Working',
+            notTested: 'Not Tested',
             high: 'High',
             medium: 'Medium',
             low: 'Low',
             aiReportSummary: 'AI Report Summary',
             introduction: 'Introduction',
             executiveSummary: 'Executive Summary',
+            strengthsSummary: "What's Working",
+            complianceSummary: 'Compliance Summary',
             recommendationsSummary: 'Recommendations Summary',
-            findingsList: 'Findings List',
-            findingsListDescription: 'Fixed accessibility findings structure from the assigned tool. Categories and subcategories stay aligned with the product definition.',
+            findingsList: 'Audit Results',
+            findingsListDescription: 'A beginner-friendly audit log that shows what is working, what needs attention, and what still needs testing.',
             searchFindings: 'Search findings',
             allSeverities: 'All severities',
+            allOutcomes: 'All results',
             allCategories: 'All categories',
             serviceName: 'Service Name',
             issueTitle: 'Issue Title',
+            outcome: 'Result',
             severity: 'Severity',
             category: 'Category',
             subcategory: 'Subcategory',
@@ -186,13 +231,21 @@ export const ProjectReportWorkspace: React.FC = () => {
             clickHere: 'Click Here',
             remove: 'Remove',
             noFindings: 'No findings match the current filters yet.',
-            editFinding: 'Edit Accessibility Finding',
-            newObservation: 'New Accessibility Observation',
+            editFinding: 'Edit Audit Result',
+            newObservation: 'New Audit Result',
             basicInformation: 'Basic Information',
+            auditResult: 'Audit Result',
+            auditResultHelp: 'Choose whether this area is working correctly or needs attention.',
+            outcomePass: 'Working',
+            outcomeFail: 'Issue found',
+            outcomePartial: 'Partially working',
+            outcomeNotApplicable: 'Not applicable',
+            outcomeNotTested: 'Not tested',
             servicePlaceholder: 'e.g., Mobile Checkout Flow',
             issueTitlePlaceholder: 'Short descriptive summary of the problem',
             issueDescription: 'Issue Description',
             issueDescriptionPlaceholder: 'Detailed breakdown of the accessibility barrier...',
+            positiveNotePlaceholder: 'Briefly explain what is working well here...',
             severityClassification: 'Severity Classification',
             accessibilityCategory: 'Accessibility Category',
             mainCategory: 'Main Category',
@@ -207,6 +260,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             developerRecommendations: 'Developer Recommendations',
             remediationSteps: 'Remediation Steps',
             remediationPlaceholder: 'Specific guidance for the development team to resolve this issue...',
+            recommendationOptionalHelp: 'Add remediation steps only when this result needs follow-up.',
             existingEvidence: 'Existing Evidence',
             cancel: 'Cancel',
             updateFinding: 'Update Finding',
@@ -239,6 +293,14 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
     return severityCopy[severity] || severity;
   }, [copy.high, copy.low, copy.medium, isArabic]);
+
+  const outcomeLabel = React.useCallback((outcome: ProjectReportEntryOutcome) => {
+    if (outcome === 'PASS') return copy.outcomePass;
+    if (outcome === 'PARTIAL') return copy.outcomePartial;
+    if (outcome === 'NOT_APPLICABLE') return copy.outcomeNotApplicable;
+    if (outcome === 'NOT_TESTED') return copy.outcomeNotTested;
+    return copy.outcomeFail;
+  }, [copy.outcomeFail, copy.outcomeNotApplicable, copy.outcomeNotTested, copy.outcomePartial, copy.outcomePass]);
 
   const evidenceActionLabel = React.useCallback((media: ProjectReportEntryMedia) => {
     if (isArabic) {
@@ -274,6 +336,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [generatingAi, setGeneratingAi] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
+  const [outcomeFilter, setOutcomeFilter] = React.useState<'ALL' | ProjectReportEntryOutcome>('ALL');
   const [categoryFilter, setCategoryFilter] = React.useState<'ALL' | AccessibilityAuditMainCategory>('ALL');
 
   const canEditEntries = hasPermission(Permission.EDIT_PROJECT_REPORT_ENTRIES);
@@ -293,29 +356,45 @@ export const ProjectReportWorkspace: React.FC = () => {
   );
   const subcategoryOptions = entryDraft.category ? taxonomy.subcategories[entryDraft.category] || [] : [];
   const reportOutputLocale: ProjectReportOutputLocale = report?.outputLocale || getAccessibilityOutputLocale(report?.templateVersion);
+  const entryNeedsSeverity = entryDraft.auditOutcome === 'FAIL' || entryDraft.auditOutcome === 'PARTIAL';
+  const entryNeedsRecommendation = entryNeedsSeverity;
 
   const filteredEntries = React.useMemo(() => {
     return entries.filter((entry) => {
+      const auditOutcome = getAuditOutcome(entry);
       const matchesSearch = [entry.serviceName, entry.issueTitle, entry.issueDescription, entry.category, entry.subcategory]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesSeverity = severityFilter === 'ALL' || entry.severity === severityFilter;
+      const matchesSeverity = severityFilter === 'ALL' || (!!entry.severity && entry.severity === severityFilter);
+      const matchesOutcome = outcomeFilter === 'ALL' || auditOutcome === outcomeFilter;
       const matchesCategory = categoryFilter === 'ALL' || entry.category === categoryFilter;
-      return matchesSearch && matchesSeverity && matchesCategory;
+      return matchesSearch && matchesSeverity && matchesOutcome && matchesCategory;
     });
-  }, [categoryFilter, entries, searchTerm, severityFilter]);
+  }, [categoryFilter, entries, outcomeFilter, searchTerm, severityFilter]);
 
-  const summaryCounts = React.useMemo(
-    () => ({
-      total: entries.length,
-      high: entries.filter((entry) => entry.severity === 'HIGH').length,
-      medium: entries.filter((entry) => entry.severity === 'MEDIUM').length,
-      low: entries.filter((entry) => entry.severity === 'LOW').length,
-    }),
-    [entries],
-  );
+  const summaryCounts = React.useMemo(() => {
+    const counts = entries.reduce(
+      (acc, entry) => {
+        const auditOutcome = getAuditOutcome(entry);
+        acc.total += 1;
+        if (auditOutcome === 'PASS') acc.pass += 1;
+        if (auditOutcome === 'FAIL') acc.fail += 1;
+        if (auditOutcome === 'PARTIAL') acc.partial += 1;
+        if (auditOutcome === 'NOT_TESTED') acc.notTested += 1;
+        if (auditOutcome === 'NOT_APPLICABLE') acc.notApplicable += 1;
+        if (entry.severity === 'HIGH') acc.high += 1;
+        if (entry.severity === 'MEDIUM') acc.medium += 1;
+        if (entry.severity === 'LOW') acc.low += 1;
+        return acc;
+      },
+      { total: 0, pass: 0, fail: 0, partial: 0, notTested: 0, notApplicable: 0, high: 0, medium: 0, low: 0 },
+    );
+    const scoredChecks = counts.pass + counts.fail + counts.partial;
+    const compliance = scoredChecks > 0 ? Math.round(((counts.pass + counts.partial * 0.5) / scoredChecks) * 100) : 0;
+    return { ...counts, compliance, scoredChecks };
+  }, [entries]);
 
   const loadData = React.useCallback(async () => {
     if (!reportId) return;
@@ -346,6 +425,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         serviceName: entry.serviceName || '',
         issueTitle: entry.issueTitle,
         issueDescription: entry.issueDescription,
+        auditOutcome: getAuditOutcome(entry),
         severity: (entry.severity || 'MEDIUM') as ProjectReportEntrySeverity,
         category: (entry.category as AccessibilityAuditMainCategory | '') || '',
         subcategory: entry.subcategory || '',
@@ -376,12 +456,16 @@ export const ProjectReportWorkspace: React.FC = () => {
       serviceName: entryDraft.serviceName.trim(),
       issueTitle: entryDraft.issueTitle.trim(),
       issueDescription: entryDraft.issueDescription.trim(),
-      severity: entryDraft.severity,
+      severity: entryNeedsSeverity ? entryDraft.severity : undefined,
       category: entryDraft.category,
       subcategory: entryDraft.subcategory,
       pageUrl: normalizeUrl(entryDraft.pageUrl),
-      recommendation: entryDraft.recommendation.trim(),
+      recommendation: entryNeedsRecommendation ? entryDraft.recommendation.trim() : '',
       status: editingEntry?.status || DEFAULT_ENTRY_STATUS,
+      rowDataJson: {
+        ...(editingEntry?.rowDataJson || {}),
+        auditOutcome: entryDraft.auditOutcome,
+      },
     };
 
     try {
@@ -392,10 +476,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       await uploadSelectedEvidence(savedEntry);
       await loadData();
       setEntryModalOpen(false);
-      toast.success(editingEntry ? 'Finding updated.' : 'Finding added.');
+      toast.success(editingEntry ? (isArabic ? 'تم تحديث النتيجة.' : 'Audit result updated.') : (isArabic ? 'تمت إضافة النتيجة.' : 'Audit result added.'));
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || 'Failed to save finding.');
+      toast.error(error?.message || (isArabic ? 'تعذر حفظ نتيجة التدقيق.' : 'Failed to save audit result.'));
     }
   };
 
@@ -404,10 +488,10 @@ export const ProjectReportWorkspace: React.FC = () => {
     try {
       await api.reportBuilderProjects.deleteEntry(reportId, entry.id);
       await loadData();
-      toast.success('Finding removed.');
+      toast.success(isArabic ? 'تمت إزالة النتيجة.' : 'Audit result removed.');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to delete finding.');
+      toast.error(isArabic ? 'تعذر حذف النتيجة.' : 'Failed to delete audit result.');
     }
   };
 
@@ -655,11 +739,31 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.totalFindings}</p><p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{summaryCounts.total}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.high}</p><p className="mt-2 text-3xl font-bold text-rose-600">{summaryCounts.high}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.medium}</p><p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.medium}</p></GlassCard>
-        <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.low}</p><p className="mt-2 text-3xl font-bold text-emerald-500">{summaryCounts.low}</p></GlassCard>
+      <div className="grid gap-4 md:grid-cols-5">
+        <GlassCard>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.complianceScore}</p>
+          <p className="mt-2 text-3xl font-bold text-cyan-600">{summaryCounts.compliance}%</p>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'عنصرًا تم تقييمه' : 'scored checks'}</p>
+        </GlassCard>
+        <GlassCard>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-600">{summaryCounts.pass}</p>
+        </GlassCard>
+        <GlassCard>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.needsAttention}</p>
+          <p className="mt-2 text-3xl font-bold text-rose-600">{summaryCounts.fail}</p>
+        </GlassCard>
+        <GlassCard>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.partialChecks}</p>
+          <p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.partial}</p>
+        </GlassCard>
+        <GlassCard>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
+          <p className="mt-2 text-3xl font-bold text-slate-700 dark:text-slate-200">{summaryCounts.notTested}</p>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {summaryCounts.notApplicable} {isArabic ? 'غير منطبق' : 'not applicable'}
+          </p>
+        </GlassCard>
       </div>
 
       {!isDraftReport && !isClientUser && (
@@ -669,7 +773,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         </GlassCard>
       )}
 
-      {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.recommendationsSummary ? (
+      {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.strengthsSummary || (report.summaryJson as any)?.complianceSummary || (report.summaryJson as any)?.recommendationsSummary ? (
         <GlassCard>
           <div className="mb-4 flex items-center gap-2">
             <Bot className="h-5 w-5 text-cyan-500" />
@@ -686,6 +790,18 @@ export const ProjectReportWorkspace: React.FC = () => {
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.executiveSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).statisticsSummary || (report.summaryJson as any).executiveSummary}</p>
+              </div>
+            )}
+            {(report.summaryJson as any)?.strengthsSummary && (
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.strengthsSummary}</h3>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).strengthsSummary}</p>
+              </div>
+            )}
+            {(report.summaryJson as any)?.complianceSummary && (
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.complianceSummary}</h3>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).complianceSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.recommendationsSummary && (
@@ -706,11 +822,15 @@ export const ProjectReportWorkspace: React.FC = () => {
               {copy.findingsListDescription}
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <div className="relative min-w-[220px]">
               <Input placeholder={copy.searchFindings} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-10" />
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             </div>
+            <Select value={outcomeFilter} onChange={(event) => setOutcomeFilter(event.target.value as 'ALL' | ProjectReportEntryOutcome)}>
+              <option value="ALL">{copy.allOutcomes}</option>
+              {AUDIT_OUTCOMES.map((outcome) => <option key={outcome} value={outcome}>{outcomeLabel(outcome)}</option>)}
+            </Select>
             <Select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as 'ALL' | ProjectReportEntrySeverity)}>
               <option value="ALL">{copy.allSeverities}</option>
               {SEVERITIES.map((severity) => <option key={severity} value={severity}>{severityLabel(severity)}</option>)}
@@ -728,6 +848,7 @@ export const ProjectReportWorkspace: React.FC = () => {
               <tr>
                 <th className="pb-3 pr-4">{copy.serviceName}</th>
                 <th className="pb-3 pr-4">{copy.issueTitle}</th>
+                <th className="pb-3 pr-4">{copy.outcome}</th>
                 <th className="pb-3 pr-4">{copy.severity}</th>
                 <th className="pb-3 pr-4">{copy.category}</th>
                 <th className="pb-3 pr-4">{copy.subcategory}</th>
@@ -745,7 +866,16 @@ export const ProjectReportWorkspace: React.FC = () => {
                       <p className="font-medium text-slate-900 dark:text-white">{entry.issueTitle}</p>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{entry.issueDescription}</p>
                     </td>
-                    <td className="py-4 pr-4"><Badge variant={severityBadgeVariant[(entry.severity || 'MEDIUM') as ProjectReportEntrySeverity]}>{severityLabel((entry.severity || 'MEDIUM') as ProjectReportEntrySeverity)}</Badge></td>
+                    <td className="py-4 pr-4"><Badge variant={outcomeVariant[getAuditOutcome(entry)]}>{outcomeLabel(getAuditOutcome(entry))}</Badge></td>
+                    <td className="py-4 pr-4">
+                      {entry.severity ? (
+                        <Badge variant={severityBadgeVariant[(entry.severity || 'MEDIUM') as ProjectReportEntrySeverity]}>
+                          {severityLabel((entry.severity || 'MEDIUM') as ProjectReportEntrySeverity)}
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
                     <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.category ? getAccessibilityCategoryLabel(entry.category, uiLocale) : '-'}</td>
                     <td className="py-4 pr-4 text-slate-700 dark:text-slate-300">{entry.category && entry.subcategory ? getAccessibilitySubcategoryLabel(entry.category, entry.subcategory, uiLocale) : entry.subcategory || '-'}</td>
                     <td className="py-4 pr-4">
@@ -771,7 +901,7 @@ export const ProjectReportWorkspace: React.FC = () => {
                   </tr>
                   {(entry.media || []).length > 0 && (
                     <tr className="bg-slate-50/70 dark:bg-slate-900/20">
-                      <td colSpan={canManageDraftContent ? 8 : 7} className="py-3 pr-4">
+                      <td colSpan={canManageDraftContent ? 9 : 8} className="py-3 pr-4">
                         <div className="flex flex-wrap gap-3">
                           {(entry.media || []).map((media) => (
                             <div key={media.id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
@@ -789,7 +919,7 @@ export const ProjectReportWorkspace: React.FC = () => {
               ))}
               {filteredEntries.length === 0 && (
                 <tr>
-                  <td colSpan={canManageDraftContent ? 8 : 7} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={canManageDraftContent ? 9 : 8} className="py-12 text-center text-slate-500 dark:text-slate-400">
                     <FileText className="mx-auto mb-3 h-10 w-10 opacity-30" />
                     {copy.noFindings}
                   </td>
@@ -808,22 +938,53 @@ export const ProjectReportWorkspace: React.FC = () => {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Input label={copy.serviceName} placeholder={copy.servicePlaceholder} value={entryDraft.serviceName} onChange={(event) => setEntryDraft((current) => ({ ...current, serviceName: event.target.value }))} required />
-              <Input label={copy.issueTitle} placeholder={copy.issueTitlePlaceholder} value={entryDraft.issueTitle} onChange={(event) => setEntryDraft((current) => ({ ...current, issueTitle: event.target.value }))} required />
+              <Input label={copy.issueTitle} placeholder={entryNeedsRecommendation ? copy.issueTitlePlaceholder : copy.positiveNotePlaceholder} value={entryDraft.issueTitle} onChange={(event) => setEntryDraft((current) => ({ ...current, issueTitle: event.target.value }))} required />
             </div>
-            <TextArea label={copy.issueDescription} placeholder={copy.issueDescriptionPlaceholder} value={entryDraft.issueDescription} onChange={(event) => setEntryDraft((current) => ({ ...current, issueDescription: event.target.value }))} required />
+            <TextArea label={copy.issueDescription} placeholder={entryNeedsRecommendation ? copy.issueDescriptionPlaceholder : copy.positiveNotePlaceholder} value={entryDraft.issueDescription} onChange={(event) => setEntryDraft((current) => ({ ...current, issueDescription: event.target.value }))} required />
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-emerald-500">
+              <span className="h-6 w-1 rounded-full bg-emerald-500" /> {copy.auditResult}
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{copy.auditResultHelp}</p>
+            <div className="grid gap-3 md:grid-cols-5">
+              {AUDIT_OUTCOMES.map((outcome) => (
+                <button
+                  key={outcome}
+                  type="button"
+                  onClick={() => setEntryDraft((current) => ({ ...current, auditOutcome: outcome }))}
+                  className={`rounded-2xl border px-4 py-5 text-center text-sm font-bold transition-all ${
+                    entryDraft.auditOutcome === outcome
+                      ? 'border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm dark:bg-cyan-500/10 dark:text-cyan-300'
+                      : 'border-slate-200 text-slate-500 hover:border-cyan-300 dark:border-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {outcomeLabel(outcome)}
+                </button>
+              ))}
+            </div>
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-orange-500">
               <span className="h-6 w-1 rounded-full bg-orange-500" /> {copy.severityClassification}
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {SEVERITIES.map((severity) => (
-                <button key={severity} type="button" onClick={() => setEntryDraft((current) => ({ ...current, severity }))} className={`rounded-2xl border px-4 py-5 text-center text-sm font-bold uppercase tracking-[0.28em] transition-all ${entryDraft.severity === severity ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-500/10 dark:text-blue-300' : 'border-slate-200 text-slate-500 hover:border-blue-300 dark:border-slate-700 dark:text-slate-300'}`}>
-                  {severityLabel(severity)}
-                </button>
-              ))}
-            </div>
+            {entryNeedsSeverity ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {SEVERITIES.map((severity) => (
+                  <button key={severity} type="button" onClick={() => setEntryDraft((current) => ({ ...current, severity }))} className={`rounded-2xl border px-4 py-5 text-center text-sm font-bold uppercase tracking-[0.28em] transition-all ${entryDraft.severity === severity ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-500/10 dark:text-blue-300' : 'border-slate-200 text-slate-500 hover:border-blue-300 dark:border-slate-700 dark:text-slate-300'}`}>
+                    {severityLabel(severity)}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <GlassCard className="border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                  {isArabic ? 'ليست هناك حاجة لتحديد شدة عندما تكون النتيجة ناجحة أو غير منطبقة أو غير مختبرة.' : 'Severity is only needed when the result has an issue or is partially working.'}
+                </p>
+              </GlassCard>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -875,7 +1036,14 @@ export const ProjectReportWorkspace: React.FC = () => {
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-indigo-500">
               <span className="h-6 w-1 rounded-full bg-indigo-500" /> {copy.developerRecommendations}
             </div>
-            <TextArea label={copy.remediationSteps} placeholder={copy.remediationPlaceholder} value={entryDraft.recommendation} onChange={(event) => setEntryDraft((current) => ({ ...current, recommendation: event.target.value }))} required />
+            <p className="text-sm text-slate-500 dark:text-slate-400">{copy.recommendationOptionalHelp}</p>
+            <TextArea
+              label={copy.remediationSteps}
+              placeholder={entryNeedsRecommendation ? copy.remediationPlaceholder : copy.positiveNotePlaceholder}
+              value={entryDraft.recommendation}
+              onChange={(event) => setEntryDraft((current) => ({ ...current, recommendation: event.target.value }))}
+              required={entryNeedsRecommendation}
+            />
           </section>
 
           {editingEntry && (editingEntry.media || []).length > 0 && (

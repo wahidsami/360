@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Client, Project, User, CreateUserResult, ResendInviteResult, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility, ProjectWorkspaceConfigDraft, ClientWorkspaceTemplateAssignment, ProjectWorkspaceTemplate, WorkspaceAudienceType, WorkspaceTemplateStatus } from '../types';
+import { Client, Project, User, CreateUserResult, ResendInviteResult, Finding, Milestone, Role, ClientMember, FileAsset, ActivityLog, ProjectUpdate, EnvironmentAccess, Invoice, Contract, CommentThread, ProjectMember, Report, Task, TaskStatus, Discussion, DiscussionReply, ProjectReadiness, ClientReportTemplateAssignment, ReportBuilderTemplate, ReportBuilderTemplateCategory, ReportBuilderTemplateStatus, ReportBuilderTemplateVersion, ProjectReport, ProjectReportEntry, ProjectReportEntryOutcome, ProjectReportEntrySeverity, ProjectReportEntryStatus, ProjectReportStatus, ProjectReportVisibility, ProjectWorkspaceConfigDraft, ClientWorkspaceTemplateAssignment, ProjectWorkspaceTemplate, WorkspaceAudienceType, WorkspaceTemplateStatus } from '../types';
 import toast from 'react-hot-toast';
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
@@ -115,6 +115,18 @@ const normalizeReport = (report: any): Report => ({
   type: report.type || 'OTHER',
   status: report.status || 'DRAFT',
   generatedBy: report.generatedBy || report.createdBy?.name || undefined,
+});
+
+const normalizeProjectReportEntryOutcome = (value: unknown): ProjectReportEntryOutcome => {
+  if (value === 'PASS' || value === 'FAIL' || value === 'PARTIAL' || value === 'NOT_APPLICABLE' || value === 'NOT_TESTED') {
+    return value;
+  }
+  return 'FAIL';
+};
+
+const normalizeProjectReportEntry = (entry: any): ProjectReportEntry => ({
+  ...entry,
+  auditOutcome: normalizeProjectReportEntryOutcome(entry?.rowDataJson?.auditOutcome),
 });
 
 export type SearchResultItem = { type: 'project' | 'task' | 'client' | 'finding'; id: string; title: string; subtitle?: string; projectId?: string; clientId?: string };
@@ -1555,7 +1567,8 @@ export const api = {
       });
     },
     listEntries: async (reportId: string): Promise<ProjectReportEntry[]> => {
-      return fetchApi(`/project-reports/${reportId}/entries`);
+      const entries = await fetchApi(`/project-reports/${reportId}/entries`);
+      return (entries || []).map(normalizeProjectReportEntry);
     },
     createEntry: async (
       reportId: string,
@@ -1573,10 +1586,11 @@ export const api = {
         rowDataJson?: Record<string, unknown>;
       },
     ): Promise<ProjectReportEntry> => {
-      return fetchApi(`/project-reports/${reportId}/entries`, {
+      const entry = await fetchApi(`/project-reports/${reportId}/entries`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+      return normalizeProjectReportEntry(entry);
     },
     updateEntry: async (
       reportId: string,
@@ -1595,10 +1609,11 @@ export const api = {
         rowDataJson: Record<string, unknown>;
       }>,
     ): Promise<ProjectReportEntry> => {
-      return fetchApi(`/project-reports/${reportId}/entries/${entryId}`, {
+      const entry = await fetchApi(`/project-reports/${reportId}/entries/${entryId}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
       });
+      return normalizeProjectReportEntry(entry);
     },
     deleteEntry: async (reportId: string, entryId: string): Promise<void> => {
       await fetchApi(`/project-reports/${reportId}/entries/${entryId}`, {
@@ -1638,7 +1653,7 @@ export const api = {
     getLatestExport: async (reportId: string): Promise<{ url: string; exportVersion: number }> => {
       return fetchApi(`/project-reports/${reportId}/latest-export`);
     },
-    generateAiSummary: async (reportId: string): Promise<{ narratives: { introduction: string; statisticsSummary?: string; executiveSummary?: string; recommendationsSummary: string } }> => {
+    generateAiSummary: async (reportId: string): Promise<{ narratives: { introduction: string; statisticsSummary?: string; executiveSummary?: string; strengthsSummary?: string; complianceSummary?: string; recommendationsSummary: string } }> => {
       return fetchApi(`/project-reports/${reportId}/generate-ai-summary`, {
         method: 'POST',
       });

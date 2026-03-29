@@ -129,6 +129,8 @@ export class AiService {
     introduction: string;
     statisticsSummary: string;
     executiveSummary: string;
+    strengthsSummary: string;
+    complianceSummary: string;
     recommendationsSummary: string;
   }> {
     const report = await this.prisma.projectReport.findFirst({
@@ -149,11 +151,36 @@ export class AiService {
             subcategory: true,
             recommendation: true,
             status: true,
+            rowDataJson: true,
           },
         },
       },
     });
     if (!report) throw new Error('Project report not found');
+
+    const normalizeOutcome = (value: unknown): 'PASS' | 'FAIL' | 'PARTIAL' | 'NOT_APPLICABLE' | 'NOT_TESTED' => {
+      if (value === 'PASS' || value === 'FAIL' || value === 'PARTIAL' || value === 'NOT_APPLICABLE' || value === 'NOT_TESTED') {
+        return value;
+      }
+      return 'FAIL';
+    };
+
+    const outcomeCounts = report.entries.reduce(
+      (acc, entry) => {
+        const outcome = normalizeOutcome((entry.rowDataJson as any)?.auditOutcome);
+        acc[outcome] += 1;
+        return acc;
+      },
+      {
+        PASS: 0,
+        FAIL: 0,
+        PARTIAL: 0,
+        NOT_APPLICABLE: 0,
+        NOT_TESTED: 0,
+      },
+    );
+    const scoredChecks = outcomeCounts.PASS + outcomeCounts.FAIL + outcomeCounts.PARTIAL;
+    const compliancePercentage = scoredChecks > 0 ? Math.round(((outcomeCounts.PASS + outcomeCounts.PARTIAL * 0.5) / scoredChecks) * 100) : 0;
 
     const payload = JSON.stringify(
       {
@@ -162,6 +189,7 @@ export class AiService {
           description: report.description,
           template: report.template?.name,
           category: report.template?.category,
+          outputLocale: report.outputLocale,
           project: report.project?.name,
           client: report.client?.name,
           performedBy: report.performedBy?.name,
@@ -172,6 +200,13 @@ export class AiService {
           high: report.entries.filter((entry) => entry.severity === 'HIGH').length,
           medium: report.entries.filter((entry) => entry.severity === 'MEDIUM').length,
           low: report.entries.filter((entry) => entry.severity === 'LOW').length,
+          pass: outcomeCounts.PASS,
+          fail: outcomeCounts.FAIL,
+          partial: outcomeCounts.PARTIAL,
+          notApplicable: outcomeCounts.NOT_APPLICABLE,
+          notTested: outcomeCounts.NOT_TESTED,
+          scoredChecks,
+          compliancePercentage,
         },
         entries: report.entries,
       },
@@ -180,13 +215,15 @@ export class AiService {
     );
 
     const raw = await this.chat(
-      'You are an accessibility audit reporting assistant. Use only the provided findings as source of truth. Write formal Arabic-first report text that can later be adapted to English. Do not invent issues or recommendations. Output valid JSON only.',
-      `Generate a JSON object with exactly these keys: introduction, statisticsSummary, recommendationsSummary.
+      'You are an accessibility audit reporting assistant. Use only the provided structured audit results as source of truth. Write in the report output language from the payload. If outputLocale is ar, write natural professional Arabic. If outputLocale is en, write natural professional English. Do not invent issues, strengths, or recommendations. Output valid JSON only.',
+      `Generate a JSON object with exactly these keys: introduction, statisticsSummary, strengthsSummary, complianceSummary, recommendationsSummary.
 
 Requirements:
 - introduction: 1 to 2 professional paragraphs introducing scope and overall result
-- statisticsSummary: concise analytical narrative explaining severity distribution, category themes, and overall issue patterns
-- recommendationsSummary: grouped practical recommendation summary using only provided recommendations
+- statisticsSummary: concise analytical narrative explaining outcome distribution, severity patterns for failed items, category themes, and testing coverage
+- strengthsSummary: concise summary of what is working well, using only PASS items
+- complianceSummary: explain the compliance percentage and what is still pending or excluded from scoring
+- recommendationsSummary: grouped practical recommendation summary using only provided recommendations from FAIL and PARTIAL items
 - Output valid JSON only
 
 Report data:
@@ -199,6 +236,8 @@ ${payload}`,
       introduction: parsed.introduction || '',
       statisticsSummary,
       executiveSummary: parsed.executiveSummary || statisticsSummary,
+      strengthsSummary: parsed.strengthsSummary || '',
+      complianceSummary: parsed.complianceSummary || '',
       recommendationsSummary: parsed.recommendationsSummary || '',
     };
   }

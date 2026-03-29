@@ -230,6 +230,7 @@ export type ProjectReportVisibility = 'INTERNAL' | 'CLIENT';
 export type ProjectReportOutputLocale = 'en' | 'ar';
 export type ProjectReportEntrySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ProjectReportEntryStatus = 'OPEN' | 'ACCEPTED' | 'FIXED' | 'VERIFIED' | 'DISMISSED';
+export type ProjectReportEntryOutcome = 'PASS' | 'FAIL' | 'PARTIAL' | 'NOT_APPLICABLE' | 'NOT_TESTED';
 
 export interface ProjectReportEntryMedia {
   id: string;
@@ -252,6 +253,7 @@ export interface ProjectReportEntry {
   pageUrl?: string | null;
   recommendation?: string | null;
   status: ProjectReportEntryStatus;
+  auditOutcome?: ProjectReportEntryOutcome;
   rowDataJson?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
