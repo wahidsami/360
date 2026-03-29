@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatSAR } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
-const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'revenue-chart', 'client-compliance', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
+const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'client-compliance', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
 const WIDGET_LABELS: Record<string, string> = {
   'kpi-cards': 'widget_kpi_cards',
   'tools-panel': 'widget_quick_actions',
@@ -30,6 +30,24 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
    const [customizeOpen, setCustomizeOpen] = useState(false);
    const [customizeWidgets, setCustomizeWidgets] = useState<{ id: string; enabled: boolean }[]>([]);
 
+   const mergeWidgetOrder = React.useCallback((saved: string[]) => {
+      const filteredSaved = saved.filter(id => DEFAULT_WIDGET_IDS.includes(id as typeof DEFAULT_WIDGET_IDS[number]));
+      const merged = [...filteredSaved];
+      for (const id of DEFAULT_WIDGET_IDS) {
+         if (!merged.includes(id)) {
+            if (id === 'client-compliance') {
+               const revenueIndex = merged.indexOf('revenue-chart');
+               if (revenueIndex >= 0) {
+                  merged.splice(revenueIndex, 0, id);
+                  continue;
+               }
+            }
+            merged.push(id);
+         }
+      }
+      return merged;
+   }, []);
+
    useEffect(() => {
       const load = async () => {
          const [data, prefs] = await Promise.all([
@@ -38,16 +56,14 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          ]);
          setStats(data);
          if (prefs.widgets?.length) {
-            const saved = prefs.widgets.map((w: any) => w.id);
-            const merged = [...saved, ...DEFAULT_WIDGET_IDS.filter(id => !saved.includes(id))];
-            setWidgetOrder(merged);
+            setWidgetOrder(mergeWidgetOrder(prefs.widgets.map((w: any) => w.id)));
          } else {
             setWidgetOrder([...DEFAULT_WIDGET_IDS]);
          }
          setLoading(false);
       };
       load();
-   }, []);
+   }, [mergeWidgetOrder]);
 
    const revenueSeries = useMemo(
       () =>
@@ -120,40 +136,6 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          {(has('revenue-chart') || has('client-compliance') || has('latest-updates') || has('projects-at-risk') || has('pending-approvals')) && (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-               {has('revenue-chart') && (
-               <GlassCard title={t('revenue_velocity')}>
-                  <div className="h-72 w-full min-h-[250px] mt-4">
-                     {stats && (
-                     <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-                        <AreaChart data={revenueSeries}>
-                           <defs>
-                              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                 <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                                 <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-                              </linearGradient>
-                           </defs>
-                           <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" vertical={false} opacity={0.4} />
-                           <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
-                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatRevenueTick(Number(value))} fontWeight="bold" width={60} />
-                           <Tooltip
-                              contentStyle={{ 
-                                 backgroundColor: 'var(--app-surface)', 
-                                 borderColor: 'var(--app-border)', 
-                                 borderRadius: '16px',
-                                 boxShadow: 'var(--shadow-xl)',
-                                 border: 'none',
-                                 padding: '12px'
-                              }}
-                              itemStyle={{ color: 'var(--brand-primary)', fontWeight: 'bold' }}
-                              formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]}
-                           />
-                           <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                        </AreaChart>
-                     </ResponsiveContainer>
-                     )}
-                  </div>
-               </GlassCard>
-               )}
                {has('client-compliance') && (
                <GlassCard title={t('client_compliance_comparison')}>
                   <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -193,7 +175,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                                  border: 'none',
                                  padding: '12px'
                               }}
-                              formatter={(value: number, _name, payload: any) => [`${value}%`, complianceTooltipLabel]}
+                              formatter={(value: number) => [`${value}%`, complianceTooltipLabel]}
                               labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
                            />
                            <Bar dataKey="compliancePercentage" radius={[0, 12, 12, 0]} maxBarSize={28}>
@@ -212,6 +194,40 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                      {t('no_client_compliance_data')}
                   </p>
                   )}
+               </GlassCard>
+               )}
+               {has('revenue-chart') && (
+               <GlassCard title={t('revenue_velocity')}>
+                  <div className="h-72 w-full min-h-[250px] mt-4">
+                     {stats && (
+                     <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+                        <AreaChart data={revenueSeries}>
+                           <defs>
+                              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                 <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                                 <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                              </linearGradient>
+                           </defs>
+                           <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" vertical={false} opacity={0.4} />
+                           <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
+                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatRevenueTick(Number(value))} fontWeight="bold" width={60} />
+                           <Tooltip
+                              contentStyle={{ 
+                                 backgroundColor: 'var(--app-surface)', 
+                                 borderColor: 'var(--app-border)', 
+                                 borderRadius: '16px',
+                                 boxShadow: 'var(--shadow-xl)',
+                                 border: 'none',
+                                 padding: '12px'
+                              }}
+                              itemStyle={{ color: 'var(--brand-primary)', fontWeight: 'bold' }}
+                              formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]}
+                           />
+                           <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                        </AreaChart>
+                     </ResponsiveContainer>
+                     )}
+                  </div>
                </GlassCard>
                )}
                {has('latest-updates') && (

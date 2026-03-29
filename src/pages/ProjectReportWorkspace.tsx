@@ -752,27 +752,27 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-5">
-        <GlassCard className="p-4 md:p-5">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.complianceScore}</p>
-          <p className="mt-2 text-2xl font-bold text-cyan-600 md:text-[1.75rem]">{summaryCounts.compliance}%</p>
+          <p className="mt-1.5 text-xl font-bold text-cyan-600 md:text-2xl">{summaryCounts.compliance}%</p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'عنصرًا تم تقييمه' : 'scored checks'}</p>
         </GlassCard>
-        <GlassCard className="p-4 md:p-5">
+        <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
-          <p className="mt-2 text-2xl font-bold text-emerald-600 md:text-[1.75rem]">{summaryCounts.pass}</p>
+          <p className="mt-1.5 text-xl font-bold text-emerald-600 md:text-2xl">{summaryCounts.pass}</p>
         </GlassCard>
-        <GlassCard className="p-4 md:p-5">
+        <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.needsAttention}</p>
-          <p className="mt-2 text-2xl font-bold text-rose-600 md:text-[1.75rem]">{summaryCounts.fail}</p>
+          <p className="mt-1.5 text-xl font-bold text-rose-600 md:text-2xl">{summaryCounts.fail}</p>
         </GlassCard>
-        <GlassCard className="p-4 md:p-5">
+        <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.partialChecks}</p>
-          <p className="mt-2 text-2xl font-bold text-amber-500 md:text-[1.75rem]">{summaryCounts.partial}</p>
+          <p className="mt-1.5 text-xl font-bold text-amber-500 md:text-2xl">{summaryCounts.partial}</p>
         </GlassCard>
-        <GlassCard className="p-4 md:p-5">
+        <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-700 dark:text-slate-200 md:text-[1.75rem]">{summaryCounts.notTested}</p>
+          <p className="mt-1.5 text-xl font-bold text-slate-700 dark:text-slate-200 md:text-2xl">{summaryCounts.notTested}</p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
             {summaryCounts.notApplicable} {isArabic ? 'غير منطبق' : 'not applicable'}
           </p>
