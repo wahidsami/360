@@ -1272,29 +1272,36 @@ export class ReportBuilderService {
           .document { background: var(--background); }
           .page {
             width: 100%;
-            min-height: 210mm;
-            padding: 40px;
+            height: 210mm;
+            padding: 24px;
             background: var(--background);
             page-break-after: always;
+            overflow: hidden;
           }
           .page:last-child { page-break-after: auto; }
           .page-shell {
-            min-height: calc(210mm - 80px);
+            height: 100%;
             border-radius: 28px;
             background: var(--surface);
             box-shadow: var(--shadow-soft);
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
           }
           .page-shell--cover,
           .page-shell--closing {
             background: linear-gradient(135deg, #0F4C81 0%, #1E88E5 52%, #00ACC1 100%);
             color: #FFFFFF;
           }
-          .page-shell__body { padding: 40px; }
+          .page-shell__body {
+            padding: 28px 32px 32px;
+            flex: 1;
+            min-height: 0;
+          }
           .page-shell--cover .page-shell__body,
           .page-shell--closing .page-shell__body {
-            min-height: calc(210mm - 80px);
+            min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -1340,7 +1347,8 @@ export class ReportBuilderService {
           .grid-12 {
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 24px;
+            gap: 20px;
+            align-items: start;
           }
           .span-5 { grid-column: span 5; }
           .span-7 { grid-column: span 7; }
@@ -1408,6 +1416,26 @@ export class ReportBuilderService {
             color: #FFFFFF;
           }
           .section-stack > * + * { margin-top: 24px; }
+          .intro-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+            gap: 20px;
+            align-items: start;
+          }
+          .intro-side {
+            display: grid;
+            gap: 16px;
+          }
+          .intro-card {
+            min-height: 0;
+            padding: 20px;
+          }
+          .intro-copy {
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.9;
+            color: var(--text-secondary);
+          }
           .split-copy { columns: 2; column-gap: 24px; }
           .split-copy p { break-inside: avoid; }
           .metric-grid {
@@ -1691,14 +1719,12 @@ export class ReportBuilderService {
                   <div class="eyebrow">${this.escapeHtml(labels.introduction)}</div>
                   <h2>${this.escapeHtml(labels.introduction)}</h2>
                 </div>
-                <div class="grid-12">
-                  <div class="span-7 card">
-                    <div class="split-copy">
-                      <p class="narrative">${this.escapeHtml(introductionBody).replace(/\n/g, '<br />')}</p>
-                    </div>
+                <div class="intro-layout">
+                  <div class="card intro-card">
+                    <p class="intro-copy narrative">${this.escapeHtml(introductionBody).replace(/\n/g, '<br />')}</p>
                   </div>
-                  <div class="span-5 section-stack">
-                    <div class="card card--soft">
+                  <div class="intro-side">
+                    <div class="card card--soft intro-card">
                       <h3>${this.escapeHtml(labels.scopeTitle)}</h3>
                       <p style="margin-top:12px;">${this.escapeHtml(labels.scopeBody)}</p>
                       <div class="pill-row">
@@ -1706,11 +1732,11 @@ export class ReportBuilderService {
                         <span class="tag-pill">${this.escapeHtml(`${localeConfig.locale === 'ar' ? '\u0639\u062f\u062f \u0627\u0644\u0635\u0641\u062d\u0627\u062a/\u0627\u0644\u0645\u0633\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0648\u062b\u0642\u0629' : 'Documented pages/routes'}: ${scopePages}`)}</span>
                       </div>
                     </div>
-                    <div class="card">
+                    <div class="card intro-card">
                       <h3>${this.escapeHtml(labels.methodologyTitle)}</h3>
                       <p style="margin-top:12px;">${this.escapeHtml(labels.methodologyBody)}</p>
                     </div>
-                    <div class="card">
+                    <div class="card intro-card">
                       <h3>${this.escapeHtml(labels.standardsTitle)}</h3>
                       <p style="margin-top:12px;">${this.escapeHtml(labels.standardsBody)}</p>
                     </div>
