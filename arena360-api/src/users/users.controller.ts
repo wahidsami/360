@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -36,5 +36,11 @@ export class UsersController {
     @Roles(GlobalRole.SUPER_ADMIN, GlobalRole.OPS, GlobalRole.PM, GlobalRole.DEV)
     updatePermissions(@Param('id') id: string, @Body() dto: UpdatePermissionsDto) {
         return this.usersService.updatePermissions(id, dto.permissions);
+    }
+
+    @Delete(':id')
+    @Roles(GlobalRole.SUPER_ADMIN)
+    remove(@Param('id') id: string, @Request() req: any) {
+        return this.usersService.remove(id, req.user?.orgId, req.user?.id);
     }
 }

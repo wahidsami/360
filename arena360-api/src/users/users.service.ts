@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../common/prisma.service';
@@ -283,6 +283,85 @@ export class UsersService {
                 updatedAt: true,
             }
         });
+    }
+
+    async remove(id: string, currentOrgId: string, currentUserId?: string): Promise<{ success: true }> {
+        const user = await this.prisma.user.findFirst({
+            where: { id, orgId: currentOrgId },
+            select: {
+                id: true,
+                role: true,
+                name: true,
+            }
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (user.id === currentUserId) {
+            throw new BadRequestException('You cannot delete your own account');
+        }
+
+        if (user.role === GlobalRole.SUPER_ADMIN) {
+            throw new BadRequestException('Super Admin accounts cannot be deleted');
+        }
+
+        const [
+            projectUpdates,
+            uploadedFiles,
+            reportedFindings,
+            createdReports,
+            createdInvoices,
+            createdContracts,
+            findingComments,
+            discussions,
+            discussionReplies,
+            timeEntries,
+            approvalRequestsRequested,
+            projectReportsPerformed,
+            projectReportEntriesCreated,
+        ] = await Promise.all([
+            this.prisma.projectUpdate.count({ where: { authorId: id } }),
+            this.prisma.fileAsset.count({ where: { uploaderId: id } }),
+            this.prisma.finding.count({ where: { reportedById: id } }),
+            this.prisma.report.count({ where: { createdById: id } }),
+            this.prisma.invoice.count({ where: { createdById: id } }),
+            this.prisma.contract.count({ where: { createdById: id } }),
+            this.prisma.findingComment.count({ where: { authorId: id } }),
+            this.prisma.discussion.count({ where: { authorId: id } }),
+            this.prisma.discussionReply.count({ where: { authorId: id } }),
+            this.prisma.timeEntry.count({ where: { userId: id } }),
+            this.prisma.approvalRequest.count({ where: { requestedById: id } }),
+            this.prisma.projectReport.count({ where: { performedById: id } }),
+            this.prisma.projectReportEntry.count({ where: { createdById: id } }),
+        ]);
+
+        const blockingRefs = [
+            projectUpdates,
+            uploadedFiles,
+            reportedFindings,
+            createdReports,
+            createdInvoices,
+            createdContracts,
+            findingComments,
+            discussions,
+            discussionReplies,
+            timeEntries,
+            approvalRequestsRequested,
+            projectReportsPerformed,
+            projectReportEntriesCreated,
+        ].reduce((sum, count) => sum + count, 0);
+
+        if (blockingRefs > 0) {
+            throw new BadRequestException('This user has activity history and cannot be deleted. Deactivate the account instead.');
+        }
+
+        await this.prisma.user.delete({
+            where: { id }
+        });
+
+        return { success: true };
     }
 
     async getDashboardPreferences(userId: string): Promise<{ widgets: { id: string; order: number; config?: Record<string, unknown> }[] }> {

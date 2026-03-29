@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
-  Search, Plus, Shield, User as UserIcon,
-  Mail, Edit2, Power, CheckCircle, Copy, ExternalLink
+  Search, Plus, Shield,
+  Mail, Edit2, Power, CheckCircle, ExternalLink, Trash2
 } from 'lucide-react';
 import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/components/ui/UIComponents";
 import { Modal } from "@/components/ui/Modal";
@@ -190,6 +190,25 @@ export const UsersAdmin: React.FC = () => {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editClientId, setEditClientId] = useState('');
 
+  const handleDeleteUser = async (user: User) => {
+    const confirmed = window.confirm(
+      `Delete ${user.name} (${user.email})?\n\nThis only works for users without activity history. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.users.delete(user.id);
+      setUsers((current) => current.filter((item) => item.id !== user.id));
+      if (editUser?.id === user.id) {
+        setEditUser(null);
+      }
+      toast.success(`${user.name} deleted`);
+    } catch (e) {
+      console.error('Failed to delete user', e);
+      toast.error(e instanceof Error ? e.message : 'Failed to delete user');
+    }
+  };
+
   // Filtering
   const filteredUsers = users.filter(u => {
     const matchSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -335,6 +354,16 @@ export const UsersAdmin: React.FC = () => {
                     <Button variant="ghost" size="sm" title={copy.disableAccount} className="hover:text-rose-400">
                       <Power className="w-4 h-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      title="Delete user"
+                      className="hover:text-rose-400"
+                      onClick={() => handleDeleteUser(user)}
+                      disabled={user.role === Role.SUPER_ADMIN}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -430,6 +459,15 @@ export const UsersAdmin: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-rose-400 hover:text-rose-300"
+                onClick={() => handleDeleteUser(editUser)}
+                disabled={editUser.role === Role.SUPER_ADMIN}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Delete User
+              </Button>
               <Button type="button" variant="ghost" onClick={() => setEditUser(null)}>{t('cancel')}</Button>
               <Button type="button" onClick={async () => {
                 if (!editUser) return;

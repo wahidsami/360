@@ -1314,7 +1314,12 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ permissions })
       });
-    }
+    },
+    delete: async (userId: string): Promise<void> => {
+      await fetchApi(`/admin/users/${userId}`, {
+        method: 'DELETE'
+      });
+    },
   },
 
   reportBuilderAdmin: {
