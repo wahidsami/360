@@ -164,7 +164,6 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
   const complianceSeries = useMemo(
     () =>
       (stats?.clientComplianceComparison || [])
-        .slice(0, 8)
         .map((item: { clientId: string; clientName: string; compliancePercentage: number; needsAttentionChecks: number; scoredChecks: number }, index: number) => ({
           ...item,
           rank: index + 1,
@@ -552,69 +551,71 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                       ))}
                     </div>
                   ) : (
-                    <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
-                          <defs>
-                            <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#22d3ee" />
-                              <stop offset="100%" stopColor="#3b82f6" />
-                            </linearGradient>
-                            <linearGradient id="complianceMedium" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#fbbf24" />
-                              <stop offset="100%" stopColor="#f59e0b" />
-                            </linearGradient>
-                            <linearGradient id="complianceLow" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#fb7185" />
-                              <stop offset="100%" stopColor="#f43f5e" />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.35} />
-                          <XAxis
-                            type="number"
-                            domain={[0, 100]}
-                            stroke={chartAxisColor}
-                            tick={{ fill: chartAxisColor }}
-                            fontSize={11}
-                            tickLine={false}
-                            axisLine={false}
-                            tickFormatter={(value) => `${value}%`}
-                          />
-                          <YAxis
-                            type="category"
-                            dataKey="shortName"
-                            stroke={chartAxisColor}
-                            tick={{ fill: chartAxisColor }}
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                            width={156}
-                          />
-                          <Tooltip
-                            cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
-                            contentStyle={tooltipStyle}
-                            formatter={(value: number, _name, context: any) => [
-                              `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
-                              t('client_compliance_score'),
-                            ]}
-                            labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
-                          />
-                          <Bar
-                            dataKey="compliancePercentage"
-                            radius={[0, 14, 14, 0]}
-                            maxBarSize={24}
-                            onClick={(entry: any) => openReportWorkspace(entry)}
-                            cursor="pointer"
-                          >
-                            {complianceSeries.map((entry) => (
-                              <Cell
-                                key={entry.clientId}
-                                fill={entry.compliancePercentage >= 85 ? 'url(#complianceHigh)' : entry.compliancePercentage >= 60 ? 'url(#complianceMedium)' : 'url(#complianceLow)'}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <div className="max-h-[560px] overflow-y-auto pr-2">
+                      <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
+                            <defs>
+                              <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#22d3ee" />
+                                <stop offset="100%" stopColor="#3b82f6" />
+                              </linearGradient>
+                              <linearGradient id="complianceMedium" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#fbbf24" />
+                                <stop offset="100%" stopColor="#f59e0b" />
+                              </linearGradient>
+                              <linearGradient id="complianceLow" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#fb7185" />
+                                <stop offset="100%" stopColor="#f43f5e" />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.35} />
+                            <XAxis
+                              type="number"
+                              domain={[0, 100]}
+                              stroke={chartAxisColor}
+                              tick={{ fill: chartAxisColor }}
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={false}
+                              tickFormatter={(value) => `${value}%`}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="shortName"
+                              stroke={chartAxisColor}
+                              tick={{ fill: chartAxisColor }}
+                              fontSize={12}
+                              tickLine={false}
+                              axisLine={false}
+                              width={156}
+                            />
+                            <Tooltip
+                              cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
+                              contentStyle={tooltipStyle}
+                              formatter={(value: number, _name, context: any) => [
+                                `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
+                                t('client_compliance_score'),
+                              ]}
+                              labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
+                            />
+                            <Bar
+                              dataKey="compliancePercentage"
+                              radius={[0, 14, 14, 0]}
+                              maxBarSize={24}
+                              onClick={(entry: any) => openReportWorkspace(entry)}
+                              cursor="pointer"
+                            >
+                              {complianceSeries.map((entry) => (
+                                <Cell
+                                  key={entry.clientId}
+                                  fill={entry.compliancePercentage >= 85 ? 'url(#complianceHigh)' : entry.compliancePercentage >= 60 ? 'url(#complianceMedium)' : 'url(#complianceLow)'}
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
                 </div>
