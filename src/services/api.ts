@@ -1728,6 +1728,8 @@ export const api = {
           activeProjects: 0,
           nextMilestonesCount: 0,
           latestUpdatesCount: 0,
+          sharedFilesCount: 0,
+          files: [],
           myProjects: []
         };
       }

@@ -248,14 +248,31 @@ export class DashboardService {
                 activeProjects: 0,
                 nextMilestonesCount: 0,
                 latestUpdatesCount: 0,
+                sharedFilesCount: 0,
+                files: [],
                 myProjects: []
             };
         }
 
-        const projects = await this.prisma.project.findMany({
-            where: { clientId: { in: clientIds } },
-            orderBy: { updatedAt: 'desc' }
-        });
+        const [projects, files] = await Promise.all([
+            this.prisma.project.findMany({
+                where: { clientId: { in: clientIds } },
+                orderBy: { updatedAt: 'desc' }
+            }),
+            this.prisma.fileAsset.findMany({
+                where: {
+                    orgId: user.orgId,
+                    deletedAt: null,
+                    visibility: 'CLIENT',
+                    OR: [
+                        { clientId: { in: clientIds } },
+                        { project: { clientId: { in: clientIds } } },
+                    ],
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 6,
+            }),
+        ]);
 
         const activeProjects = projects.filter(p =>
             p.status !== 'ARCHIVED' && p.status !== 'COMPLETED'
@@ -273,6 +290,8 @@ export class DashboardService {
             activeProjects,
             nextMilestonesCount: 0, // Placeholder
             latestUpdatesCount: 0, // Placeholder
+            sharedFilesCount: files.length,
+            files,
             myProjects
         };
     }

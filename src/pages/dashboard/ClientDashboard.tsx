@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Flag, Clock, FileText, ArrowRight } from 'lucide-react';
+import { Briefcase, Flag, Clock, FileText } from 'lucide-react';
 import { GlassCard, KpiCard, Badge, Button } from "@/components/ui/UIComponents";
 import { ToolsPanel } from '@/components/ToolsPanel';
 import { api } from '@/services/api';
-import { Role, Project, FileAsset } from '@/types';
+import { Role } from '@/types';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
@@ -40,7 +40,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
             <KpiCard label={t('next_milestones')} value={stats.nextMilestonesCount ?? 0} icon={<Flag />} />
             <KpiCard label={t('pending_approvals')} value="0" icon={<Clock />} />
-            <KpiCard label={t('last_activity')} value={stats.latestUpdatesCount ?? 0} />
+            <KpiCard label={t('shared_files')} value={stats.sharedFilesCount ?? 0} icon={<FileText />} />
          </div>
 
          <ToolsPanel role={role} />
