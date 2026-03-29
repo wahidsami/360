@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Download, Eye, FileText, Filter, FolderOpen, ShieldCheck } from 'lucide-react';
@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, KpiCard, Modal, Select } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
+import { AccessibilityAuditOutputLocale } from '@/features/accessibility/accessibilityAuditConfig';
 import { ProjectReport, Role } from '@/types';
 
 const INTERNAL_REPORT_ROLES = [Role.SUPER_ADMIN, Role.OPS, Role.PM, Role.DEV, Role.QA, Role.FINANCE];
@@ -60,9 +61,12 @@ export const Reports: React.FC = () => {
             visibilityInternal: 'داخلي',
             preview: 'معاينة',
             openReport: 'فتح التقرير',
-            downloadLatest: 'تنزيل آخر نسخة',
+            downloadLatest: 'تنزيل آخر نسخة PDF',
             noExport: 'لا توجد نسخة PDF بعد',
             previewTitle: 'معاينة التقرير',
+            previewDescription: 'اختر لغة المعاينة أولاً. سيتم عرض نفس إخراج التقرير النهائي بالعربية أو الإنجليزية.',
+            english: 'English',
+            arabic: 'العربية',
             loadError: 'فشل تحميل التقارير.',
             previewError: 'فشل تحميل معاينة التقرير.',
             exportError: 'لا توجد نسخة PDF متاحة لهذا التقرير حتى الآن.',
@@ -101,6 +105,9 @@ export const Reports: React.FC = () => {
             downloadLatest: 'Download Latest PDF',
             noExport: 'No PDF Yet',
             previewTitle: 'Report Preview',
+            previewDescription: 'Choose the preview language first. The modal loads the final rendered report output in either English or Arabic.',
+            english: 'English',
+            arabic: 'العربية',
             loadError: 'Failed to load reports.',
             previewError: 'Failed to load report preview.',
             exportError: 'No PDF export is available for this report yet.',
@@ -127,12 +134,18 @@ export const Reports: React.FC = () => {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
+  const [previewLocale, setPreviewLocale] = useState<AccessibilityAuditOutputLocale>(isArabic ? 'ar' : 'en');
+  const [previewReport, setPreviewReport] = useState<ProjectReport | null>(null);
 
   useEffect(() => {
     if (user && !isInternalReportsUser && !isClientReportsUser) {
       navigate('/app/dashboard', { replace: true });
     }
   }, [isClientReportsUser, isInternalReportsUser, navigate, user]);
+
+  useEffect(() => {
+    setPreviewLocale(isArabic ? 'ar' : 'en');
+  }, [isArabic]);
 
   const loadReports = useCallback(async () => {
     if (!user) return;
@@ -157,18 +170,20 @@ export const Reports: React.FC = () => {
   }, [isClientReportsUser, isInternalReportsUser, loadReports, user]);
 
   const openPreview = useCallback(
-    async (report: ProjectReport) => {
+    async (report: ProjectReport, locale: AccessibilityAuditOutputLocale = previewLocale) => {
       try {
-        const html = await api.reportBuilderProjects.getPreviewHtml(report.id);
+        const html = await api.reportBuilderProjects.getPreviewHtml(report.id, locale);
         setPreviewHtml(html);
         setPreviewTitle(report.title);
+        setPreviewLocale(locale);
+        setPreviewReport(report);
         setPreviewModalOpen(true);
       } catch (error) {
         console.error(error);
         toast.error(copy.previewError);
       }
     },
-    [copy.previewError],
+    [copy.previewError, previewLocale],
   );
 
   const downloadLatestExport = useCallback(
@@ -224,7 +239,7 @@ export const Reports: React.FC = () => {
   return (
     <>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 justify-between md:flex-row md:items-center">
           <div>
             <h1 className="text-3xl font-bold font-display text-white">{copy.title}</h1>
             <p className="text-slate-400">{isClientReportsUser ? copy.subtitleClient : copy.subtitleInternal}</p>
@@ -236,7 +251,7 @@ export const Reports: React.FC = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <KpiCard label={copy.totalReports} value={String(reports.length)} icon={<FileText />} />
           <KpiCard label={copy.projects} value={String(uniqueProjectCount)} icon={<FolderOpen />} />
           <KpiCard
@@ -247,14 +262,14 @@ export const Reports: React.FC = () => {
         </div>
 
         <GlassCard className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div>
               <h3 className="text-lg font-semibold text-white">{copy.library}</h3>
               <p className="text-sm text-slate-400">
                 {isClientReportsUser ? copy.libraryHelpClient : copy.libraryHelpInternal}
               </p>
             </div>
-            <div className="flex gap-3 w-full md:w-auto">
+            <div className="flex w-full gap-3 md:w-auto">
               <div className="relative flex-1 md:w-72">
                 <Input
                   placeholder={copy.searchPlaceholder}
@@ -262,7 +277,7 @@ export const Reports: React.FC = () => {
                   onChange={(event) => setSearchTerm(event.target.value)}
                   className="pl-9"
                 />
-                <Filter className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                <Filter className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
               </div>
               {!isClientReportsUser && (
                 <Select
@@ -312,14 +327,14 @@ export const Reports: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={() => openPreview(report)}>
-                        <Eye className="w-4 h-4 mr-2" /> {copy.preview}
+                      <Button variant="outline" onClick={() => openPreview(report, previewLocale)}>
+                        <Eye className="mr-2 h-4 w-4" /> {copy.preview}
                       </Button>
                       <Button variant="outline" onClick={() => navigate(`/app/projects/${report.projectId}/report-builder/${report.id}`)}>
-                        <FolderOpen className="w-4 h-4 mr-2" /> {copy.openReport}
+                        <FolderOpen className="mr-2 h-4 w-4" /> {copy.openReport}
                       </Button>
                       <Button variant="outline" onClick={() => downloadLatestExport(report)} disabled={!hasExport}>
-                        <Download className="w-4 h-4 mr-2" /> {hasExport ? copy.downloadLatest : copy.noExport}
+                        <Download className="mr-2 h-4 w-4" /> {hasExport ? copy.downloadLatest : copy.noExport}
                       </Button>
                     </div>
                   </div>
@@ -330,7 +345,7 @@ export const Reports: React.FC = () => {
             {!loading && filteredReports.length === 0 && (
               <GlassCard>
                 <div className="py-10 text-center text-slate-400">
-                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <FileText className="mx-auto mb-3 h-10 w-10 opacity-30" />
                   {copy.noResults}
                 </div>
               </GlassCard>
@@ -340,11 +355,34 @@ export const Reports: React.FC = () => {
       </div>
 
       <Modal isOpen={previewModalOpen} onClose={() => setPreviewModalOpen(false)} title={previewTitle || copy.previewTitle} maxWidth="max-w-6xl">
-        <iframe
-          title={copy.previewTitle}
-          className="w-full min-h-[70vh] rounded-xl border border-slate-200 dark:border-slate-800 bg-white"
-          srcDoc={previewHtml}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-slate-600 dark:text-slate-300">{copy.previewDescription}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={previewLocale === 'en' ? 'primary' : 'outline'}
+                onClick={() => previewReport && openPreview(previewReport, 'en')}
+              >
+                {copy.english}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={previewLocale === 'ar' ? 'primary' : 'outline'}
+                onClick={() => previewReport && openPreview(previewReport, 'ar')}
+              >
+                {copy.arabic}
+              </Button>
+            </div>
+          </div>
+          <iframe
+            title={copy.previewTitle}
+            className="min-h-[70vh] w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800"
+            srcDoc={previewHtml}
+          />
+        </div>
       </Modal>
     </>
   );
