@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, CheckCircle2, Activity, ShieldAlert, Settings2, AlertTriangle } from 'lucide-react';
+import { Users, CheckCircle2, Activity, ShieldAlert, Settings2, AlertTriangle, FileText, Briefcase, ArrowRight, ShieldCheck } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -176,6 +176,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
   const topPerformer = complianceSeries[0] || null;
   const lowestPerformer = complianceSeries.length > 0 ? complianceSeries[complianceSeries.length - 1] : null;
   const complianceChartHeight = Math.max(220, complianceSeries.length * 52);
+  const useCompactComplianceLayout = complianceSeries.length <= 2;
 
   const findingsSeverityData = useMemo(
     () =>
@@ -248,6 +249,12 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     () => complianceSeries.map((item) => item.needsAttentionChecks),
     [complianceSeries],
   );
+  const revenueHasHistory = useMemo(
+    () => revenueSeries.some((point: { amount: number }) => Number(point.amount) > 0),
+    [revenueSeries],
+  );
+  const showFindingsStatusChart = findingsStatusData.length > 1;
+  const showPortfolioHealthChart = portfolioHealthData.length > 1;
 
   const chartAxisColor = '#94a3b8';
   const chartGridColor = 'rgba(148, 163, 184, 0.12)';
@@ -274,6 +281,21 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     toast.success(t('dashboard_updated'));
   };
 
+  const openClient = (clientId?: string | null) => {
+    if (!clientId) return;
+    navigate(`/app/clients/${clientId}`);
+  };
+
+  const openReportWorkspace = (item: { projectId?: string | null; reportId?: string | null; clientId?: string | null }) => {
+    if (item.projectId && item.reportId) {
+      navigate(`/app/projects/${item.projectId}/report-builder/${item.reportId}`);
+      return;
+    }
+    if (item.clientId) {
+      openClient(item.clientId);
+    }
+  };
+
   if (loading) {
     return <div className="p-10 text-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">{t('initializing')}</div>;
   }
@@ -297,6 +319,111 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         <Button variant="ghost" size="sm" onClick={openCustomize} className="text-slate-500 hover:text-cyan-600 font-bold uppercase tracking-widest text-[10px] self-start">
           <Settings2 className="w-4 h-4 mr-2" /> {t('customize_workspace')}
         </Button>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)] gap-5">
+        <div className="relative overflow-hidden rounded-[28px] border border-cyan-500/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.28),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,23,42,0.86)_50%,rgba(30,41,59,0.96))] p-6 shadow-[0_22px_60px_rgba(2,6,23,0.26)]">
+          <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_280px] lg:items-end">
+            <div>
+              <Badge variant="info" size="sm" className="border-cyan-400/20 bg-cyan-500/10 text-cyan-200">{t('dashboard')}</Badge>
+              <h2 className="mt-4 max-w-xl text-3xl font-black leading-tight tracking-tight text-white">
+                {t('executive_accessibility_overview')}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                {t('dashboard_hero_caption')}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Button size="sm" onClick={() => navigate('/app/reports')} className="shadow-none">
+                  <FileText className="mr-2 h-4 w-4" /> {t('view_reports')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => navigate('/app/clients')} className="border-slate-600 bg-slate-900/40 text-slate-100 hover:bg-slate-800/70">
+                  <Briefcase className="mr-2 h-4 w-4" /> {t('view_clients')}
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200/90">{t('top_client')}</p>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-black text-white">{topPerformer?.clientName || t('no_data')}</p>
+                    <p className="mt-1 text-xs text-slate-300">{topPerformer ? `${topPerformer.compliancePercentage}% ${t('client_compliance_score').toLowerCase()}` : t('no_client_compliance_data')}</p>
+                  </div>
+                  {topPerformer && (
+                    <button
+                      type="button"
+                      onClick={() => openReportWorkspace(topPerformer)}
+                      className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-2.5 text-cyan-200 transition-all hover:border-cyan-300/40 hover:bg-cyan-500/20"
+                      title={t('open_report')}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-300">{t('active_clients')}</p>
+                  <p className="mt-3 text-3xl font-black text-white">{stats.totalClients ?? 0}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-300">{t('reviewed_checks')}</p>
+                  <p className="mt-3 text-3xl font-black text-white">{stats.scoredChecks ?? 0}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          <div className="rounded-[28px] border border-emerald-500/18 bg-gradient-to-br from-emerald-500/18 via-slate-900 to-slate-900 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-200">{t('operational_pulse')}</p>
+                <p className="mt-2 text-2xl font-black text-white">{stats.projectsAtRisk?.length ?? 0}</p>
+                <p className="mt-1 text-xs text-slate-300">{t('projects_at_risk')}</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-200">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/8 bg-slate-950/30 p-3">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('pending_approvals')}</p>
+                <p className="mt-2 text-xl font-black text-white">{stats.pendingApprovals ?? 0}</p>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-slate-950/30 p-3">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
+                <p className="mt-2 text-xl font-black text-white">{stats.latestUpdates?.length ?? 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-violet-500/18 bg-gradient-to-br from-violet-500/18 via-slate-900 to-slate-900 p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-violet-200">{t('report_activity')}</p>
+            <div className="mt-4 space-y-3">
+              {complianceSeries.slice(0, 3).map((item) => (
+                <button
+                  key={item.clientId}
+                  type="button"
+                  onClick={() => openReportWorkspace(item)}
+                  className="flex w-full items-center justify-between rounded-2xl border border-white/8 bg-slate-950/30 px-4 py-3 text-left transition-all hover:border-violet-300/30 hover:bg-slate-900/60"
+                >
+                  <div>
+                    <p className="text-sm font-black text-white">{item.clientName}</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">{item.scoredChecks} {t('reviewed_checks').toLowerCase()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-black text-violet-200">{item.compliancePercentage}%</p>
+                    <p className="text-[11px] text-slate-400">{t('open_report')}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {has('kpi-cards') && (
@@ -387,68 +514,109 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
               <Badge variant="warning" size="sm">{t('checks_needing_attention')}: {stats.needsAttentionChecks ?? 0}</Badge>
             </div>
             {complianceSeries.length > 0 ? (
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_240px]">
+              <div className={`grid gap-5 ${useCompactComplianceLayout ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_240px]'}`}>
                 <div className="rounded-3xl border border-slate-200/40 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_45%)] p-3 dark:border-slate-800/70 dark:bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_48%)]">
-                  <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
-                        <defs>
-                          <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#22d3ee" />
-                            <stop offset="100%" stopColor="#3b82f6" />
-                          </linearGradient>
-                          <linearGradient id="complianceMedium" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#fbbf24" />
-                            <stop offset="100%" stopColor="#f59e0b" />
-                          </linearGradient>
-                          <linearGradient id="complianceLow" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#fb7185" />
-                            <stop offset="100%" stopColor="#f43f5e" />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.35} />
-                        <XAxis
-                          type="number"
-                          domain={[0, 100]}
-                          stroke={chartAxisColor}
-                          tick={{ fill: chartAxisColor }}
-                          fontSize={11}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(value) => `${value}%`}
-                        />
-                        <YAxis
-                          type="category"
-                          dataKey="shortName"
-                          stroke={chartAxisColor}
-                          tick={{ fill: chartAxisColor }}
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                          width={156}
-                        />
-                        <Tooltip
-                          cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
-                          contentStyle={tooltipStyle}
-                          formatter={(value: number, _name, context: any) => [
-                            `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
-                            t('client_compliance_score'),
-                          ]}
-                          labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
-                        />
-                        <Bar dataKey="compliancePercentage" radius={[0, 14, 14, 0]} maxBarSize={24}>
-                          {complianceSeries.map((entry) => (
-                            <Cell
-                              key={entry.clientId}
-                              fill={entry.compliancePercentage >= 85 ? 'url(#complianceHigh)' : entry.compliancePercentage >= 60 ? 'url(#complianceMedium)' : 'url(#complianceLow)'}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {useCompactComplianceLayout ? (
+                    <div className="grid gap-3">
+                      {complianceSeries.map((item) => (
+                        <button
+                          key={item.clientId}
+                          type="button"
+                          onClick={() => openReportWorkspace(item)}
+                          className="grid gap-4 rounded-3xl border border-slate-700/60 bg-slate-950/25 p-4 text-left transition-all hover:border-cyan-300/20 hover:bg-slate-900/60 md:grid-cols-[minmax(0,1fr)_220px]"
+                        >
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">#{item.rank}</p>
+                            <p className="mt-2 text-xl font-black text-white">{item.clientName}</p>
+                            <p className="mt-1 text-sm text-slate-300">{item.scoredChecks} {t('reviewed_checks').toLowerCase()}</p>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-300">{t('client_compliance_score')}</span>
+                              <span className="font-black text-cyan-300">{item.compliancePercentage}%</span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500"
+                                style={{ width: `${Math.max(item.compliancePercentage, 4)}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-400">{t('checks_needing_attention')}</span>
+                              <span className="font-black text-amber-300">{item.needsAttentionChecks}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
+                          <defs>
+                            <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#22d3ee" />
+                              <stop offset="100%" stopColor="#3b82f6" />
+                            </linearGradient>
+                            <linearGradient id="complianceMedium" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#fbbf24" />
+                              <stop offset="100%" stopColor="#f59e0b" />
+                            </linearGradient>
+                            <linearGradient id="complianceLow" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#fb7185" />
+                              <stop offset="100%" stopColor="#f43f5e" />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.35} />
+                          <XAxis
+                            type="number"
+                            domain={[0, 100]}
+                            stroke={chartAxisColor}
+                            tick={{ fill: chartAxisColor }}
+                            fontSize={11}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(value) => `${value}%`}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="shortName"
+                            stroke={chartAxisColor}
+                            tick={{ fill: chartAxisColor }}
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            width={156}
+                          />
+                          <Tooltip
+                            cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
+                            contentStyle={tooltipStyle}
+                            formatter={(value: number, _name, context: any) => [
+                              `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
+                              t('client_compliance_score'),
+                            ]}
+                            labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
+                          />
+                          <Bar
+                            dataKey="compliancePercentage"
+                            radius={[0, 14, 14, 0]}
+                            maxBarSize={24}
+                            onClick={(entry: any) => openReportWorkspace(entry)}
+                            cursor="pointer"
+                          >
+                            {complianceSeries.map((entry) => (
+                              <Cell
+                                key={entry.clientId}
+                                fill={entry.compliancePercentage >= 85 ? 'url(#complianceHigh)' : entry.compliancePercentage >= 60 ? 'url(#complianceMedium)' : 'url(#complianceLow)'}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </div>
-                <div className="grid gap-4 content-start">
+                <div className={`grid gap-4 content-start ${useCompactComplianceLayout ? 'md:grid-cols-3 xl:grid-cols-3' : ''}`}>
                   <div className="rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-4">
                     <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-300">{t('average_compliance')}</p>
                     <p className="mt-3 text-4xl font-black text-white">{stats.averageCompliance ?? 0}%</p>
@@ -483,7 +651,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         )}
 
         <div className="xl:col-span-3 grid gap-6">
-          <GlassCard className="overflow-hidden" title={t('audit_coverage')}>
+          <GlassCard className="overflow-hidden cursor-pointer" title={t('audit_coverage')} onClick={() => navigate('/app/clients')}>
             <div className="grid gap-5 md:grid-cols-[112px,1fr] md:items-center">
               <div className="relative h-28 w-28 mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
@@ -522,7 +690,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             </p>
           </GlassCard>
 
-          <GlassCard className="overflow-hidden" title={t('findings_severity_mix')}>
+          <GlassCard className="overflow-hidden cursor-pointer" title={t('findings_severity_mix')} onClick={() => navigate('/app/findings')}>
             {findingsSeverityData.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-[132px,1fr] md:items-center">
                 <div className="h-32">
@@ -556,69 +724,118 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <GlassCard className="xl:col-span-4 overflow-hidden" title={t('findings_status_overview')}>
+        <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('findings_status_overview')} onClick={() => navigate('/app/findings')}>
           {findingsStatusData.length > 0 ? (
-            <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={findingsStatusData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
-                  <XAxis dataKey="name" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [value, t('findings')]} />
-                  <Bar dataKey="count" radius={[10, 10, 0, 0]}>
-                    {findingsStatusData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            showFindingsStatusChart ? (
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={findingsStatusData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
+                    <XAxis dataKey="name" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [value, t('findings')]} />
+                    <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                      {findingsStatusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {findingsStatusData.map((entry) => (
+                  <div key={entry.name} className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }} />
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{entry.name}</span>
+                      </div>
+                      <span className="text-xl font-black text-white">{entry.count}</span>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200/60 dark:bg-slate-800">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(entry.count * 18, 100)}%`, backgroundColor: entry.fill }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
             <p className="py-12 text-center text-sm font-medium italic text-slate-500 dark:text-slate-400">{t('no_data')}</p>
           )}
         </GlassCard>
 
-        <GlassCard className="xl:col-span-4 overflow-hidden" title={t('portfolio_health_snapshot')}>
+        <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('portfolio_health_snapshot')} onClick={() => navigate('/app/projects')}>
           {portfolioHealthData.length > 0 ? (
-            <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={portfolioHealthData} layout="vertical" margin={{ top: 8, right: 16, left: 12, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.2} />
-                  <XAxis type="number" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} width={96} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [value, t('projects')]} />
-                  <Bar dataKey="count" radius={[0, 10, 10, 0]} maxBarSize={26}>
-                    {portfolioHealthData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            showPortfolioHealthChart ? (
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={portfolioHealthData} layout="vertical" margin={{ top: 8, right: 16, left: 12, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.2} />
+                    <XAxis type="number" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} width={96} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [value, t('projects')]} />
+                    <Bar dataKey="count" radius={[0, 10, 10, 0]} maxBarSize={26}>
+                      {portfolioHealthData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {portfolioHealthData.map((entry) => (
+                  <div key={entry.name} className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{entry.name}</span>
+                      <span className="text-xl font-black text-white">{entry.count}</span>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200/60 dark:bg-slate-800">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(entry.count * 22, 100)}%`, backgroundColor: entry.fill }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
             <p className="py-12 text-center text-sm font-medium italic text-slate-500 dark:text-slate-400">{t('no_data')}</p>
           )}
         </GlassCard>
 
         {has('revenue-chart') && (
-          <GlassCard className="xl:col-span-4 overflow-hidden" title={t('revenue_velocity')}>
-            <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueSeries}>
-                  <defs>
-                    <linearGradient id="dashboardRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
-                  <XAxis dataKey="label" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(Number(value))} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]} />
-                  <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#dashboardRevenueGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          <GlassCard className="xl:col-span-4 overflow-hidden cursor-pointer" title={t('revenue_velocity')} onClick={() => navigate('/app/reports')}>
+            {revenueHasHistory ? (
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueSeries}>
+                    <defs>
+                      <linearGradient id="dashboardRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
+                    <XAxis dataKey="label" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(Number(value))} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]} />
+                    <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#dashboardRevenueGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('revenue')}</p>
+                  <p className="mt-2 text-3xl font-black text-white">{formatCurrency(Number(stats.revenue || 0), 'SAR')}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('total_outstanding')}</p>
+                  <p className="mt-2 text-2xl font-black text-white">{formatCurrency(Number(analytics?.financial.totalOutstanding || 0), 'SAR')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{t('no_paid_invoices_yet')}</p>
+                </div>
+              </div>
+            )}
           </GlassCard>
         )}
       </div>
@@ -631,8 +848,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <div className="space-y-5">
               {(stats.latestUpdates as ProjectUpdate[]).length > 0 ? (
                 (stats.latestUpdates as ProjectUpdate[]).map((update) => (
-                  <div key={update.id} className="flex gap-4 items-start border-b border-slate-100 dark:border-slate-800/50 pb-4 last:border-0 last:pb-0">
-                    <div className="mt-1 rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-2.5 text-cyan-600 dark:text-cyan-400">
+                  <div key={update.id} className="flex gap-4 items-start rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white dark:border-slate-800/50 dark:bg-slate-950/20 dark:hover:bg-slate-900/50">
+                    <div className="mt-1 rounded-2xl bg-slate-100 dark:bg-slate-800/50 p-2.5 text-cyan-600 dark:text-cyan-400">
                       <Activity className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -676,9 +893,25 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   </div>
                 ))
               ) : (
-                <div className="py-12 text-center">
-                  <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-                  <p className="text-sm font-medium italic text-slate-500 dark:text-slate-400">{t('system_stable')}</p>
+                <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/8 p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-300">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-white">{t('system_stable')}</p>
+                      <p className="mt-2 text-xs leading-6 text-slate-300">
+                        {(analytics?.portfolio.projectCount ?? 0)} {t('projects').toLowerCase()} monitored.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/app/projects')}
+                        className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-200"
+                      >
+                        {t('view_all_projects')} <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -687,9 +920,20 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
         {has('pending-approvals') && (
           <GlassCard className="xl:col-span-3" title={t('pending_approvals')}>
-            <div className="flex h-full min-h-[220px] flex-col items-center justify-center text-center">
-              <div className="text-6xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
-              <p className="mt-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">{t('awaiting_verification')}</p>
+            <div className="flex h-full min-h-[220px] flex-col justify-between rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{t('awaiting_verification')}</p>
+                  <div className="mt-3 text-6xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
+                </div>
+                <div className="rounded-2xl bg-cyan-500/12 p-3 text-cyan-300">
+                  <FileText className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
+                <p className="text-xs text-slate-400">{t('latest_updates')}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-200">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+              </div>
             </div>
           </GlassCard>
         )}

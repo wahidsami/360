@@ -114,6 +114,7 @@ export class DashboardService {
                 orderBy: [{ updatedAt: 'desc' }],
                 select: {
                     id: true,
+                    projectId: true,
                     title: true,
                     updatedAt: true,
                     clientId: true,
@@ -167,6 +168,7 @@ export class DashboardService {
                 return {
                     clientId: report.clientId,
                     clientName: report.client?.name || 'Unknown Client',
+                    projectId: report.projectId,
                     reportId: report.id,
                     reportTitle: report.title,
                     latestReportAt: report.updatedAt,
