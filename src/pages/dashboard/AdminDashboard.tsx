@@ -14,6 +14,8 @@ import {
   Cell,
   PieChart,
   Pie,
+  RadialBarChart,
+  RadialBar,
 } from 'recharts';
 import { GlassCard, KpiCard, Badge, Button, Modal } from '@/components/ui/UIComponents';
 import { ToolsPanel } from '@/components/ToolsPanel';
@@ -145,12 +147,16 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     () =>
       (stats?.clientComplianceComparison || [])
         .slice(0, 8)
-        .map((item: { clientName: string; compliancePercentage: number }) => ({
+        .map((item: { clientId: string; clientName: string; compliancePercentage: number; needsAttentionChecks: number; scoredChecks: number }, index: number) => ({
           ...item,
-          shortName: item.clientName.length > 18 ? `${item.clientName.slice(0, 18)}...` : item.clientName,
+          rank: index + 1,
+          shortName: `${index + 1}. ${item.clientName.length > 16 ? `${item.clientName.slice(0, 16)}...` : item.clientName}`,
         })),
     [stats?.clientComplianceComparison],
   );
+
+  const topPerformer = complianceSeries[0] || null;
+  const lowestPerformer = complianceSeries.length > 0 ? complianceSeries[complianceSeries.length - 1] : null;
 
   const findingsSeverityData = useMemo(
     () =>
@@ -204,14 +210,14 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     ].filter((item) => item.value > 0);
   }, [stats?.auditedClients, stats?.totalClients, t]);
 
-  const chartAxisColor = 'var(--app-text-muted)';
-  const chartGridColor = 'var(--app-border)';
+  const chartAxisColor = '#94a3b8';
+  const chartGridColor = 'rgba(148, 163, 184, 0.12)';
   const tooltipStyle = {
-    backgroundColor: 'var(--app-surface)',
-    borderColor: 'var(--app-border)',
+    backgroundColor: '#0f172a',
+    borderColor: 'rgba(148, 163, 184, 0.18)',
     borderRadius: '16px',
-    boxShadow: 'var(--shadow-xl)',
-    border: 'none',
+    boxShadow: '0 20px 50px rgba(2, 6, 23, 0.45)',
+    border: '1px solid rgba(148, 163, 184, 0.18)',
     padding: '12px',
   } as const;
 
@@ -289,53 +295,102 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {has('client-compliance') && (
-          <GlassCard className="xl:col-span-8 overflow-hidden" title={t('client_compliance_comparison')}>
+          <GlassCard className="xl:col-span-9 overflow-hidden" title={t('client_compliance_comparison')}>
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <Badge variant="info" size="sm">{t('average_compliance')}: {stats.averageCompliance ?? 0}%</Badge>
               <Badge variant="neutral" size="sm">{t('audited_clients')}: {stats.auditedClients ?? 0}</Badge>
               <Badge variant="neutral" size="sm">{t('reviewed_checks')}: {stats.scoredChecks ?? 0}</Badge>
+              <Badge variant="warning" size="sm">{t('checks_needing_attention')}: {stats.needsAttentionChecks ?? 0}</Badge>
             </div>
             {complianceSeries.length > 0 ? (
-              <div className="h-[360px] w-full min-h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 20, left: 8, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.2} />
-                    <XAxis
-                      type="number"
-                      domain={[0, 100]}
-                      stroke={chartAxisColor}
-                      tick={{ fill: chartAxisColor }}
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `${value}%`}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="shortName"
-                      stroke={chartAxisColor}
-                      tick={{ fill: chartAxisColor }}
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      width={150}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(6, 182, 212, 0.08)' }}
-                      contentStyle={tooltipStyle}
-                      formatter={(value: number) => [`${value}%`, t('client_compliance_score')]}
-                      labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
-                    />
-                    <Bar dataKey="compliancePercentage" radius={[0, 14, 14, 0]} maxBarSize={28}>
-                      {complianceSeries.map((entry: { clientId: string; compliancePercentage: number }) => (
-                        <Cell
-                          key={entry.clientId}
-                          fill={entry.compliancePercentage >= 85 ? '#22c55e' : entry.compliancePercentage >= 60 ? '#f59e0b' : '#f43f5e'}
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_240px]">
+                <div className="rounded-3xl border border-slate-200/40 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_45%)] p-3 dark:border-slate-800/70 dark:bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_48%)]">
+                  <div className="h-[340px] w-full min-h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
+                        <defs>
+                          <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#22d3ee" />
+                            <stop offset="100%" stopColor="#3b82f6" />
+                          </linearGradient>
+                          <linearGradient id="complianceMedium" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#fbbf24" />
+                            <stop offset="100%" stopColor="#f59e0b" />
+                          </linearGradient>
+                          <linearGradient id="complianceLow" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#fb7185" />
+                            <stop offset="100%" stopColor="#f43f5e" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.35} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 100]}
+                          stroke={chartAxisColor}
+                          tick={{ fill: chartAxisColor }}
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `${value}%`}
                         />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                        <YAxis
+                          type="category"
+                          dataKey="shortName"
+                          stroke={chartAxisColor}
+                          tick={{ fill: chartAxisColor }}
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          width={156}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
+                          contentStyle={tooltipStyle}
+                          formatter={(value: number, _name, context: any) => [
+                            `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
+                            t('client_compliance_score'),
+                          ]}
+                          labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
+                        />
+                        <Bar dataKey="compliancePercentage" radius={[0, 14, 14, 0]} maxBarSize={24}>
+                          {complianceSeries.map((entry) => (
+                            <Cell
+                              key={entry.clientId}
+                              fill={entry.compliancePercentage >= 85 ? 'url(#complianceHigh)' : entry.compliancePercentage >= 60 ? 'url(#complianceMedium)' : 'url(#complianceLow)'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div className="grid gap-4 content-start">
+                  <div className="rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-300">{t('average_compliance')}</p>
+                    <p className="mt-3 text-4xl font-black text-white">{stats.averageCompliance ?? 0}%</p>
+                    <p className="mt-2 text-xs text-slate-300">{stats.auditedClients ?? 0} {t('audited_clients').toLowerCase()}</p>
+                  </div>
+                  {topPerformer && (
+                    <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-300">Top Client</p>
+                      <p className="mt-2 text-lg font-black text-white">{topPerformer.clientName}</p>
+                      <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className="text-slate-300">{t('client_compliance_score')}</span>
+                        <span className="font-black text-emerald-300">{topPerformer.compliancePercentage}%</span>
+                      </div>
+                    </div>
+                  )}
+                  {lowestPerformer && (
+                    <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-300">Needs Focus</p>
+                      <p className="mt-2 text-lg font-black text-white">{lowestPerformer.clientName}</p>
+                      <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className="text-slate-300">{t('checks_needing_attention')}</span>
+                        <span className="font-black text-amber-300">{lowestPerformer.needsAttentionChecks}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="py-16 text-center text-sm font-medium italic text-slate-500 dark:text-slate-400">{t('no_client_compliance_data')}</p>
@@ -343,44 +398,53 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
           </GlassCard>
         )}
 
-        <div className="xl:col-span-4 grid gap-6">
+        <div className="xl:col-span-3 grid gap-6">
           <GlassCard className="overflow-hidden" title={t('audit_coverage')}>
-            <div className="grid grid-cols-[140px,1fr] items-center gap-4">
-              <div className="relative h-36 w-36 mx-auto">
+            <div className="grid gap-5 md:grid-cols-[112px,1fr] md:items-center">
+              <div className="relative h-28 w-28 mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={coverageData} dataKey="value" innerRadius={46} outerRadius={64} stroke="none" paddingAngle={3}>
-                      {coverageData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
+                  <RadialBarChart
+                    innerRadius="72%"
+                    outerRadius="100%"
+                    barSize={12}
+                    data={[{ name: t('audit_coverage'), value: coveragePercentage, fill: '#22d3ee' }]}
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    <RadialBar background dataKey="value" cornerRadius={999} />
+                  </RadialBarChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-black text-slate-900 dark:text-white">{coveragePercentage}%</span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">{t('audit_coverage')}</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">{coveragePercentage}%</span>
+                  <span className="text-[9px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('audit_coverage')}</span>
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/70 bg-slate-50/70 dark:bg-slate-950/30 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('audited_clients')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/70 bg-slate-50/70 dark:bg-slate-950/30 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('audited_clients')}</p>
                   <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{stats.auditedClients ?? 0}</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/70 bg-slate-50/70 dark:bg-slate-950/30 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('remaining_clients')}</p>
+                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/70 bg-slate-50/70 dark:bg-slate-950/30 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('remaining_clients')}</p>
                   <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{Math.max((stats.totalClients ?? 0) - (stats.auditedClients ?? 0), 0)}</p>
                 </div>
               </div>
             </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-500" style={{ width: `${coveragePercentage}%` }} />
+            </div>
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              {stats.auditedClients ?? 0} / {stats.totalClients ?? 0} {t('clients_audited_short')}
+            </p>
           </GlassCard>
 
           <GlassCard className="overflow-hidden" title={t('findings_severity_mix')}>
             {findingsSeverityData.length > 0 ? (
-              <div className="grid grid-cols-[150px,1fr] items-center gap-4">
-                <div className="h-40">
+              <div className="grid gap-4 md:grid-cols-[132px,1fr] md:items-center">
+                <div className="h-32">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={findingsSeverityData} dataKey="count" nameKey="name" innerRadius={42} outerRadius={68} stroke="none" paddingAngle={3}>
+                      <Pie data={findingsSeverityData} dataKey="count" nameKey="name" innerRadius={34} outerRadius={56} stroke="none" paddingAngle={3}>
                         {findingsSeverityData.map((entry) => (
                           <Cell key={entry.name} fill={entry.fill} />
                         ))}
