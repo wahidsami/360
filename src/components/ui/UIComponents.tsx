@@ -164,24 +164,26 @@ interface KpiCardProps {
     trend?: string | number;
     trendUp?: boolean;
     icon?: React.ReactNode;
+    compact?: boolean;
+    className?: string;
 }
 
-export const KpiCard = ({ label, value, trend, trendUp, icon }: KpiCardProps) => (
-    <div className="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-xl dark:hover:shadow-cyan-500/5 transition-all duration-300 hover:-translate-y-1">
+export const KpiCard = ({ label, value, trend, trendUp, icon, compact = false, className = '' }: KpiCardProps) => (
+    <div className={`group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-xl dark:hover:shadow-cyan-500/5 transition-all duration-300 hover:-translate-y-1 ${className}`}>
         {/* Subtle gradient overlay for light theme */}
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/40 via-transparent to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
         
-        <div className="relative p-6 z-10">
-            <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{label}</h3>
+        <div className={`relative z-10 ${compact ? 'p-4 md:p-5' : 'p-6'}`}>
+            <div className={`flex justify-between items-start ${compact ? 'mb-3' : 'mb-4'}`}>
+                <h3 className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest`}>{label}</h3>
                 {icon && (
-                    <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 dark:from-cyan-500/20 dark:to-blue-600/20 rounded-xl text-white dark:text-cyan-400 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <div className={`${compact ? 'p-2.5' : 'p-3'} bg-gradient-to-br from-cyan-400 to-blue-500 dark:from-cyan-500/20 dark:to-blue-600/20 rounded-xl text-white dark:text-cyan-400 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                         {icon}
                     </div>
                 )}
             </div>
-            <div className="flex items-end gap-3">
-                <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{value}</div>
+            <div className={`flex items-end ${compact ? 'gap-2' : 'gap-3'}`}>
+                <div className={`${compact ? 'text-3xl md:text-[2rem]' : 'text-4xl'} font-black text-slate-900 dark:text-white tracking-tight leading-none`}>{value}</div>
                 {trend !== undefined && (
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                         {trendUp ? '↑' : '↓'} {trend}

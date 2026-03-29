@@ -124,10 +124,10 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
          {has('kpi-cards') && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <KpiCard label={t('total_clients')} value={stats.totalClients} icon={<Users />} />
-            <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
-            <KpiCard label={t('revenue')} value={formatSAR(stats.revenue)} icon={<DollarSign />} />
-            <KpiCard label={t('overdue_tasks')} value={stats.overdueTasks} icon={<AlertTriangle />} />
+            <KpiCard compact label={t('total_clients')} value={stats.totalClients} icon={<Users />} />
+            <KpiCard compact label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
+            <KpiCard compact label={t('revenue')} value={formatSAR(stats.revenue)} icon={<DollarSign />} />
+            <KpiCard compact label={t('overdue_tasks')} value={stats.overdueTasks} icon={<AlertTriangle />} />
          </div>
          )}
 

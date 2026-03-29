@@ -792,33 +792,33 @@ export const ProjectReportWorkspace: React.FC = () => {
             <Bot className="h-5 w-5 text-cyan-500" />
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{copy.aiReportSummary}</h2>
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 xl:grid-cols-12">
             {(report.summaryJson as any)?.introduction && (
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.introduction}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).introduction}</p>
               </div>
             )}
             {((report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary) && (
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.executiveSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).statisticsSummary || (report.summaryJson as any).executiveSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.strengthsSummary && (
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.strengthsSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).strengthsSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.complianceSummary && (
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-6">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.complianceSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).complianceSummary}</p>
               </div>
             )}
             {(report.summaryJson as any)?.recommendationsSummary && (
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-6">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.recommendationsSummary}</h3>
                 <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).recommendationsSummary}</p>
               </div>
