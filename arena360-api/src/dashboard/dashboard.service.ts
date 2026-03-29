@@ -14,7 +14,7 @@ export class DashboardService {
         }
 
         // Aggregate stats within user's org
-        const [totalClients, projects, tasks, pendingMilestones, paidInvoices, recentUpdates] = await Promise.all([
+        const [totalClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals] = await Promise.all([
             this.prisma.client.count({
                 where: { orgId: user.orgId, status: { not: 'ARCHIVED' } }
             }),
@@ -41,12 +41,26 @@ export class DashboardService {
                 },
                 _sum: { amount: true }
             }),
+            this.prisma.invoice.findMany({
+                where: {
+                    orgId: user.orgId,
+                    status: 'PAID',
+                    paidAt: { not: null },
+                },
+                select: { amount: true, paidAt: true },
+            }),
             this.prisma.projectUpdate.findMany({
                 where: { orgId: user.orgId },
                 orderBy: { createdAt: 'desc' },
                 take: 5,
                 include: { author: { select: { name: true } } }
-            })
+            }),
+            this.prisma.approvalRequest.count({
+                where: {
+                    orgId: user.orgId,
+                    status: 'PENDING',
+                },
+            }),
         ]);
 
         const activeProjects = projects.filter(p =>
@@ -73,8 +87,10 @@ export class DashboardService {
             title: u.title,
             content: u.content,
             timestamp: u.createdAt,
-            authorName: u.author.name
+            authorName: u.author?.name || 'Unknown'
         }));
+
+        const revenueByMonth = this.buildRevenueByMonth(paidInvoicesByMonth, 7);
 
         return {
             totalClients,
@@ -84,7 +100,9 @@ export class DashboardService {
             latestUpdates,
             recentUpdatesCount: latestUpdates.length,
             pendingMilestones,
-            revenue: paidInvoices._sum.amount || 0
+            pendingApprovals,
+            revenue: paidInvoices._sum.amount || 0,
+            revenueByMonth,
         };
     }
 
@@ -208,16 +226,22 @@ export class DashboardService {
             contractsActive,
             overdueInvoices: overdueInvoices.map(inv => ({
                 id: inv.id,
+                reference: inv.invoiceNumber,
                 amount: inv.amount,
+                currency: inv.currency,
                 dueDate: inv.dueDate,
+                issuedDate: inv.issuedAt || inv.createdAt,
                 clientName: inv.project?.client?.name || 'Unknown',
-                status: inv.status
+                status: this.mapInvoiceStatus(inv.status),
             })),
             recentInvoices: recentInvoices.map(inv => ({
                 id: inv.id,
+                reference: inv.invoiceNumber,
                 amount: inv.amount,
-                status: inv.status,
-                issueDate: inv.createdAt,
+                currency: inv.currency,
+                dueDate: inv.dueDate,
+                issuedDate: inv.issuedAt || inv.createdAt,
+                status: this.mapInvoiceStatus(inv.status),
                 clientName: inv.project?.client?.name || 'Unknown'
             }))
         };
@@ -248,16 +272,38 @@ export class DashboardService {
                 activeProjects: 0,
                 nextMilestonesCount: 0,
                 latestUpdatesCount: 0,
+                pendingApprovals: 0,
                 sharedFilesCount: 0,
                 files: [],
                 myProjects: []
             };
         }
 
-        const [projects, files] = await Promise.all([
-            this.prisma.project.findMany({
-                where: { clientId: { in: clientIds } },
-                orderBy: { updatedAt: 'desc' }
+        const projects = await this.prisma.project.findMany({
+            where: { clientId: { in: clientIds } },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        const projectIds = projects.map((project) => project.id);
+
+        const [upcomingMilestonesCount, sharedFilesCount, files, pendingApprovals] = await Promise.all([
+            this.prisma.milestone.count({
+                where: {
+                    projectId: { in: projectIds },
+                    status: { in: ['PENDING', 'IN_PROGRESS'] },
+                    dueDate: { gte: new Date() },
+                },
+            }),
+            this.prisma.fileAsset.count({
+                where: {
+                    orgId: user.orgId,
+                    deletedAt: null,
+                    visibility: 'CLIENT',
+                    OR: [
+                        { clientId: { in: clientIds } },
+                        { project: { clientId: { in: clientIds } } },
+                    ],
+                },
             }),
             this.prisma.fileAsset.findMany({
                 where: {
@@ -271,6 +317,15 @@ export class DashboardService {
                 },
                 orderBy: { createdAt: 'desc' },
                 take: 6,
+            }),
+            this.prisma.approvalRequest.count({
+                where: {
+                    orgId: user.orgId,
+                    status: 'PENDING',
+                    projectId: {
+                        in: projectIds,
+                    },
+                },
             }),
         ]);
 
@@ -288,12 +343,54 @@ export class DashboardService {
 
         return {
             activeProjects,
-            nextMilestonesCount: 0, // Placeholder
+            nextMilestonesCount: upcomingMilestonesCount,
             latestUpdatesCount: 0, // Placeholder
-            sharedFilesCount: files.length,
+            pendingApprovals,
+            sharedFilesCount,
             files,
             myProjects
         };
+    }
+
+    private buildRevenueByMonth(
+        invoices: Array<{ amount: number; paidAt: Date | null }>,
+        monthsBack: number,
+    ) {
+        const buckets = new Map<string, number>();
+
+        for (let i = monthsBack - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(1);
+            date.setMonth(date.getMonth() - i);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            buckets.set(monthKey, 0);
+        }
+
+        for (const invoice of invoices) {
+            if (!invoice.paidAt) continue;
+            const monthKey = `${invoice.paidAt.getFullYear()}-${String(invoice.paidAt.getMonth() + 1).padStart(2, '0')}`;
+            if (buckets.has(monthKey)) {
+                buckets.set(monthKey, (buckets.get(monthKey) || 0) + invoice.amount);
+            }
+        }
+
+        return Array.from(buckets.entries()).map(([monthKey, amount]) => ({
+            monthKey,
+            amount,
+        }));
+    }
+
+    private mapInvoiceStatus(status: string) {
+        switch (status) {
+            case 'PAID':
+                return 'paid';
+            case 'ISSUED':
+                return 'sent';
+            case 'OVERDUE':
+                return 'overdue';
+            default:
+                return 'draft';
+        }
     }
 
     /** Advanced analytics for Analytics page (internal roles) */

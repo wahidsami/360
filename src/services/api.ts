@@ -1683,7 +1683,9 @@ export const api = {
           overdueTasks: 0,
           recentUpdatesCount: 0,
           pendingMilestones: 0,
+          pendingApprovals: 0,
           revenue: 0,
+          revenueByMonth: [],
           latestUpdates: []
         };
       }
@@ -1730,6 +1732,7 @@ export const api = {
           activeProjects: 0,
           nextMilestonesCount: 0,
           latestUpdatesCount: 0,
+          pendingApprovals: 0,
           sharedFilesCount: 0,
           files: [],
           myProjects: []

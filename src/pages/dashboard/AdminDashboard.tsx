@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, Briefcase, DollarSign, Activity, AlertTriangle, Clock, Settings2 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -19,16 +19,6 @@ const WIDGET_LABELS: Record<string, string> = {
   'projects-at-risk': 'widget_projects_at_risk',
   'pending-approvals': 'widget_pending_approvals',
 };
-
-const data = [
-   { name: 'Jan', value: 4000 },
-   { name: 'Feb', value: 3000 },
-   { name: 'Mar', value: 2000 },
-   { name: 'Apr', value: 2780 },
-   { name: 'May', value: 1890 },
-   { name: 'Jun', value: 2390 },
-   { name: 'Jul', value: 3490 },
-];
 
 export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
    const { t } = useTranslation();
@@ -55,6 +45,15 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
       };
       load();
    }, []);
+
+   const revenueSeries = useMemo(
+      () =>
+         (stats?.revenueByMonth || []).map((point: { monthKey: string; amount: number }) => ({
+            ...point,
+            label: new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(`${point.monthKey}-01T00:00:00`)),
+         })),
+      [stats?.revenueByMonth],
+   );
 
    const openCustomize = () => {
       setCustomizeWidgets(
@@ -89,10 +88,10 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
          {has('kpi-cards') && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <KpiCard label={t('total_clients')} value={stats.totalClients} trend={12} icon={<Users />} />
-            <KpiCard label={t('active_projects')} value={stats.activeProjects} trend={-5} icon={<Briefcase />} />
-            <KpiCard label={t('revenue')} value={formatSAR(stats.revenue)} trend={24} icon={<DollarSign />} />
-            <KpiCard label={t('overdue_tasks')} value={stats.overdueTasks} trend={-10} icon={<AlertTriangle />} />
+            <KpiCard label={t('total_clients')} value={stats.totalClients} icon={<Users />} />
+            <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
+            <KpiCard label={t('revenue')} value={formatSAR(stats.revenue)} icon={<DollarSign />} />
+            <KpiCard label={t('overdue_tasks')} value={stats.overdueTasks} icon={<AlertTriangle />} />
          </div>
          )}
 
@@ -106,7 +105,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   <div className="h-72 w-full min-h-[250px] mt-4">
                      {stats && (
                      <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-                        <AreaChart data={data}>
+                        <AreaChart data={revenueSeries}>
                            <defs>
                               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
@@ -114,8 +113,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                               </linearGradient>
                            </defs>
                            <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" vertical={false} opacity={0.4} />
-                           <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
-                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} fontWeight="bold" />
+                           <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
+                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatSAR(Number(value))} fontWeight="bold" />
                            <Tooltip
                               contentStyle={{ 
                                  backgroundColor: 'var(--app-surface)', 
@@ -126,8 +125,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                                  padding: '12px'
                               }}
                               itemStyle={{ color: 'var(--brand-primary)', fontWeight: 'bold' }}
+                              formatter={(value: number) => [formatSAR(value), t('revenue')]}
                            />
-                           <Area type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                           <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                         </AreaChart>
                      </ResponsiveContainer>
                      )}

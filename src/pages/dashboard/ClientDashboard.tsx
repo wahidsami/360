@@ -39,7 +39,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KpiCard label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
             <KpiCard label={t('next_milestones')} value={stats.nextMilestonesCount ?? 0} icon={<Flag />} />
-            <KpiCard label={t('pending_approvals')} value="0" icon={<Clock />} />
+            <KpiCard label={t('pending_approvals')} value={stats.pendingApprovals ?? 0} icon={<Clock />} />
             <KpiCard label={t('shared_files')} value={stats.sharedFilesCount ?? 0} icon={<FileText />} />
          </div>
 

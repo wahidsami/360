@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DollarSign, FileText, Briefcase, AlertTriangle } from 'lucide-react';
+import { DollarSign, FileText, Briefcase } from 'lucide-react';
 import { GlassCard, KpiCard, Badge } from '@/components/ui/UIComponents';
 import { ToolsPanel } from '@/components/ToolsPanel';
 import { api } from '@/services/api';
 import { Role, Invoice } from '@/types';
+import { formatSAR } from '../../utils/currency';
 
 export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
    const { t } = useTranslation();
@@ -30,10 +31,10 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
        </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <KpiCard label={t('outstanding_balance')} value={`$${(stats.outstanding / 1000).toFixed(1)}k`} trend={-5} icon={<DollarSign />} />
-          <KpiCard label={t('invoices_due')} value={stats.invoicesDue} icon={<FileText />} />
-          <KpiCard label={t('paid_this_month')} value={`$${(stats.paidThisMonth / 1000).toFixed(1)}k`} trend={10} icon={<Briefcase />} />
-          <KpiCard label={t('active_contracts')} value={stats.activeContracts} icon={<Briefcase />} />
+          <KpiCard label={t('outstanding_balance')} value={formatSAR(stats.outstandingAmount || 0)} icon={<DollarSign />} />
+          <KpiCard label={t('invoices_due')} value={stats.invoicesDueCount || 0} icon={<FileText />} />
+          <KpiCard label={t('paid_this_month')} value={formatSAR(stats.paidThisMonth || 0)} icon={<Briefcase />} />
+          <KpiCard label={t('active_contracts')} value={stats.contractsActive || 0} icon={<Briefcase />} />
        </div>
 
        <ToolsPanel role={role} />
@@ -55,7 +56,7 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
                          <tr key={inv.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                             <td className="py-4 font-mono font-bold text-slate-600 dark:text-slate-300">{inv.reference}</td>
                             <td className="py-4 text-rose-600 dark:text-rose-400 font-black">{inv.currency} {inv.amount.toLocaleString()}</td>
-                            <td className="py-4 text-slate-500 dark:text-slate-400 font-medium">{inv.dueDate}</td>
+                            <td className="py-4 text-slate-500 dark:text-slate-400 font-medium">{new Date(inv.dueDate).toLocaleDateString()}</td>
                             <td className="py-4"><Badge variant="danger" size="sm">{t('overdue')}</Badge></td>
                          </tr>
                       ))}
@@ -71,7 +72,7 @@ export const FinanceDashboard: React.FC<{ role: Role }> = ({ role }) => {
                    <div key={inv.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-slate-100 dark:border-transparent hover:bg-white dark:hover:bg-slate-800/50 hover:shadow-md transition-all group">
                       <div>
                          <p className="font-bold text-slate-800 dark:text-slate-200 tracking-tight">{inv.reference}</p>
-                         <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{inv.issuedDate}</p>
+                         <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{new Date(inv.issuedDate).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
                          <p className="font-black text-slate-900 dark:text-slate-100">{inv.currency} {inv.amount.toLocaleString()}</p>
