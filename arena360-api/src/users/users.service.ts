@@ -85,7 +85,11 @@ export class UsersService {
         return `${frontendUrl}/#/accept-invite?token=${inviteToken}`;
     }
 
-    private async issueInvite(userId: string, email: string, currentUserId?: string): Promise<{ inviteLink: string; expiresAt: Date }> {
+    private async issueInvite(
+        userId: string,
+        email: string,
+        currentUserId?: string,
+    ): Promise<{ inviteLink: string; expiresAt: Date; emailSent: boolean; emailError?: string }> {
         const crypto = require('crypto');
         const inviteToken = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
@@ -111,13 +115,17 @@ export class UsersService {
 
         const inviteLink = this.buildInviteLink(inviteToken);
 
+        let emailSent = true;
+        let emailError: string | undefined;
         try {
             await this.emailService.sendInvite(email, inviteLink, 'Arena360');
         } catch (error) {
             console.error(`Invite email delivery failed for ${email}`, error);
+            emailSent = false;
+            emailError = error instanceof Error ? error.message : 'Invite email send failed';
         }
 
-        return { inviteLink, expiresAt };
+        return { inviteLink, expiresAt, emailSent, emailError };
     }
 
     private mapAdminUser(user: AdminUserRecord) {
@@ -154,7 +162,11 @@ export class UsersService {
         };
     }
 
-    async create(createUserDto: CreateUserDto, currentOrgId: string, currentUserId?: string): Promise<{ user: SafeUser, inviteLink?: string, expiresAt?: Date }> {
+    async create(
+        createUserDto: CreateUserDto,
+        currentOrgId: string,
+        currentUserId?: string,
+    ): Promise<{ user: SafeUser; inviteLink?: string; expiresAt?: Date; inviteEmailSent?: boolean; inviteEmailError?: string }> {
         const { password, ...userData } = createUserDto;
         const crypto = require('crypto');
 
@@ -207,18 +219,22 @@ export class UsersService {
 
             // Construct Invite Link
             let inviteLink: string | undefined;
+            let inviteEmailSent: boolean | undefined;
+            let inviteEmailError: string | undefined;
             if (inviteToken) {
                 inviteLink = this.buildInviteLink(inviteToken);
 
-                // Email delivery should not block account creation.
                 try {
                     await this.emailService.sendInvite(userData.email, inviteLink, 'Arena360');
+                    inviteEmailSent = true;
                 } catch (error) {
                     console.error(`Invite email delivery failed for ${userData.email}`, error);
+                    inviteEmailSent = false;
+                    inviteEmailError = error instanceof Error ? error.message : 'Invite email send failed';
                 }
             }
 
-            return { user, inviteLink, expiresAt: inviteExpiresAt };
+            return { user, inviteLink, expiresAt: inviteExpiresAt, inviteEmailSent, inviteEmailError };
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                 throw new ConflictException('Email already exists');
@@ -350,7 +366,11 @@ export class UsersService {
         });
     }
 
-    async resendInvite(id: string, currentOrgId: string, currentUserId?: string): Promise<{ inviteLink: string; expiresAt: Date }> {
+    async resendInvite(
+        id: string,
+        currentOrgId: string,
+        currentUserId?: string,
+    ): Promise<{ inviteLink: string; expiresAt: Date; emailSent: boolean; emailError?: string }> {
         const resolvedOrgId = await this.resolveOrgId(currentOrgId);
         const user = await this.prisma.user.findFirst({
             where: {

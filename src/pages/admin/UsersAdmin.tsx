@@ -118,6 +118,8 @@ export const UsersAdmin: React.FC = () => {
   const copyInviteLinkLabel = isArabic ? 'نسخ رابط الدعوة' : 'Copy invite link';
   const copyInviteLinkFailed = isArabic ? 'فشل نسخ رابط الدعوة' : 'Failed to copy invite link';
   const copyInviteLinkSuccess = isArabic ? 'تم نسخ رابط الدعوة للمستخدم' : 'Invite link copied for';
+  const inviteEmailFailedLabel = isArabic ? 'تم إنشاء المستخدم لكن تعذر إرسال البريد. استخدم رابط الدعوة الاحتياطي.' : 'User created, but invite email failed. Use the backup invite link.';
+  const resendEmailFailedLabel = isArabic ? 'تعذر إرسال البريد. استخدم رابط الدعوة الاحتياطي.' : 'Invite email failed. Use the backup invite link.';
   const internalUsersLabel = isArabic ? 'الفريق الداخلي' : 'Internal Team';
   const clientAccountsLabel = isArabic ? 'حسابات العميل' : 'Client Accounts';
   const invitePendingLabel = isArabic ? 'الدعوة معلقة' : 'Invite pending';
@@ -313,7 +315,11 @@ export const UsersAdmin: React.FC = () => {
       setNewUser({ name: '', email: '', role: Role.VIEWER, permissions: [], clientId: '' });
 
       if (created.inviteLink) {
-        toast.success(`${copy.inviteSent} ${newUser.email}`);
+        if (created.inviteEmailSent === false) {
+          toast.error(inviteEmailFailedLabel);
+        } else {
+          toast.success(`${copy.inviteSent} ${newUser.email}`);
+        }
         setInviteResult({ link: created.inviteLink, email: newUser.email });
       } else {
         toast.success(copy.createUserSuccess);
@@ -341,7 +347,11 @@ export const UsersAdmin: React.FC = () => {
     try {
       const result = await api.users.resendInvite(user.id);
       await loadData();
-      toast.success(`${resendInviteSent} ${user.email}`);
+      if (result.emailSent === false) {
+        toast.error(resendEmailFailedLabel);
+      } else {
+        toast.success(`${resendInviteSent} ${user.email}`);
+      }
       setInviteResult({ link: result.inviteLink, email: user.email });
     } catch (e) {
       console.error('Failed to resend invite', e);
@@ -354,7 +364,11 @@ export const UsersAdmin: React.FC = () => {
       const result = await api.users.resendInvite(user.id);
       await navigator.clipboard.writeText(result.inviteLink);
       await loadData();
-      toast.success(`${copyInviteLinkSuccess} ${user.email}`);
+      if (result.emailSent === false) {
+        toast.error(resendEmailFailedLabel);
+      } else {
+        toast.success(`${copyInviteLinkSuccess} ${user.email}`);
+      }
     } catch (e) {
       console.error('Failed to copy invite link', e);
       toast.error(copyInviteLinkFailed);

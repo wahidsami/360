@@ -10,7 +10,10 @@ export class EmailService {
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.get<string>('RESEND_API_KEY');
-        this.fromEmail = this.configService.get<string>('EMAIL_FROM') || 'onboarding@resend.dev';
+        this.fromEmail =
+            this.configService.get<string>('EMAIL_FROM') ||
+            this.configService.get<string>('RESEND_FROM_EMAIL') ||
+            'onboarding@resend.dev';
 
         if (apiKey && apiKey.startsWith('re_')) {
             this.resend = new Resend(apiKey);
@@ -35,12 +38,16 @@ export class EmailService {
 
         if (this.resend) {
             try {
-                await this.resend.emails.send({
+                const response = await this.resend.emails.send({
                     from: this.fromEmail,
                     to,
                     subject,
                     html,
                 });
+                if (response.error) {
+                    this.logger.error(`Failed to send invite email to ${to}: ${response.error.message}`);
+                    throw new Error(response.error.message || 'Invite email send failed');
+                }
                 this.logger.log(`Invite email sent to ${to}`);
             } catch (error) {
                 this.logger.error(`Failed to send invite email to ${to}:`, error);
@@ -70,12 +77,16 @@ export class EmailService {
         `;
         if (this.resend) {
             try {
-                await this.resend.emails.send({
+                const response = await this.resend.emails.send({
                     from: this.fromEmail,
                     to,
                     subject,
                     html,
                 });
+                if (response.error) {
+                    this.logger.error(`Failed to send password reset email to ${to}: ${response.error.message}`);
+                    throw new Error(response.error.message || 'Password reset email send failed');
+                }
                 this.logger.log(`Password reset email sent to ${to}`);
             } catch (error) {
                 this.logger.error(`Failed to send password reset email to ${to}:`, error);

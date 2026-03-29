@@ -76,11 +76,15 @@ export interface CreateUserResult {
   user: User;
   inviteLink?: string;
   expiresAt?: string;
+  inviteEmailSent?: boolean;
+  inviteEmailError?: string;
 }
 
 export interface ResendInviteResult {
   inviteLink: string;
   expiresAt: string;
+  emailSent: boolean;
+  emailError?: string;
 }
 
 export type ClientStatus = 'active' | 'inactive' | 'archived';
