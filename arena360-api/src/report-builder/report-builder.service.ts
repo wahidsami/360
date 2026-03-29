@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma.service';
 import { StorageService } from '../common/storage.service';
 import { ScopeUtils, UserWithRoles } from '../common/utils/scope.utils';
+import { ROLE_DEFAULT_PERMISSIONS } from '../auth/permissions.guard';
 import * as puppeteer from 'puppeteer';
 import { existsSync } from 'fs';
 import { AiService } from '../ai/ai.service';
@@ -30,7 +31,7 @@ import {
   ACCESSIBILITY_AUDIT_CATEGORIES,
   ACCESSIBILITY_AUDIT_MAIN_CATEGORIES,
 } from './accessibility-audit.config';
-import { FileCategory, FileScopeType, FileVisibility, ProjectReportMediaType } from '@prisma/client';
+import { FileCategory, FileScopeType, FileVisibility, GlobalRole, ProjectReportMediaType } from '@prisma/client';
 
 @Injectable()
 export class ReportBuilderService {
@@ -332,6 +333,27 @@ export class ReportBuilderService {
     });
     if (!entry) throw new NotFoundException('Project report entry not found');
     return entry;
+  }
+
+  private hasPermission(user: UserWithRoles, permission: string) {
+    if (user.role === GlobalRole.SUPER_ADMIN) return true;
+
+    const rolePermissions = ROLE_DEFAULT_PERMISSIONS[user.role as GlobalRole] ?? [];
+    const customPermissions = Array.isArray((user as any).customPermissions)
+      ? ((user as any).customPermissions as string[])
+      : [];
+
+    return rolePermissions.includes(permission) || customPermissions.includes(permission);
+  }
+
+  private canPublishProjectReports(user: UserWithRoles) {
+    return this.hasPermission(user, 'PUBLISH_PROJECT_REPORTS');
+  }
+
+  private ensureDraftReportContent(report: { status: string }) {
+    if (report.status !== 'DRAFT') {
+      throw new ForbiddenException('Only draft reports can be edited. Return the report to draft before changing findings or evidence.');
+    }
   }
 
   private sanitizeFilename(filename: string) {
@@ -1927,12 +1949,28 @@ export class ReportBuilderService {
 
   async updateProjectReport(reportId: string, user: UserWithRoles, dto: UpdateProjectReportDto) {
     const current = await this.ensureProjectReportAccess(reportId, user);
+    const canPublish = this.canPublishProjectReports(user);
     if (dto.performedById) {
       const performer = await this.prisma.user.findFirst({
         where: { id: dto.performedById, orgId: user.orgId, isActive: true },
         select: { id: true },
       });
       if (!performer) throw new NotFoundException('Selected performer not found');
+    }
+
+    if (dto.status) {
+      if (dto.status === 'IN_REVIEW' && current.status !== 'DRAFT' && !canPublish) {
+        throw new ForbiddenException('Only PM/Admin can move a submitted report back through the workflow.');
+      }
+
+      if (
+        ['APPROVED', 'PUBLISHED', 'ARCHIVED'].includes(dto.status) ||
+        (dto.status === 'DRAFT' && current.status !== 'DRAFT')
+      ) {
+        if (!canPublish) {
+          throw new ForbiddenException('Only PM/Admin can approve, publish, archive, or reopen submitted reports.');
+        }
+      }
     }
 
     const publishedAt = dto.status === 'PUBLISHED' ? new Date() : undefined;
@@ -1944,6 +1982,7 @@ export class ReportBuilderService {
         ...(dto.description !== undefined && { description: dto.description?.trim() || null }),
         ...(dto.status != null && { status: dto.status }),
         ...(dto.visibility != null && { visibility: dto.visibility }),
+        ...(dto.status === 'PUBLISHED' && { visibility: 'CLIENT' }),
         ...(dto.performedById != null && { performedById: dto.performedById }),
         ...(dto.summaryJson !== undefined && { summaryJson: dto.summaryJson as object }),
         ...(dto.coverSnapshotJson !== undefined && {
@@ -2004,6 +2043,7 @@ export class ReportBuilderService {
     dto: CreateProjectReportEntryDto,
   ) {
     const report = await this.ensureProjectReportAccess(reportId, user);
+    this.ensureDraftReportContent(report);
     this.validateAccessibilityEntryInput(report, dto);
     const normalizedCategory =
       report.template?.category === 'ACCESSIBILITY'
@@ -2052,6 +2092,7 @@ export class ReportBuilderService {
     dto: UpdateProjectReportEntryDto,
   ) {
     const report = await this.ensureProjectReportAccess(reportId, user);
+    this.ensureDraftReportContent(report);
     const entry = await this.prisma.projectReportEntry.findFirst({
       where: {
         id: entryId,
@@ -2118,6 +2159,7 @@ export class ReportBuilderService {
 
   async deleteProjectReportEntry(reportId: string, entryId: string, user: UserWithRoles) {
     const report = await this.ensureProjectReportAccess(reportId, user);
+    this.ensureDraftReportContent(report);
     const entry = await this.prisma.projectReportEntry.findFirst({
       where: {
         id: entryId,
@@ -2154,7 +2196,8 @@ export class ReportBuilderService {
     user: UserWithRoles,
     dto: ReorderProjectReportEntriesDto,
   ) {
-    await this.ensureProjectReportAccess(reportId, user);
+    const report = await this.ensureProjectReportAccess(reportId, user);
+    this.ensureDraftReportContent(report);
     if (!dto.items.length) return [];
 
     await this.prisma.$transaction(
@@ -2186,6 +2229,7 @@ export class ReportBuilderService {
   ) {
     const entry = await this.ensureProjectReportEntryAccess(reportId, entryId, user);
     const report = await this.ensureProjectReportAccess(reportId, user);
+    this.ensureDraftReportContent(report);
     const visibility: FileVisibility = report.visibility === 'CLIENT' ? 'CLIENT' : 'INTERNAL';
     const storageKey = this.storage.generateStorageKey(
       user.orgId,
@@ -2246,6 +2290,7 @@ export class ReportBuilderService {
     user: UserWithRoles,
   ) {
     const entry = await this.ensureProjectReportEntryAccess(reportId, entryId, user);
+    this.ensureDraftReportContent(entry.projectReport);
     const media = await this.prisma.projectReportEntryMedia.findFirst({
       where: {
         id: mediaId,

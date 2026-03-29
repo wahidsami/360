@@ -63,6 +63,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
             cancel: 'إلغاء',
             createReport: 'إنشاء تقرير إمكانية الوصول',
             statusDraft: 'مسودة',
+            statusInReview: 'قيد المراجعة',
+            statusApproved: 'معتمد',
             statusPublished: 'منشور',
             statusArchived: 'مؤرشف',
           }
@@ -103,6 +105,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
             cancel: 'Cancel',
             createReport: 'Create Accessibility Report',
             statusDraft: 'DRAFT',
+            statusInReview: 'IN REVIEW',
+            statusApproved: 'APPROVED',
             statusPublished: 'PUBLISHED',
             statusArchived: 'ARCHIVED',
           },
@@ -111,13 +115,14 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
 
   const reportStatusLabel = React.useCallback(
     (status: string) => {
-      if (!isArabic) return status;
       if (status === 'DRAFT') return copy.statusDraft;
+      if (status === 'IN_REVIEW') return copy.statusInReview;
+      if (status === 'APPROVED') return copy.statusApproved;
       if (status === 'PUBLISHED') return copy.statusPublished;
       if (status === 'ARCHIVED') return copy.statusArchived;
       return status;
     },
-    [copy.statusArchived, copy.statusDraft, copy.statusPublished, isArabic],
+    [copy.statusApproved, copy.statusArchived, copy.statusDraft, copy.statusInReview, copy.statusPublished],
   );
 
   const [reports, setReports] = useState<ProjectReport[]>([]);
@@ -294,7 +299,19 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ onRefresh, projectName }
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={report.status === 'PUBLISHED' ? 'success' : 'info'}>{reportStatusLabel(report.status)}</Badge>
+                      <Badge
+                        variant={
+                          report.status === 'PUBLISHED'
+                            ? 'success'
+                            : report.status === 'APPROVED'
+                              ? 'warning'
+                              : report.status === 'ARCHIVED'
+                                ? 'neutral'
+                                : 'info'
+                        }
+                      >
+                        {reportStatusLabel(report.status)}
+                      </Badge>
                       <Badge variant="neutral">{report.visibility === 'CLIENT' ? copy.client : copy.internal}</Badge>
                       <Badge variant="warning">v{report.templateVersion.versionNumber}</Badge>
                     </div>

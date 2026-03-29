@@ -136,7 +136,20 @@ export const ProjectReportWorkspace: React.FC = () => {
             previewDescription: 'تُعرض هذه المعاينة من مسار HTML/PDF في الخلفية وتُظهر شكل التقرير النهائي باستخدام الملاحظات والأدلة الحالية.',
             english: 'English',
             arabic: 'العربية',
-            printPdf: 'طباعة / حفظ PDF'
+            printPdf: 'طباعة / حفظ PDF',
+            statusDraft: 'مسودة',
+            statusInReview: 'قيد المراجعة',
+            statusApproved: 'معتمد',
+            statusPublished: 'منشور',
+            statusArchived: 'مؤرشف',
+            submitForReview: 'إرسال للمراجعة',
+            approveReport: 'اعتماد التقرير',
+            publishReport: 'نشر للعميل',
+            returnToDraft: 'إعادة إلى المسودة',
+            reportLockedTitle: 'الملاحظات مقفلة خارج حالة المسودة',
+            reportLockedHelp: 'بعد إرسال التقرير للمراجعة، تتوقف تعديلات الملاحظات والأدلة حتى يعيد PM أو Admin التقرير إلى المسودة.',
+            statusUpdateSuccess: 'تم تحديث حالة التقرير.',
+            statusUpdateError: 'فشل تحديث حالة التقرير.'
           }
         : {
             loadingReport: 'Loading accessibility report...',
@@ -202,7 +215,20 @@ export const ProjectReportWorkspace: React.FC = () => {
             previewDescription: 'This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.',
             english: 'English',
             arabic: 'العربية',
-            printPdf: 'Print / Save PDF'
+            printPdf: 'Print / Save PDF',
+            statusDraft: 'DRAFT',
+            statusInReview: 'IN REVIEW',
+            statusApproved: 'APPROVED',
+            statusPublished: 'PUBLISHED',
+            statusArchived: 'ARCHIVED',
+            submitForReview: 'Submit for Review',
+            approveReport: 'Approve Report',
+            publishReport: 'Publish to Client',
+            returnToDraft: 'Return to Draft',
+            reportLockedTitle: 'Findings are locked outside draft status',
+            reportLockedHelp: 'Once a report is submitted for review, findings and evidence stay frozen until PM or Admin returns it to draft.',
+            statusUpdateSuccess: 'Report status updated.',
+            statusUpdateError: 'Failed to update report status.'
           },
     [isArabic],
   );
@@ -222,6 +248,15 @@ export const ProjectReportWorkspace: React.FC = () => {
     }
     return mediaActionLabel(media);
   }, [isArabic]);
+
+  const reportStatusLabel = React.useCallback((status: string) => {
+    if (status === 'DRAFT') return copy.statusDraft;
+    if (status === 'IN_REVIEW') return copy.statusInReview;
+    if (status === 'APPROVED') return copy.statusApproved;
+    if (status === 'PUBLISHED') return copy.statusPublished;
+    if (status === 'ARCHIVED') return copy.statusArchived;
+    return status;
+  }, [copy.statusApproved, copy.statusArchived, copy.statusDraft, copy.statusInReview, copy.statusPublished]);
 
   const [loading, setLoading] = React.useState(true);
   const [report, setReport] = React.useState<ProjectReport | null>(null);
@@ -243,6 +278,7 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const canEditEntries = hasPermission(Permission.EDIT_PROJECT_REPORT_ENTRIES);
   const canEditReport = hasPermission(Permission.EDIT_PROJECT_REPORTS);
+  const canPublishReports = hasPermission(Permission.PUBLISH_PROJECT_REPORTS);
   const canGenerateExports = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
   const exportPdfLabel = isArabic ? 'تصدير PDF' : 'Export PDF';
@@ -474,10 +510,10 @@ export const ProjectReportWorkspace: React.FC = () => {
     try {
       const updated = await api.reportBuilderProjects.updateProjectReport(reportId, { status: nextStatus });
       setReport(updated);
-      toast.success('Report status updated.');
+      toast.success(copy.statusUpdateSuccess);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update report status.');
+      toast.error(copy.statusUpdateError);
     }
   };
 
@@ -489,6 +525,9 @@ export const ProjectReportWorkspace: React.FC = () => {
     return <GlassCard><p className="text-sm text-slate-600 dark:text-slate-400">{copy.reportNotFound}</p></GlassCard>;
   }
 
+  const isDraftReport = report.status === 'DRAFT';
+  const canManageDraftContent = canEditEntries && isDraftReport;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -499,7 +538,19 @@ export const ProjectReportWorkspace: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">{report.title}</h1>
-              <Badge variant={report.status === 'PUBLISHED' ? 'success' : 'info'}>{report.status}</Badge>
+              <Badge
+                variant={
+                  report.status === 'PUBLISHED'
+                    ? 'success'
+                    : report.status === 'APPROVED'
+                      ? 'warning'
+                      : report.status === 'ARCHIVED'
+                        ? 'neutral'
+                        : 'info'
+                }
+              >
+                {reportStatusLabel(report.status)}
+              </Badge>
               <Badge variant="neutral">{report.visibility}</Badge>
             </div>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -532,16 +583,37 @@ export const ProjectReportWorkspace: React.FC = () => {
               <Download className="mr-2 h-4 w-4" /> {copy.downloadLatestExport}
             </Button>
           )}
-          {canEditReport && (
-            <Select value={report.status} onChange={(event) => handleStatusChange(event.target.value as ProjectReport['status'])} className="min-w-[180px]">
-              <option value="DRAFT">{isArabic ? 'مسودة' : 'DRAFT'}</option>
-              <option value="IN_REVIEW">{isArabic ? 'قيد المراجعة' : 'IN_REVIEW'}</option>
-              <option value="APPROVED">{isArabic ? 'معتمد' : 'APPROVED'}</option>
-              <option value="PUBLISHED">{isArabic ? 'منشور' : 'PUBLISHED'}</option>
-              <option value="ARCHIVED">{isArabic ? 'مؤرشف' : 'ARCHIVED'}</option>
-            </Select>
+          {canEditReport && report.status === 'DRAFT' && (
+            <Button variant="outline" onClick={() => handleStatusChange('IN_REVIEW')}>
+              {copy.submitForReview}
+            </Button>
           )}
-          {canEditEntries && (
+          {canPublishReports && report.status === 'IN_REVIEW' && (
+            <>
+              <Button variant="outline" onClick={() => handleStatusChange('DRAFT')}>
+                {copy.returnToDraft}
+              </Button>
+              <Button onClick={() => handleStatusChange('APPROVED')}>
+                {copy.approveReport}
+              </Button>
+            </>
+          )}
+          {canPublishReports && report.status === 'APPROVED' && (
+            <>
+              <Button variant="outline" onClick={() => handleStatusChange('DRAFT')}>
+                {copy.returnToDraft}
+              </Button>
+              <Button onClick={() => handleStatusChange('PUBLISHED')}>
+                {copy.publishReport}
+              </Button>
+            </>
+          )}
+          {canPublishReports && report.status === 'PUBLISHED' && (
+            <Button variant="outline" onClick={() => handleStatusChange('DRAFT')}>
+              {copy.returnToDraft}
+            </Button>
+          )}
+          {canManageDraftContent && (
             <Button onClick={() => openEntryModal()}>
               <Plus className="mr-2 h-4 w-4" /> {copy.addFinding}
             </Button>
@@ -555,6 +627,13 @@ export const ProjectReportWorkspace: React.FC = () => {
         <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.medium}</p><p className="mt-2 text-3xl font-bold text-amber-500">{summaryCounts.medium}</p></GlassCard>
         <GlassCard><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.low}</p><p className="mt-2 text-3xl font-bold text-emerald-500">{summaryCounts.low}</p></GlassCard>
       </div>
+
+      {!isDraftReport && !isClientUser && (
+        <GlassCard className="border-amber-200/70 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">{copy.reportLockedTitle}</p>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">{copy.reportLockedHelp}</p>
+        </GlassCard>
+      )}
 
       {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.recommendationsSummary ? (
         <GlassCard>
@@ -620,7 +699,7 @@ export const ProjectReportWorkspace: React.FC = () => {
                 <th className="pb-3 pr-4">{copy.subcategory}</th>
                 <th className="pb-3 pr-4">{copy.pageUrl}</th>
                 <th className="pb-3 pr-4">{copy.media}</th>
-                {canEditEntries && <th className="pb-3 text-right">{copy.actions}</th>}
+                {canManageDraftContent && <th className="pb-3 text-right">{copy.actions}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -647,7 +726,7 @@ export const ProjectReportWorkspace: React.FC = () => {
                         )) : <span className="text-slate-500">-</span>}
                       </div>
                     </td>
-                    {canEditEntries && (
+                    {canManageDraftContent && (
                       <td className="py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="sm" onClick={() => openEntryModal(entry)}><Pencil className="h-4 w-4" /></Button>
@@ -658,14 +737,14 @@ export const ProjectReportWorkspace: React.FC = () => {
                   </tr>
                   {(entry.media || []).length > 0 && (
                     <tr className="bg-slate-50/70 dark:bg-slate-900/20">
-                      <td colSpan={canEditEntries ? 8 : 7} className="py-3 pr-4">
+                      <td colSpan={canManageDraftContent ? 8 : 7} className="py-3 pr-4">
                         <div className="flex flex-wrap gap-3">
                           {(entry.media || []).map((media) => (
                             <div key={media.id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
                               {media.mediaType === 'VIDEO' ? <Video className="h-4 w-4 text-cyan-500" /> : <FileImage className="h-4 w-4 text-cyan-500" />}
                               <span className="text-xs text-slate-700 dark:text-slate-300">{media.fileAsset.filename || media.fileAsset.name}</span>
                               <Button variant="ghost" size="sm" onClick={() => handleOpenEvidence(media)}>{evidenceActionLabel(media)}</Button>
-                              {canEditEntries && <button type="button" className="text-xs text-rose-500" onClick={() => handleDeleteEvidence(entry, media)}>{copy.remove}</button>}
+                              {canManageDraftContent && <button type="button" className="text-xs text-rose-500" onClick={() => handleDeleteEvidence(entry, media)}>{copy.remove}</button>}
                             </div>
                           ))}
                         </div>
@@ -676,7 +755,7 @@ export const ProjectReportWorkspace: React.FC = () => {
               ))}
               {filteredEntries.length === 0 && (
                 <tr>
-                  <td colSpan={canEditEntries ? 8 : 7} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={canManageDraftContent ? 8 : 7} className="py-12 text-center text-slate-500 dark:text-slate-400">
                     <FileText className="mx-auto mb-3 h-10 w-10 opacity-30" />
                     {copy.noFindings}
                   </td>
