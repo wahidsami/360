@@ -55,12 +55,47 @@ export const ProjectDetails: React.FC = () => {
     const roleVisibleTabIds = PermissionsService.getVisibleTabs(user.role)
       .filter((tabId): tabId is ProjectTabId => PROJECT_TAB_DEFINITIONS.some((definition) => definition.id === tabId));
 
+    const workspaceTabs = Array.isArray(project?.workspaceConfig?.tabsJson)
+      ? project.workspaceConfig.tabsJson.map((tab) => ({
+          tabId: tab.tabId as ProjectTabId,
+          state: tab.state,
+          orderIndex: tab.orderIndex,
+        }))
+      : [];
+
+    const normalizedWorkspaceTabs = (() => {
+      if (user.role === Role.FINANCE || !roleVisibleTabIds.includes('discussions')) {
+        return workspaceTabs;
+      }
+
+      const discussionOrder = PROJECT_TAB_DEFINITIONS.find((definition) => definition.id === 'discussions')?.order ?? 2;
+      const hasDiscussionEntry = workspaceTabs.some((tab) => tab.tabId === 'discussions');
+
+      if (!hasDiscussionEntry) {
+        return [
+          ...workspaceTabs,
+          {
+            tabId: 'discussions' as ProjectTabId,
+            state: 'visible_interactive',
+            orderIndex: discussionOrder,
+          },
+        ];
+      }
+
+      return workspaceTabs.map((tab) =>
+        tab.tabId === 'discussions'
+          ? {
+              ...tab,
+              state: 'visible_interactive',
+            }
+          : tab,
+      );
+    })();
+
     const interactiveWorkspaceTabs = new Set(
-      Array.isArray(project?.workspaceConfig?.tabsJson)
-        ? project.workspaceConfig.tabsJson
-            .filter((tab) => tab.state === 'visible_interactive')
-            .map((tab) => tab.tabId as ProjectTabId)
-        : [],
+      normalizedWorkspaceTabs
+        .filter((tab) => tab.state === 'visible_interactive')
+        .map((tab) => tab.tabId),
     );
 
     const roleReadOnlyTabIds = PROJECT_TAB_DEFINITIONS
@@ -73,13 +108,7 @@ export const ProjectDetails: React.FC = () => {
       readOnlyTabIds: roleReadOnlyTabIds,
       workspaceConfig: project?.workspaceConfig
         ? {
-            tabs: Array.isArray(project.workspaceConfig.tabsJson)
-              ? project.workspaceConfig.tabsJson.map((tab) => ({
-                  tabId: tab.tabId as ProjectTabId,
-                  state: tab.state,
-                  orderIndex: tab.orderIndex,
-                }))
-              : [],
+            tabs: normalizedWorkspaceTabs,
           }
         : null,
     });
