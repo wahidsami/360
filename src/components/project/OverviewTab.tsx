@@ -210,13 +210,14 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
     );
 }
 
-function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = [] }: { onNavigate?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
+function QuickActionsPanel({ project, onNavigate, onAction, onRefresh, overdueCount, allowedTabs = [] }: { project: any, onNavigate?: any, onAction?: any, onRefresh?: () => void, overdueCount: number, allowedTabs?: string[] }) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = React.useState(false);
     const canSee = (id: string) => allowedTabs.includes(id);
     const { user } = useAuth();
     const clientRoles = [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER];
     const isClient = !!user && clientRoles.includes(user.role);
+    const hasDeadline = !!(project?.deadline || project?.endDate);
 
     return (
         <div className="relative">
@@ -233,6 +234,11 @@ function QuickActionsPanel({ onNavigate, onRefresh, overdueCount, allowedTabs = 
                     {canSee('tasks') && !isClient && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
                             <PlusCircle className="w-4 h-4 text-emerald-500" /> {t('add_task')}
+                        </button>
+                    )}
+                    {!isClient && (
+                        <button onClick={() => { setIsOpen(false); onAction?.({ type: 'open_edit_project' }); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+                            <span className="text-amber-500">📅</span> {t(hasDeadline ? 'edit_deadline' : 'set_deadline')}
                         </button>
                     )}
                     {canSee('updates') && (
@@ -394,7 +400,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
         <div className="space-y-8 pb-12">
             <div className="flex justify-between items-center w-full border-b border-slate-200 dark:border-slate-800 pb-4 mb-2">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white px-2">{t('project_dashboard')}</h2>
-                <QuickActionsPanel onNavigate={onNavigate} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
+                <QuickActionsPanel project={project} onNavigate={onNavigate} onAction={onAction} onRefresh={onRefresh} overdueCount={overdueTasks} allowedTabs={allowedTabs} />
             </div>
 
             {/* TOP SECTION */}

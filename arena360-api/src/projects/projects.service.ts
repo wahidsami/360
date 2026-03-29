@@ -146,6 +146,7 @@ export class ProjectsService {
                 budget: (data.budget !== undefined && data.budget !== null && data.budget !== '') ? parseFloat(data.budget.toString()) : null,
                 tags: Array.isArray(data.tags) ? data.tags : [],
                 startDate,
+                endDate,
                 org: { connect: { id: user.orgId } },
                 client: { connect: { id: data.clientId } },
                 members: {
