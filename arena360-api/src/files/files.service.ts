@@ -34,9 +34,17 @@ export class FilesService {
     // === CLIENT FILES ===
 
     async listClientFiles(clientId: string, user: UserWithRoles) {
+        const clientScope = ScopeUtils.clientScope(user, 'id');
+
         // Verify client exists and user has access
         const client = await this.prisma.client.findFirst({
-            where: { id: clientId, orgId: user.orgId }
+            where: {
+                orgId: user.orgId,
+                AND: [
+                    { id: clientId },
+                    clientScope.id ? { id: clientScope.id } : {},
+                ],
+            }
         });
 
         if (!client) {
@@ -71,25 +79,39 @@ export class FilesService {
         visibility?: FileVisibility,
         displayName?: string
     ) {
+        const clientScope = ScopeUtils.clientScope(user, 'id');
+
         // Verify client exists and user has access
         const client = await this.prisma.client.findFirst({
-            where: { id: clientId, orgId: user.orgId }
+            where: {
+                orgId: user.orgId,
+                AND: [
+                    { id: clientId },
+                    clientScope.id ? { id: clientScope.id } : {},
+                ],
+            }
         });
 
         if (!client) {
             throw new NotFoundException('Client not found');
         }
 
-        // Only internal roles can upload files
         const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
-        if (!internalRoles.includes(user.role)) {
-            throw new ForbiddenException('Only internal staff can upload files');
+        const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
+        const isInternal = internalRoles.includes(user.role);
+        const isClientMember = clientRoles.includes(user.role);
+
+        if (!isInternal && !isClientMember) {
+            throw new ForbiddenException('You do not have permission to upload files');
         }
 
-        // DEV can only upload INTERNAL files
-        const fileVisibility = visibility || 'INTERNAL';
+        // Client uploads default to shared-with-client and cannot create internal-only files.
+        const fileVisibility = visibility || (isClientMember ? 'CLIENT' : 'INTERNAL');
         if (user.role === 'DEV' && fileVisibility === 'CLIENT') {
             throw new ForbiddenException('DEV role can only upload INTERNAL files');
+        }
+        if (isClientMember && fileVisibility !== 'CLIENT') {
+            throw new ForbiddenException('Client members can only upload CLIENT visibility files');
         }
 
         // Generate storage key
@@ -127,9 +149,17 @@ export class FilesService {
     }
 
     async downloadClientFile(clientId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
+        const clientScope = ScopeUtils.clientScope(user, 'id');
+
         // Verify client exists and user has access
         const client = await this.prisma.client.findFirst({
-            where: { id: clientId, orgId: user.orgId }
+            where: {
+                orgId: user.orgId,
+                AND: [
+                    { id: clientId },
+                    clientScope.id ? { id: clientScope.id } : {},
+                ],
+            }
         });
 
         if (!client) {
@@ -165,7 +195,8 @@ export class FilesService {
     async listProjectFiles(projectId: string, user: UserWithRoles) {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, ...ScopeUtils.projectScope(user) }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) },
+            select: { id: true, clientId: true }
         });
 
         if (!project) {
@@ -177,11 +208,19 @@ export class FilesService {
 
         return this.prisma.fileAsset.findMany({
             where: {
-                projectId,
-                scopeType: 'PROJECT',
                 orgId: user.orgId,
-                // Client users only see CLIENT visibility files
-                ...(isClientUser && { visibility: 'CLIENT' })
+                OR: [
+                    {
+                        projectId,
+                        scopeType: 'PROJECT',
+                    },
+                    {
+                        clientId: project.clientId,
+                        scopeType: 'CLIENT',
+                        visibility: 'CLIENT',
+                    },
+                ],
+                ...(isClientUser && { visibility: 'CLIENT' }),
             },
             include: {
                 uploader: {
@@ -258,7 +297,8 @@ export class FilesService {
     async downloadProjectFile(projectId: string, fileId: string, user: UserWithRoles, download: boolean = false): Promise<string> {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
-            where: { id: projectId, ...ScopeUtils.projectScope(user) }
+            where: { id: projectId, ...ScopeUtils.projectScope(user) },
+            select: { id: true, clientId: true }
         });
 
         if (!project) {
@@ -269,9 +309,18 @@ export class FilesService {
         const file = await this.prisma.fileAsset.findFirst({
             where: {
                 id: fileId,
-                projectId,
-                scopeType: 'PROJECT',
-                orgId: user.orgId
+                orgId: user.orgId,
+                OR: [
+                    {
+                        projectId,
+                        scopeType: 'PROJECT',
+                    },
+                    {
+                        clientId: project.clientId,
+                        scopeType: 'CLIENT',
+                        visibility: 'CLIENT',
+                    },
+                ],
             }
         });
 

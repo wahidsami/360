@@ -176,7 +176,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                             >
                                 <Eye className="w-4 h-4" />
                             </button>
-                            {onDelete && (
+                            {onDelete && file.scopeType !== 'CLIENT' && (
                                 <button
                                     onClick={() => handleDelete(file)}
                                     disabled={downloadingId === file.id}

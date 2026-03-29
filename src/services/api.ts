@@ -91,6 +91,25 @@ const normalizeFinding = (f: any): Finding => ({
   severity: (f.severity?.toLowerCase() || 'medium') as any
 });
 
+const normalizeFileAsset = (f: any): FileAsset => ({
+  id: f.id,
+  entityId: f.projectId || f.clientId || f.findingId || f.entityId,
+  name: f.filename ?? f.name,
+  filename: f.filename ?? f.name,
+  category: f.category,
+  type: f.mimeType ?? f.type ?? 'application/octet-stream',
+  mimeType: f.mimeType ?? f.type ?? 'application/octet-stream',
+  size: f.sizeBytes ? `${(f.sizeBytes / 1024 / 1024).toFixed(2)} MB` : (f.size || '0 MB'),
+  sizeBytes: f.sizeBytes,
+  url: f.url || '',
+  uploadedAt: f.uploadedAt ?? f.createdAt,
+  uploaderName: f.uploader?.name ?? f.uploaderName ?? 'Unknown',
+  visibility: f.visibility,
+  scopeType: f.scopeType,
+  clientId: f.clientId,
+  projectId: f.projectId,
+});
+
 const normalizeReport = (report: any): Report => ({
   ...report,
   type: report.type || 'OTHER',
@@ -346,7 +365,8 @@ export const api = {
     },
     getFiles: async (clientId: string): Promise<FileAsset[]> => {
       try {
-        return await fetchApi(`/clients/${clientId}/files`);
+        const files = await fetchApi(`/clients/${clientId}/files`);
+        return (files || []).map(normalizeFileAsset);
       } catch (e) {
         console.error('Failed to get client files:', e);
         return [];
@@ -641,18 +661,7 @@ export const api = {
     getFiles: async (projectId: string): Promise<FileAsset[]> => {
       try {
         const files = await fetchApi(`/projects/${projectId}/files`);
-        // Map backend fields to frontend expected fields
-        return (files || []).map((f: any) => ({
-          id: f.id,
-          name: f.filename ?? f.name,
-          category: f.category,
-          type: f.type,
-          size: f.sizeBytes ? `${(f.sizeBytes / 1024 / 1024).toFixed(2)} MB` : f.size,
-          url: f.url,
-          uploadedAt: f.uploadedAt ?? f.createdAt,
-          uploaderName: f.uploader?.name ?? f.uploaderName,
-          visibility: f.visibility,
-        }));
+        return (files || []).map(normalizeFileAsset);
       } catch (e) {
         console.error('Failed to get project files:', e);
         return [];
@@ -1054,7 +1063,8 @@ export const api = {
     },
     getFiles: async (findingId: string): Promise<FileAsset[]> => {
       try {
-        return await fetchApi(`/findings/${findingId}/files`);
+        const files = await fetchApi(`/findings/${findingId}/files`);
+        return (files || []).map(normalizeFileAsset);
       } catch (e) {
         console.error('Failed to get finding files:', e);
         return [];

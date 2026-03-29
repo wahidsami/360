@@ -103,16 +103,21 @@ export interface ProjectMember {
 
 export interface FileAsset {
   id: string;
-  entityId: string;
+  entityId?: string;
   name: string;
   filename?: string;
-  category: 'contract' | 'invoice' | 'brief' | 'design' | 'docs' | 'build' | 'report' | 'other';
+  category: 'contract' | 'invoice' | 'brief' | 'design' | 'docs' | 'build' | 'report' | 'other' | string;
   type: string;
+  mimeType?: string;
   size: string;
+  sizeBytes?: number;
   url: string;
   uploadedAt: string;
   uploaderName: string;
-  visibility?: 'internal' | 'public';
+  visibility?: 'internal' | 'public' | 'INTERNAL' | 'CLIENT' | string;
+  scopeType?: 'CLIENT' | 'PROJECT' | 'FINDING' | string;
+  clientId?: string;
+  projectId?: string;
 }
 
 export interface Report {
