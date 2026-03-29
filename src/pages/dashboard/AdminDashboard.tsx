@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, Briefcase, DollarSign, Activity, AlertTriangle, Clock, Settings2 } from 'lucide-react';
+import { Users, CheckCircle2, Activity, ShieldAlert, Settings2 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from 'recharts';
 import { GlassCard, KpiCard, Badge, Button, Modal } from "@/components/ui/UIComponents";
 import { ToolsPanel } from '@/components/ToolsPanel';
 import { api } from '@/services/api';
 import { Role, Project, ProjectUpdate } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { formatCurrency, formatSAR } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
 const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'client-compliance', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
@@ -80,7 +80,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             .slice(0, 8)
             .map((item: { clientName: string; compliancePercentage: number; scoredChecks: number }) => ({
                ...item,
-               shortName: item.clientName.length > 18 ? `${item.clientName.slice(0, 18)}…` : item.clientName,
+               shortName: item.clientName.length > 18 ? `${item.clientName.slice(0, 18)}...` : item.clientName,
             })),
       [stats?.clientComplianceComparison],
    );
@@ -88,6 +88,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
    const complianceTooltipLabel = t('client_compliance_score');
    const averageComplianceLabel = t('average_compliance');
    const auditedClientsLabel = t('audited_clients');
+   const chartAxisColor = 'var(--app-text-muted)';
+   const chartGridColor = 'var(--app-border)';
    const formatRevenueTick = (value: number) =>
       new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 
@@ -125,9 +127,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          {has('kpi-cards') && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KpiCard compact label={t('total_clients')} value={stats.totalClients} icon={<Users />} />
-            <KpiCard compact label={t('active_projects')} value={stats.activeProjects} icon={<Briefcase />} />
-            <KpiCard compact label={t('revenue')} value={formatSAR(stats.revenue)} icon={<DollarSign />} />
-            <KpiCard compact label={t('overdue_tasks')} value={stats.overdueTasks} icon={<AlertTriangle />} />
+            <KpiCard compact label={auditedClientsLabel} value={stats.auditedClients ?? 0} icon={<CheckCircle2 />} />
+            <KpiCard compact label={averageComplianceLabel} value={`${stats.averageCompliance ?? 0}%`} icon={<Activity />} />
+            <KpiCard compact label={t('checks_needing_attention')} value={stats.needsAttentionChecks ?? 0} icon={<ShieldAlert />} />
          </div>
          )}
 
@@ -146,11 +148,12 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   <div className="h-80 w-full min-h-[280px]">
                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 24, left: 12, bottom: 8 }}>
-                           <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" horizontal={false} opacity={0.25} />
+                           <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.25} />
                            <XAxis
                               type="number"
                               domain={[0, 100]}
-                              stroke="var(--text-muted)"
+                              stroke={chartAxisColor}
+                              tick={{ fill: chartAxisColor }}
                               fontSize={10}
                               tickLine={false}
                               axisLine={false}
@@ -159,7 +162,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            <YAxis
                               type="category"
                               dataKey="shortName"
-                              stroke="var(--text-muted)"
+                              stroke={chartAxisColor}
+                              tick={{ fill: chartAxisColor }}
                               fontSize={11}
                               tickLine={false}
                               axisLine={false}
@@ -208,9 +212,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                               </linearGradient>
                            </defs>
-                           <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" vertical={false} opacity={0.4} />
-                           <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
-                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatRevenueTick(Number(value))} fontWeight="bold" width={60} />
+                           <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.4} />
+                           <XAxis dataKey="label" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
+                           <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatRevenueTick(Number(value))} fontWeight="bold" width={60} />
                            <Tooltip
                               contentStyle={{ 
                                  backgroundColor: 'var(--app-surface)', 

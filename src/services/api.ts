@@ -1708,6 +1708,8 @@ export const api = {
           latestUpdates: [],
           auditedClients: 0,
           averageCompliance: 0,
+          needsAttentionChecks: 0,
+          scoredChecks: 0,
           clientComplianceComparison: [],
         };
       }

@@ -168,6 +168,7 @@ export class DashboardService {
                     latestReportAt: report.updatedAt,
                     compliancePercentage: metrics.compliancePercentage,
                     scoredChecks: metrics.scoredChecks,
+                    needsAttentionChecks: metrics.counts.FAIL + metrics.counts.PARTIAL,
                     totalChecks: report.entries.length,
                 };
             })
@@ -185,6 +186,8 @@ export class DashboardService {
                 clientComplianceComparison.reduce((sum, item) => sum + item.compliancePercentage, 0) / auditedClients,
             )
             : 0;
+        const needsAttentionChecks = clientComplianceComparison.reduce((sum, item) => sum + item.needsAttentionChecks, 0);
+        const scoredChecks = clientComplianceComparison.reduce((sum, item) => sum + item.scoredChecks, 0);
 
         return {
             totalClients,
@@ -199,6 +202,8 @@ export class DashboardService {
             revenueByMonth,
             auditedClients,
             averageCompliance,
+            needsAttentionChecks,
+            scoredChecks,
             clientComplianceComparison,
         };
     }
