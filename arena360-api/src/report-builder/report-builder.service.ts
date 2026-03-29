@@ -310,7 +310,54 @@ export class ReportBuilderService {
       },
     });
     if (!report) throw new NotFoundException('Project report not found');
+    if (report.status === 'PUBLISHED' && report.visibility === 'CLIENT') {
+      await this.promoteProjectReportAssetsForClient(report.id, report.orgId, report.projectId);
+    }
     return report;
+  }
+
+  private async promoteProjectReportAssetsForClient(reportId: string, orgId: string, projectId: string) {
+    const [mediaLinks, exportLinks] = await Promise.all([
+      this.prisma.projectReportEntryMedia.findMany({
+        where: {
+          entry: {
+            projectReportId: reportId,
+            orgId,
+            deletedAt: null,
+          },
+        },
+        select: { fileAssetId: true },
+      }),
+      this.prisma.projectReportExport.findMany({
+        where: {
+          projectReportId: reportId,
+          orgId,
+        },
+        select: { fileAssetId: true },
+      }),
+    ]);
+
+    const fileAssetIds = Array.from(
+      new Set(
+        [...mediaLinks, ...exportLinks]
+          .map((link) => link.fileAssetId)
+          .filter((fileAssetId): fileAssetId is string => typeof fileAssetId === 'string' && fileAssetId.length > 0),
+      ),
+    );
+
+    if (!fileAssetIds.length) return;
+
+    await this.prisma.fileAsset.updateMany({
+      where: {
+        id: { in: fileAssetIds },
+        orgId,
+        projectId,
+        visibility: { not: 'CLIENT' },
+      },
+      data: {
+        visibility: 'CLIENT',
+      },
+    });
   }
 
   private async ensureProjectReportEntryAccess(reportId: string, entryId: string, user: UserWithRoles) {
@@ -1996,6 +2043,9 @@ export class ReportBuilderService {
         performedBy: { select: { id: true, name: true, email: true, role: true } },
       },
     });
+    if (report.visibility === 'CLIENT') {
+      await this.promoteProjectReportAssetsForClient(report.id, user.orgId, current.projectId);
+    }
     await this.logActivity({
       orgId: user.orgId,
       projectId: current.projectId,

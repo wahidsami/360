@@ -22,10 +22,10 @@ export class PermissionsService {
 
         [Role.FINANCE]: ['overview', 'financials', 'reports', 'files', 'activity'],
 
-        [Role.CLIENT_OWNER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'activity', 'financials'],
-        [Role.CLIENT_MANAGER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'activity'],
-        [Role.CLIENT_MEMBER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'activity'],
-        [Role.VIEWER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'activity']
+        [Role.CLIENT_OWNER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files', 'financials'],
+        [Role.CLIENT_MANAGER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files'],
+        [Role.CLIENT_MEMBER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files'],
+        [Role.VIEWER]: ['overview', 'discussions', 'tasks', 'milestones', 'updates', 'reports', 'files']
     };
 
     private static readonly DEFAULT_LANDING: Record<string, string> = {
@@ -45,10 +45,10 @@ export class PermissionsService {
         [Role.DEV]: ['overview', 'milestones', 'activity'],
         [Role.QA]: ['overview', 'milestones', 'activity'],
         [Role.FINANCE]: ['overview', 'reports', 'files', 'activity', 'financials'],
-        [Role.CLIENT_OWNER]: ['overview', 'milestones', 'files', 'activity', 'financials'],
-        [Role.CLIENT_MANAGER]: ['overview', 'milestones', 'files', 'activity'],
-        [Role.CLIENT_MEMBER]: ['overview', 'milestones', 'files', 'activity'],
-        [Role.VIEWER]: ['overview', 'milestones', 'files', 'activity']
+        [Role.CLIENT_OWNER]: ['overview', 'milestones', 'files', 'financials'],
+        [Role.CLIENT_MANAGER]: ['overview', 'milestones', 'files'],
+        [Role.CLIENT_MEMBER]: ['overview', 'milestones', 'files'],
+        [Role.VIEWER]: ['overview', 'milestones', 'files']
     };
 
     static getVisibleTabs(role: Role): string[] {
