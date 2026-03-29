@@ -1683,10 +1683,14 @@ export const api = {
           ...stats,
           projectsAtRisk: (stats.projectsAtRisk || []).map(normalizeProject),
           latestUpdates: (stats.latestUpdates || []).map((u: any) => ({
-            ...u,
-            timestamp: u.createdAt,
-            authorName: u.author?.name || 'Unknown'
-          }))
+             ...u,
+            timestamp: u.timestamp || u.createdAt,
+            authorName: u.authorName || u.author?.name || 'Unknown'
+          })),
+          clientComplianceComparison: (stats.clientComplianceComparison || []).map((item: any) => ({
+            ...item,
+            latestReportAt: item.latestReportAt || item.updatedAt,
+          })),
         };
       } catch (e) {
         console.error('Failed to load admin dashboard:', e);
@@ -1701,7 +1705,10 @@ export const api = {
           pendingApprovals: 0,
           revenue: 0,
           revenueByMonth: [],
-          latestUpdates: []
+          latestUpdates: [],
+          auditedClients: 0,
+          averageCompliance: 0,
+          clientComplianceComparison: [],
         };
       }
     },

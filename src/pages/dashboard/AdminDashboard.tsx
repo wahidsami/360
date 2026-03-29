@@ -1,20 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, Briefcase, DollarSign, Activity, AlertTriangle, Clock, Settings2 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from 'recharts';
 import { GlassCard, KpiCard, Badge, Button, Modal } from "@/components/ui/UIComponents";
 import { ToolsPanel } from '@/components/ToolsPanel';
 import { api } from '@/services/api';
 import { Role, Project, ProjectUpdate } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { formatSAR } from '../../utils/currency';
+import { formatCurrency, formatSAR } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
-const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
+const DEFAULT_WIDGET_IDS = ['kpi-cards', 'tools-panel', 'revenue-chart', 'client-compliance', 'latest-updates', 'projects-at-risk', 'pending-approvals'] as const;
 const WIDGET_LABELS: Record<string, string> = {
   'kpi-cards': 'widget_kpi_cards',
   'tools-panel': 'widget_quick_actions',
   'revenue-chart': 'widget_revenue_chart',
+  'client-compliance': 'widget_client_compliance_chart',
   'latest-updates': 'widget_latest_updates',
   'projects-at-risk': 'widget_projects_at_risk',
   'pending-approvals': 'widget_pending_approvals',
@@ -37,7 +38,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          ]);
          setStats(data);
          if (prefs.widgets?.length) {
-            setWidgetOrder(prefs.widgets.map((w: any) => w.id));
+            const saved = prefs.widgets.map((w: any) => w.id);
+            const merged = [...saved, ...DEFAULT_WIDGET_IDS.filter(id => !saved.includes(id))];
+            setWidgetOrder(merged);
          } else {
             setWidgetOrder([...DEFAULT_WIDGET_IDS]);
          }
@@ -54,6 +57,23 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
          })),
       [stats?.revenueByMonth],
    );
+
+   const complianceSeries = useMemo(
+      () =>
+         (stats?.clientComplianceComparison || [])
+            .slice(0, 8)
+            .map((item: { clientName: string; compliancePercentage: number; scoredChecks: number }) => ({
+               ...item,
+               shortName: item.clientName.length > 18 ? `${item.clientName.slice(0, 18)}…` : item.clientName,
+            })),
+      [stats?.clientComplianceComparison],
+   );
+
+   const complianceTooltipLabel = t('client_compliance_score');
+   const averageComplianceLabel = t('average_compliance');
+   const auditedClientsLabel = t('audited_clients');
+   const formatRevenueTick = (value: number) =>
+      new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 
    const openCustomize = () => {
       setCustomizeWidgets(
@@ -97,7 +117,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
          {has('tools-panel') && <ToolsPanel role={role} />}
 
-         {(has('revenue-chart') || has('latest-updates') || has('projects-at-risk') || has('pending-approvals')) && (
+         {(has('revenue-chart') || has('client-compliance') || has('latest-updates') || has('projects-at-risk') || has('pending-approvals')) && (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
                {has('revenue-chart') && (
@@ -114,7 +134,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                            </defs>
                            <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" vertical={false} opacity={0.4} />
                            <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} fontWeight="bold" />
-                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatSAR(Number(value))} fontWeight="bold" />
+                           <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => formatRevenueTick(Number(value))} fontWeight="bold" width={60} />
                            <Tooltip
                               contentStyle={{ 
                                  backgroundColor: 'var(--app-surface)', 
@@ -125,13 +145,73 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                                  padding: '12px'
                               }}
                               itemStyle={{ color: 'var(--brand-primary)', fontWeight: 'bold' }}
-                              formatter={(value: number) => [formatSAR(value), t('revenue')]}
+                              formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]}
                            />
                            <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                         </AreaChart>
                      </ResponsiveContainer>
                      )}
                   </div>
+               </GlassCard>
+               )}
+               {has('client-compliance') && (
+               <GlassCard title={t('client_compliance_comparison')}>
+                  <div className="mb-5 flex flex-wrap items-center gap-3">
+                     <Badge variant="info" size="sm">{averageComplianceLabel}: {stats.averageCompliance ?? 0}%</Badge>
+                     <Badge variant="neutral" size="sm">{auditedClientsLabel}: {stats.auditedClients ?? 0}</Badge>
+                  </div>
+                  {complianceSeries.length > 0 ? (
+                  <div className="h-80 w-full min-h-[280px]">
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 24, left: 12, bottom: 8 }}>
+                           <CartesianGrid strokeDasharray="3 3" stroke="var(--app-border)" horizontal={false} opacity={0.25} />
+                           <XAxis
+                              type="number"
+                              domain={[0, 100]}
+                              stroke="var(--text-muted)"
+                              fontSize={10}
+                              tickLine={false}
+                              axisLine={false}
+                              tickFormatter={(value) => `${value}%`}
+                           />
+                           <YAxis
+                              type="category"
+                              dataKey="shortName"
+                              stroke="var(--text-muted)"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={false}
+                              width={130}
+                           />
+                           <Tooltip
+                              cursor={{ fill: 'rgba(6, 182, 212, 0.08)' }}
+                              contentStyle={{
+                                 backgroundColor: 'var(--app-surface)',
+                                 borderColor: 'var(--app-border)',
+                                 borderRadius: '16px',
+                                 boxShadow: 'var(--shadow-xl)',
+                                 border: 'none',
+                                 padding: '12px'
+                              }}
+                              formatter={(value: number, _name, payload: any) => [`${value}%`, complianceTooltipLabel]}
+                              labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
+                           />
+                           <Bar dataKey="compliancePercentage" radius={[0, 12, 12, 0]} maxBarSize={28}>
+                              {complianceSeries.map((entry: { clientId: string; compliancePercentage: number }) => (
+                                 <Cell
+                                    key={entry.clientId}
+                                    fill={entry.compliancePercentage >= 85 ? '#22c55e' : entry.compliancePercentage >= 60 ? '#f59e0b' : '#f43f5e'}
+                                 />
+                              ))}
+                           </Bar>
+                        </BarChart>
+                     </ResponsiveContainer>
+                  </div>
+                  ) : (
+                  <p className="py-12 text-center text-sm font-medium italic text-slate-500 dark:text-slate-400">
+                     {t('no_client_compliance_data')}
+                  </p>
+                  )}
                </GlassCard>
                )}
                {has('latest-updates') && (

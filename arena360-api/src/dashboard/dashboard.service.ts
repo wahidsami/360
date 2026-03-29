@@ -6,6 +6,43 @@ import { UserWithRoles } from '../common/utils/scope.utils';
 export class DashboardService {
     constructor(private prisma: PrismaService) { }
 
+    private readonly accessibilityTemplateCode = 'accessibility-audit';
+
+    private normalizeAuditOutcome(value: unknown): 'PASS' | 'FAIL' | 'PARTIAL' | 'NOT_APPLICABLE' | 'NOT_TESTED' {
+        if (value === 'PASS' || value === 'FAIL' || value === 'PARTIAL' || value === 'NOT_APPLICABLE' || value === 'NOT_TESTED') {
+            return value;
+        }
+        return 'FAIL';
+    }
+
+    private getComplianceMetrics(entries: Array<{ rowDataJson?: unknown }>) {
+        const counts = entries.reduce(
+            (acc, entry) => {
+                const outcome = this.normalizeAuditOutcome((entry?.rowDataJson as any)?.auditOutcome);
+                acc[outcome] += 1;
+                return acc;
+            },
+            {
+                PASS: 0,
+                FAIL: 0,
+                PARTIAL: 0,
+                NOT_APPLICABLE: 0,
+                NOT_TESTED: 0,
+            },
+        );
+
+        const scoredChecks = counts.PASS + counts.FAIL + counts.PARTIAL;
+        const compliancePercentage = scoredChecks > 0
+            ? Math.round(((counts.PASS + counts.PARTIAL * 0.5) / scoredChecks) * 100)
+            : 0;
+
+        return {
+            scoredChecks,
+            compliancePercentage,
+            counts,
+        };
+    }
+
     async getAdminStats(user: UserWithRoles) {
         // Admin dashboard: internal role only
         const internalRoles = ['SUPER_ADMIN', 'OPS', 'PM', 'DEV', 'QA'];
@@ -14,7 +51,7 @@ export class DashboardService {
         }
 
         // Aggregate stats within user's org
-        const [totalClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals] = await Promise.all([
+        const [totalClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals, accessibilityReports] = await Promise.all([
             this.prisma.client.count({
                 where: { orgId: user.orgId, status: { not: 'ARCHIVED' } }
             }),
@@ -61,6 +98,28 @@ export class DashboardService {
                     status: 'PENDING',
                 },
             }),
+            this.prisma.projectReport.findMany({
+                where: {
+                    orgId: user.orgId,
+                    deletedAt: null,
+                    template: {
+                        code: this.accessibilityTemplateCode,
+                        category: 'ACCESSIBILITY',
+                    },
+                },
+                orderBy: [{ updatedAt: 'desc' }],
+                select: {
+                    id: true,
+                    title: true,
+                    updatedAt: true,
+                    clientId: true,
+                    client: { select: { name: true } },
+                    entries: {
+                        where: { deletedAt: null },
+                        select: { rowDataJson: true },
+                    },
+                },
+            }),
         ]);
 
         const activeProjects = projects.filter(p =>
@@ -91,6 +150,41 @@ export class DashboardService {
         }));
 
         const revenueByMonth = this.buildRevenueByMonth(paidInvoicesByMonth, 7);
+        const latestReportByClient = new Map<string, typeof accessibilityReports[number]>();
+
+        for (const report of accessibilityReports) {
+            if (!report.clientId || latestReportByClient.has(report.clientId)) continue;
+            latestReportByClient.set(report.clientId, report);
+        }
+
+        const clientComplianceComparison = Array.from(latestReportByClient.values())
+            .map((report) => {
+                const metrics = this.getComplianceMetrics(report.entries);
+                return {
+                    clientId: report.clientId,
+                    clientName: report.client?.name || 'Unknown Client',
+                    reportId: report.id,
+                    reportTitle: report.title,
+                    latestReportAt: report.updatedAt,
+                    compliancePercentage: metrics.compliancePercentage,
+                    scoredChecks: metrics.scoredChecks,
+                    totalChecks: report.entries.length,
+                };
+            })
+            .filter((item) => item.totalChecks > 0)
+            .sort((a, b) => {
+                if (b.compliancePercentage !== a.compliancePercentage) {
+                    return b.compliancePercentage - a.compliancePercentage;
+                }
+                return a.clientName.localeCompare(b.clientName);
+            });
+
+        const auditedClients = clientComplianceComparison.length;
+        const averageCompliance = auditedClients > 0
+            ? Math.round(
+                clientComplianceComparison.reduce((sum, item) => sum + item.compliancePercentage, 0) / auditedClients,
+            )
+            : 0;
 
         return {
             totalClients,
@@ -103,6 +197,9 @@ export class DashboardService {
             pendingApprovals,
             revenue: paidInvoices._sum.amount || 0,
             revenueByMonth,
+            auditedClients,
+            averageCompliance,
+            clientComplianceComparison,
         };
     }
 
