@@ -91,8 +91,12 @@ export class UsersService {
                 // NOTE: Set FRONTEND_URL in arena360-api/.env (e.g. https://arena360.unifinitylab.com)
                 inviteLink = `${frontendUrl}/#/accept-invite?token=${inviteToken}`;
 
-                // Send Invite Email
-                await this.emailService.sendInvite(userData.email, inviteLink, 'Arena360');
+                // Email delivery should not block account creation.
+                try {
+                    await this.emailService.sendInvite(userData.email, inviteLink, 'Arena360');
+                } catch (error) {
+                    console.error(`Invite email delivery failed for ${userData.email}`, error);
+                }
             }
 
             return { user, inviteLink, expiresAt: inviteExpiresAt };
