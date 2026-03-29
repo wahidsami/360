@@ -20,6 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migrate": "prisma migrate deploy",
+    "db:recover:report-output-locale": "prisma migrate resolve --rolled-back 20260329130000_add_project_report_output_locale && prisma migrate deploy",
     "db:seed": "prisma db seed",
     "pdf:check": "node scripts/check-pdf-runtime.js",
     "stack:up": "docker-compose up -d",
