@@ -23,18 +23,125 @@ export class EmailService {
         }
     }
 
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    private buildEmailShell(title: string, eyebrow: string, body: string): string {
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>${title}</title>
+                </head>
+                <body style="margin:0; padding:0; background-color:#eef2ff; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); margin:0; padding:32px 16px;">
+                        <tr>
+                            <td align="center">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px;">
+                                    <tr>
+                                        <td style="padding-bottom:16px; text-align:center;">
+                                            <div style="display:inline-block; padding:8px 14px; border-radius:999px; background-color:#dbeafe; color:#1d4ed8; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">
+                                                ${eyebrow}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#ffffff; border:1px solid #dbe4f0; border-radius:28px; padding:40px 36px; box-shadow:0 18px 50px rgba(15, 23, 42, 0.10);">
+                                            ${body}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:18px 12px 0; text-align:center; color:#64748b; font-size:12px; line-height:1.7;">
+                                            Arena360 secure workspace access
+                                            <br />
+                                            If the button does not open, copy the link below into your browser.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+            </html>
+        `;
+    }
+
+    private buildInviteEmail(to: string, inviteLink: string, orgName: string): { html: string; text: string } {
+        const safeOrgName = this.escapeHtml(orgName);
+        const safeInviteLink = this.escapeHtml(inviteLink);
+        const safeRecipient = this.escapeHtml(to);
+
+        const html = this.buildEmailShell(
+            `Invitation to join ${safeOrgName}`,
+            'Arena360 Invitation',
+            `
+                <div style="margin-bottom:28px;">
+                    <div style="width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); color:#ffffff; font-size:24px; font-weight:800; line-height:56px; text-align:center; margin-bottom:20px;">A</div>
+                    <h1 style="margin:0 0 12px; font-size:34px; line-height:1.15; color:#0f172a;">You’re invited to join ${safeOrgName}</h1>
+                    <p style="margin:0; font-size:16px; line-height:1.7; color:#475569;">
+                        Hi ${safeRecipient}, your Arena360 workspace is ready. Use the secure invitation below to activate your account and start collaborating with your team.
+                    </p>
+                </div>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 28px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:22px;">
+                    <tr>
+                        <td style="padding:22px 22px 8px;">
+                            <div style="font-size:13px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#2563eb; margin-bottom:10px;">What happens next</div>
+                            <div style="font-size:15px; line-height:1.8; color:#334155;">
+                                1. Open your invitation link<br />
+                                2. Set your password and complete account setup<br />
+                                3. Access your workspace and assigned client context
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 22px 22px;">
+                            <a href="${safeInviteLink}" style="display:inline-block; background:linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%); color:#ffffff; text-decoration:none; font-size:16px; font-weight:700; padding:15px 26px; border-radius:14px;">
+                                Accept Invitation
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="margin-bottom:24px;">
+                    <div style="font-size:13px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#475569; margin-bottom:10px;">Direct link</div>
+                    <div style="background-color:#0f172a; color:#e2e8f0; border-radius:18px; padding:18px 20px; font-size:13px; line-height:1.7; word-break:break-all;">
+                        <a href="${safeInviteLink}" style="color:#93c5fd; text-decoration:none;">${safeInviteLink}</a>
+                    </div>
+                </div>
+
+                <div style="padding:18px 20px; border-radius:18px; background-color:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; font-size:14px; line-height:1.7;">
+                    This invitation expires in <strong>72 hours</strong>. If you were not expecting this email, you can ignore it safely.
+                </div>
+            `,
+        );
+
+        const text = [
+            `You're invited to join ${orgName} on Arena360.`,
+            '',
+            `Hi ${to},`,
+            '',
+            'Your workspace is ready. Open the secure link below to activate your account and finish setup:',
+            inviteLink,
+            '',
+            'This invitation expires in 72 hours.',
+            'If you were not expecting this email, you can ignore it safely.',
+        ].join('\n');
+
+        return { html, text };
+    }
+
     async sendInvite(to: string, inviteLink: string, orgName: string = 'Arena360'): Promise<void> {
         const subject = `You've been invited to join ${orgName}`;
-        const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                <h1>Welcome to ${orgName}</h1>
-                <p>You have been invited to join the <strong>${orgName}</strong> workspace on Arena360.</p>
-                <p>Click the button below to accept your invitation and set up your account:</p>
-                <a href="${inviteLink}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Accept Invitation</a>
-                <p>or copy this link: <br> <a href="${inviteLink}">${inviteLink}</a></p>
-                <p>This link will expire in 72 hours.</p>
-            </div>
-        `;
+        const { html, text } = this.buildInviteEmail(to, inviteLink, orgName);
 
         if (this.resend) {
             try {
@@ -43,6 +150,7 @@ export class EmailService {
                     to,
                     subject,
                     html,
+                    text,
                 });
                 if (response.error) {
                     this.logger.error(`Failed to send invite email to ${to}: ${response.error.message}`);
