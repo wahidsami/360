@@ -164,7 +164,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
   const complianceSeries = useMemo(
     () =>
       (stats?.clientComplianceComparison || [])
-        .map((item: { clientId: string; clientName: string; compliancePercentage: number; needsAttentionChecks: number; scoredChecks: number }, index: number) => ({
+        .map((item: { clientId: string; clientName: string; compliancePercentage: number; needsAttentionChecks: number; scoredChecks: number; audited?: boolean }, index: number) => ({
           ...item,
           rank: index + 1,
           shortName: `${index + 1}. ${item.clientName.length > 16 ? `${item.clientName.slice(0, 16)}...` : item.clientName}`,
@@ -175,7 +175,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
   const topPerformer = complianceSeries[0] || null;
   const lowestPerformer = complianceSeries.length > 0 ? complianceSeries[complianceSeries.length - 1] : null;
   const complianceChartHeight = Math.max(220, complianceSeries.length * 52);
-  const useCompactComplianceLayout = complianceSeries.length <= 2;
+  const useCompactComplianceLayout = complianceSeries.length <= 4;
 
   const findingsSeverityData = useMemo(
     () =>
@@ -295,6 +295,10 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     if (item.clientId) {
       openClient(item.clientId);
     }
+  };
+
+  const scrollToLatestUpdates = () => {
+    document.getElementById('dashboard-latest-updates')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (loading) {
@@ -529,7 +533,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                           <div>
                             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">#{item.rank}</p>
                             <p className="mt-2 text-xl font-black text-white">{item.clientName}</p>
-                            <p className="mt-1 text-sm text-slate-300">{item.scoredChecks} {t('reviewed_checks').toLowerCase()}</p>
+                            <p className="mt-1 text-sm text-slate-300">
+                              {item.audited ? `${item.scoredChecks} ${t('reviewed_checks').toLowerCase()}` : t('not_audited_yet')}
+                            </p>
                           </div>
                           <div className="space-y-3">
                             <div className="flex items-center justify-between text-sm">
@@ -544,7 +550,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                             </div>
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-slate-400">{t('checks_needing_attention')}</span>
-                              <span className="font-black text-amber-300">{item.needsAttentionChecks}</span>
+                              <span className="font-black text-amber-300">{item.audited ? item.needsAttentionChecks : '--'}</span>
                             </div>
                           </div>
                         </button>
@@ -594,7 +600,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                               cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
                               contentStyle={tooltipStyle}
                               formatter={(value: number, _name, context: any) => [
-                                `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`,
+                                context?.payload?.audited
+                                  ? `${value}% | ${context?.payload?.scoredChecks ?? 0} ${t('reviewed_checks').toLowerCase()}`
+                                  : t('not_audited_yet'),
                                 t('client_compliance_score'),
                               ]}
                               labelFormatter={(_label, payload: any) => payload?.[0]?.payload?.clientName || ''}
@@ -631,7 +639,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                       <p className="mt-2 text-lg font-black text-white">{topPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('client_compliance_score')}</span>
-                        <span className="font-black text-emerald-300">{topPerformer.compliancePercentage}%</span>
+                        <span className="font-black text-emerald-300">{topPerformer.audited ? `${topPerformer.compliancePercentage}%` : t('not_audited_short')}</span>
                       </div>
                     </div>
                   )}
@@ -641,7 +649,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                       <p className="mt-2 text-lg font-black text-white">{lowestPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('checks_needing_attention')}</span>
-                        <span className="font-black text-amber-300">{lowestPerformer.needsAttentionChecks}</span>
+                        <span className="font-black text-amber-300">{lowestPerformer.audited ? lowestPerformer.needsAttentionChecks : t('not_audited_short')}</span>
                       </div>
                     </div>
                   )}
@@ -848,7 +856,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 items-stretch gap-6">
         {has('latest-updates') && (
-          <GlassCard className="xl:col-span-5 h-full overflow-hidden" title={t('latest_updates')}>
+          <GlassCard id="dashboard-latest-updates" className="xl:col-span-5 h-full overflow-hidden" title={t('latest_updates')}>
             <div className="space-y-5">
               {(stats.latestUpdates as ProjectUpdate[]).length > 0 ? (
                 (stats.latestUpdates as ProjectUpdate[]).map((update) => (
@@ -924,22 +932,28 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
         {has('pending-approvals') && (
           <GlassCard className="xl:col-span-3 h-full overflow-hidden" title={t('pending_approvals')}>
-            <div className="flex h-full min-h-[168px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
+            <div className="flex h-full min-h-[148px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{t('awaiting_verification')}</p>
-                  <div className="mt-3 text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
+                  <div className="mt-3 text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.pendingApprovals}</div>
                 </div>
                 <div className="rounded-2xl bg-cyan-500/12 p-3 text-cyan-300">
                   <FileText className="h-5 w-5" />
                 </div>
               </div>
-              <div className="mt-5 rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 dark:border-slate-800/70 dark:bg-slate-900/50">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+              <div className="mt-auto pt-4">
+                <button
+                  type="button"
+                  onClick={scrollToLatestUpdates}
+                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 text-left transition-all hover:bg-slate-100/80 dark:border-slate-800/70 dark:bg-slate-900/50 dark:hover:bg-slate-900/80"
+                >
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+                  </div>
                   <ArrowRight className="h-4 w-4 text-slate-400" />
-                </div>
+                </button>
               </div>
             </div>
           </GlassCard>

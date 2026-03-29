@@ -51,9 +51,11 @@ export class DashboardService {
         }
 
         // Aggregate stats within user's org
-        const [totalClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals, accessibilityReports] = await Promise.all([
-            this.prisma.client.count({
-                where: { orgId: user.orgId, deletedAt: null, status: 'ACTIVE' }
+        const [activeClients, projects, tasks, pendingMilestones, paidInvoices, paidInvoicesByMonth, recentUpdates, pendingApprovals, accessibilityReports] = await Promise.all([
+            this.prisma.client.findMany({
+                where: { orgId: user.orgId, deletedAt: null, status: 'ACTIVE' },
+                select: { id: true, name: true },
+                orderBy: { name: 'asc' },
             }),
             this.prisma.project.findMany({
                 where: { orgId: user.orgId },
@@ -127,6 +129,8 @@ export class DashboardService {
             }),
         ]);
 
+        const totalClients = activeClients.length;
+
         const activeProjects = projects.filter(p =>
             p.status === 'IN_PROGRESS' || p.status === 'PLANNING'
         ).length;
@@ -162,10 +166,10 @@ export class DashboardService {
             latestReportByClient.set(report.clientId, report);
         }
 
-        const clientComplianceComparison = Array.from(latestReportByClient.values())
-            .map((report) => {
+        const reportMetricsByClient = new Map(
+            Array.from(latestReportByClient.values()).map((report) => {
                 const metrics = this.getComplianceMetrics(report.entries);
-                return {
+                return [report.clientId, {
                     clientId: report.clientId,
                     clientName: report.client?.name || 'Unknown Client',
                     projectId: report.projectId,
@@ -176,24 +180,56 @@ export class DashboardService {
                     scoredChecks: metrics.scoredChecks,
                     needsAttentionChecks: metrics.counts.FAIL + metrics.counts.PARTIAL,
                     totalChecks: report.entries.length,
+                    audited: report.entries.length > 0,
+                }];
+            }),
+        );
+
+        const clientComplianceComparison = activeClients
+            .map((client) => {
+                const reportMetrics = reportMetricsByClient.get(client.id);
+                if (reportMetrics) {
+                    return reportMetrics;
+                }
+
+                return {
+                    clientId: client.id,
+                    clientName: client.name,
+                    projectId: null,
+                    reportId: null,
+                    reportTitle: null,
+                    latestReportAt: null,
+                    compliancePercentage: 0,
+                    scoredChecks: 0,
+                    needsAttentionChecks: 0,
+                    totalChecks: 0,
+                    audited: false,
                 };
             })
-            .filter((item) => item.totalChecks > 0)
             .sort((a, b) => {
+                if (a.audited !== b.audited) {
+                    return a.audited ? -1 : 1;
+                }
                 if (b.compliancePercentage !== a.compliancePercentage) {
                     return b.compliancePercentage - a.compliancePercentage;
                 }
                 return a.clientName.localeCompare(b.clientName);
             });
 
-        const auditedClients = clientComplianceComparison.length;
+        const auditedClients = clientComplianceComparison.filter((item) => item.audited).length;
         const averageCompliance = auditedClients > 0
             ? Math.round(
-                clientComplianceComparison.reduce((sum, item) => sum + item.compliancePercentage, 0) / auditedClients,
+                clientComplianceComparison
+                    .filter((item) => item.audited)
+                    .reduce((sum, item) => sum + item.compliancePercentage, 0) / auditedClients,
             )
             : 0;
-        const needsAttentionChecks = clientComplianceComparison.reduce((sum, item) => sum + item.needsAttentionChecks, 0);
-        const scoredChecks = clientComplianceComparison.reduce((sum, item) => sum + item.scoredChecks, 0);
+        const needsAttentionChecks = clientComplianceComparison
+            .filter((item) => item.audited)
+            .reduce((sum, item) => sum + item.needsAttentionChecks, 0);
+        const scoredChecks = clientComplianceComparison
+            .filter((item) => item.audited)
+            .reduce((sum, item) => sum + item.scoredChecks, 0);
 
         return {
             totalClients,
