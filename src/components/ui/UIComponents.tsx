@@ -166,13 +166,13 @@ interface KpiCardProps {
     icon?: React.ReactNode;
     compact?: boolean;
     className?: string;
+    helperText?: string;
 }
 
-export const KpiCard = ({ label, value, trend, trendUp, icon, compact = false, className = '' }: KpiCardProps) => (
+export const KpiCard = ({ label, value, trend, trendUp, icon, compact = false, className = '', helperText }: KpiCardProps) => (
     <div className={`group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-xl dark:hover:shadow-cyan-500/5 transition-all duration-300 hover:-translate-y-1 ${className}`}>
-        {/* Subtle gradient overlay for light theme */}
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/40 via-transparent to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        
+
         <div className={`relative z-10 ${compact ? 'p-4 md:p-5' : 'p-6'}`}>
             <div className={`flex justify-between items-start ${compact ? 'mb-3' : 'mb-4'}`}>
                 <h3 className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest`}>{label}</h3>
@@ -186,10 +186,15 @@ export const KpiCard = ({ label, value, trend, trendUp, icon, compact = false, c
                 <div className={`${compact ? 'text-3xl md:text-[2rem]' : 'text-4xl'} font-black text-slate-900 dark:text-white tracking-tight leading-none`}>{value}</div>
                 {trend !== undefined && (
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {trendUp ? '↑' : '↓'} {trend}
+                        {trendUp ? '+' : '-'} {trend}
                     </span>
                 )}
             </div>
+            {helperText && (
+                <p className={`mt-2 ${compact ? 'text-[11px]' : 'text-xs'} font-medium text-slate-500 dark:text-slate-400`}>
+                    {helperText}
+                </p>
+            )}
         </div>
     </div>
 );
