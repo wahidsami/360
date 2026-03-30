@@ -25,6 +25,11 @@ export class ClientsController {
         return this.clientsService.findOne(id, req.user);
     }
 
+    @Get(':id/financial-summary')
+    getFinancialSummary(@Request() req: any, @Param('id') id: string) {
+        return this.clientsService.getFinancialSummary(id, req.user);
+    }
+
     @Patch(':id')
     update(@Request() req: any, @Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
         return this.clientsService.update(id, req.user, updateClientDto);

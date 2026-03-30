@@ -317,6 +317,26 @@ export const api = {
         return undefined;
       }
     },
+    getFinancialSummary: async (id: string): Promise<{
+      openInvoices: number;
+      overdueAmount: number;
+      totalPaid: number;
+      activeContracts: number;
+      nextContractEndDate: string | null;
+    }> => {
+      try {
+        return await fetchApi(`/clients/${id}/financial-summary`);
+      } catch (e) {
+        console.error('Failed to get client financial summary:', e);
+        return {
+          openInvoices: 0,
+          overdueAmount: 0,
+          totalPaid: 0,
+          activeContracts: 0,
+          nextContractEndDate: null,
+        };
+      }
+    },
     create: async (payload: Omit<Client, 'id' | 'revenueYTD' | 'outstandingBalance' | 'lastActivity'>): Promise<Client> => {
       const body = {
         ...payload,

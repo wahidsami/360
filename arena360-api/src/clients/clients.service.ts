@@ -140,6 +140,73 @@ export class ClientsService {
         });
     }
 
+    async getFinancialSummary(id: string, user: UserWithRoles) {
+        await this.findOne(id, user);
+
+        const projects = await this.prisma.project.findMany({
+            where: {
+                orgId: user.orgId,
+                clientId: id,
+                deletedAt: null,
+            },
+            select: { id: true },
+        });
+
+        const projectIds = projects.map((project) => project.id);
+        if (projectIds.length === 0) {
+            return {
+                openInvoices: 0,
+                overdueAmount: 0,
+                totalPaid: 0,
+                activeContracts: 0,
+                nextContractEndDate: null,
+            };
+        }
+
+        const [invoices, contracts] = await Promise.all([
+            this.prisma.invoice.findMany({
+                where: {
+                    orgId: user.orgId,
+                    projectId: { in: projectIds },
+                    deletedAt: null,
+                },
+                select: {
+                    amount: true,
+                    status: true,
+                },
+            }),
+            this.prisma.contract.findMany({
+                where: {
+                    orgId: user.orgId,
+                    projectId: { in: projectIds },
+                    deletedAt: null,
+                },
+                select: {
+                    endDate: true,
+                    status: true,
+                },
+            }),
+        ]);
+
+        const activeContracts = contracts.filter((contract) => contract.status === 'ACTIVE');
+        const nextContractEndDate = activeContracts
+            .map((contract) => contract.endDate)
+            .filter((endDate): endDate is Date => !!endDate)
+            .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
+
+        return {
+            openInvoices: invoices.filter((invoice) => invoice.status === 'ISSUED' || invoice.status === 'OVERDUE').length,
+            overdueAmount: invoices
+                .filter((invoice) => invoice.status === 'OVERDUE')
+                .reduce((sum, invoice) => sum + invoice.amount, 0),
+            totalPaid: invoices
+                .filter((invoice) => invoice.status === 'PAID')
+                .reduce((sum, invoice) => sum + invoice.amount, 0),
+            activeContracts: activeContracts.length,
+            nextContractEndDate,
+        };
+    }
+
     async archive(id: string, user: UserWithRoles) {
         await this.findOne(id, user);
         return this.prisma.client.update({

@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal';
 import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { useAuth } from '../contexts/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
 export const ClientDetails: React.FC = () => {
     const { t } = useTranslation();
@@ -23,6 +24,13 @@ export const ClientDetails: React.FC = () => {
     const [members, setMembers] = useState<ClientMember[]>([]);
     const [files, setFiles] = useState<FileAsset[]>([]);
     const [activity, setActivity] = useState<ActivityLog[]>([]);
+    const [financialSummary, setFinancialSummary] = useState({
+        openInvoices: 0,
+        overdueAmount: 0,
+        totalPaid: 0,
+        activeContracts: 0,
+        nextContractEndDate: null as string | null,
+    });
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
 
@@ -47,6 +55,13 @@ export const ClientDetails: React.FC = () => {
             setMembers([]);
             setFiles([]);
             setActivity([]);
+            setFinancialSummary({
+                openInvoices: 0,
+                overdueAmount: 0,
+                totalPaid: 0,
+                activeContracts: 0,
+                nextContractEndDate: null,
+            });
             loadData(clientId, () => isCurrent);
         }
 
@@ -73,11 +88,18 @@ export const ClientDetails: React.FC = () => {
             return;
         }
 
-        const [p, m, f, a] = await Promise.allSettled([
+        const [p, m, f, a, financials] = await Promise.allSettled([
             api.projects.getByClient(requestedClientId),
             api.clients.getMembers(requestedClientId),
             api.clients.getFiles(requestedClientId),
-            isClientPortalUser ? Promise.resolve([]) : api.clients.getActivity(requestedClientId)
+            isClientPortalUser ? Promise.resolve([]) : api.clients.getActivity(requestedClientId),
+            can(Permission.VIEW_FINANCIALS) ? api.clients.getFinancialSummary(requestedClientId) : Promise.resolve({
+                openInvoices: 0,
+                overdueAmount: 0,
+                totalPaid: 0,
+                activeContracts: 0,
+                nextContractEndDate: null,
+            }),
         ]);
 
         if (!isCurrent()) return;
@@ -85,6 +107,13 @@ export const ClientDetails: React.FC = () => {
         setMembers(m.status === 'fulfilled' ? m.value : []);
         setFiles(f.status === 'fulfilled' ? f.value : []);
         setActivity(a.status === 'fulfilled' ? a.value : []);
+        setFinancialSummary(financials.status === 'fulfilled' ? financials.value : {
+            openInvoices: 0,
+            overdueAmount: 0,
+            totalPaid: 0,
+            activeContracts: 0,
+            nextContractEndDate: null,
+        });
         setLoading(false);
     };
 
@@ -456,25 +485,40 @@ export const ClientDetails: React.FC = () => {
                     </GlassCard>
                 )}
 
-                {/* FINANCIALS (Placeholder logic as mocked) */}
+                {/* FINANCIALS */}
                 {activeTab === 'financials' && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <GlassCard title="Invoices">
                             <div className="text-center py-8">
-                                <h4 className="text-3xl font-bold text-white mb-2">3</h4>
+                                <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.openInvoices}</h4>
                                 <p className="text-slate-500 text-sm">Open Invoices</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-rose-400 text-sm font-medium">Overdue: $12,500</span>
+                                <span className="text-rose-400 text-sm font-medium">
+                                    Overdue: {formatCurrency(financialSummary.overdueAmount, 'SAR')}
+                                </span>
                             </div>
                         </GlassCard>
                         <GlassCard title="Contracts">
                             <div className="text-center py-8">
-                                <h4 className="text-3xl font-bold text-white mb-2">1</h4>
+                                <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.activeContracts}</h4>
                                 <p className="text-slate-500 text-sm">Active Contract</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-emerald-400 text-sm font-medium">Exp: Dec 2024</span>
+                                <span className="text-emerald-400 text-sm font-medium">
+                                    {financialSummary.nextContractEndDate
+                                        ? `Exp: ${new Date(financialSummary.nextContractEndDate).toLocaleDateString()}`
+                                        : 'No expiry set'}
+                                </span>
+                            </div>
+                        </GlassCard>
+                        <GlassCard title="Payments">
+                            <div className="text-center py-8">
+                                <h4 className="text-3xl font-bold text-white mb-2">{formatCurrency(financialSummary.totalPaid, 'SAR')}</h4>
+                                <p className="text-slate-500 text-sm">Paid Invoices</p>
+                            </div>
+                            <div className="border-t border-slate-700/50 pt-4 text-center">
+                                <span className="text-cyan-400 text-sm font-medium">Across all active client projects</span>
                             </div>
                         </GlassCard>
                     </div>
