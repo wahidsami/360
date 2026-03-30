@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, ListTodo, Users, AlertCircle, X } from 'lucide-react';
 import { api, SearchResultItem } from '../services/api';
@@ -45,6 +46,19 @@ export const SearchResults: React.FC<{ open: boolean; onClose: () => void; initi
     if (open) setQ(initialQuery);
   }, [open, initialQuery]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+
   const handleSelect = (item: SearchResultItem) => {
     onClose();
     if (item.type === 'project') navigate(`/app/projects/${item.id}`);
@@ -53,31 +67,31 @@ export const SearchResults: React.FC<{ open: boolean; onClose: () => void; initi
     else if (item.type === 'finding') navigate(`/app/findings/${item.id}`);
   };
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[2147483646] flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative z-[2147483647] w-full max-w-xl overflow-hidden rounded-2xl border border-cyan-500/25 bg-slate-900 shadow-[0_30px_90px_rgba(2,6,23,0.7)] animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 p-3 border-b border-slate-700">
+        <div className="flex items-center gap-2 border-b border-slate-700 p-3">
           <input
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search projects, tasks, clients, findings..."
-            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan-500"
+            className="flex-1 rounded-lg border border-cyan-500/40 bg-slate-950 px-4 py-2 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none"
             autoFocus
           />
-          <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg">
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:text-white">
+            <X className="h-5 w-5" />
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
-          {loading && <div className="p-4 text-slate-500 text-sm">Searching...</div>}
-          {!loading && results.length === 0 && q.length >= 2 && <div className="p-4 text-slate-500 text-sm">No results.</div>}
-          {!loading && results.length === 0 && q.length < 2 && <div className="p-4 text-slate-500 text-sm">Type at least 2 characters.</div>}
+          {loading && <div className="p-4 text-sm text-slate-500">Searching...</div>}
+          {!loading && results.length === 0 && q.length >= 2 && <div className="p-4 text-sm text-slate-500">No results.</div>}
+          {!loading && results.length === 0 && q.length < 2 && <div className="p-4 text-sm text-slate-500">Type at least 2 characters.</div>}
           {!loading &&
             results.map((item) => {
               const Icon = iconMap[item.type];
@@ -85,20 +99,21 @@ export const SearchResults: React.FC<{ open: boolean; onClose: () => void; initi
                 <button
                   key={`${item.type}-${item.id}`}
                   type="button"
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800/80 text-left"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-800/80"
                   onClick={() => handleSelect(item)}
                 >
-                  <Icon className="w-5 h-5 text-cyan-400 shrink-0" />
+                  <Icon className="h-5 w-5 shrink-0 text-cyan-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{item.title}</p>
-                    {item.subtitle && <p className="text-xs text-slate-500 truncate">{item.subtitle}</p>}
+                    <p className="truncate font-medium text-slate-100">{item.title}</p>
+                    {item.subtitle && <p className="truncate text-xs text-slate-500">{item.subtitle}</p>}
                   </div>
-                  <span className="text-xs text-slate-500 capitalize">{item.type}</span>
+                  <span className="text-xs capitalize text-slate-500">{item.type}</span>
                 </button>
               );
             })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
