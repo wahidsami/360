@@ -211,7 +211,17 @@ export class FilesService {
                 orgId: user.orgId,
                 projectId,
                 scopeType: 'PROJECT',
+                deletedAt: null,
+                category: {
+                    in: ['DOCS', 'DESIGNS', 'BUILDS', 'OTHER'],
+                },
                 ...(isClientUser && { visibility: 'CLIENT' }),
+                projectReportEntryMedia: {
+                    none: {},
+                },
+                projectReportExports: {
+                    none: {},
+                },
             },
             include: {
                 uploader: {
