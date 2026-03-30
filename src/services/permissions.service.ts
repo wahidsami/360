@@ -14,11 +14,11 @@ export class PermissionsService {
             'timeline', 'sprints', 'reports', 'time',
             'recurring', 'files', 'team', 'financials', 'testing', 'activity', 'automations', 'compliance'],
 
-        [Role.DEV]: ['overview', 'discussions', 'tasks', 'milestones', 'timeline', 'sprints',
-            'reports', 'time', 'recurring', 'files', 'testing', 'activity'],
+        [Role.DEV]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
+            'reports', 'team', 'files'],
 
-        [Role.QA]: ['overview', 'discussions', 'tasks', 'milestones', 'timeline', 'sprints',
-            'reports', 'time', 'recurring', 'files', 'testing', 'activity'],
+        [Role.QA]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
+            'reports', 'team', 'files'],
 
         [Role.FINANCE]: ['overview', 'financials', 'reports', 'files', 'activity'],
 
