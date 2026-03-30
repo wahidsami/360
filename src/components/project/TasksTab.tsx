@@ -17,6 +17,8 @@ interface TasksTabProps {
     onJoin: () => void;
     currentUserId: string;
     defaultFilter?: 'all' | 'my-tasks';
+    canManageTasks?: boolean;
+    canJoinTeam?: boolean;
 }
 
 const KANBAN_COLUMNS = [
@@ -28,7 +30,20 @@ const KANBAN_COLUMNS = [
     { id: 'done', label: 'done', color: 'text-emerald-400', border: 'border-emerald-800' },
 ];
 
-export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones, members, onUpsert, onDelete, onMove, onJoin, currentUserId, defaultFilter = 'all' }) => {
+export const TasksTab: React.FC<TasksTabProps> = ({
+    projectId,
+    tasks,
+    milestones,
+    members,
+    onUpsert,
+    onDelete,
+    onMove,
+    onJoin,
+    currentUserId,
+    defaultFilter = 'all',
+    canManageTasks = false,
+    canJoinTeam = false,
+}) => {
     const { t } = useTranslation();
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
     const [filter, setFilter] = useState<'all' | 'my-tasks'>(defaultFilter);
@@ -124,7 +139,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                     </button>
                 </div>
                 <div className="flex gap-2">
-                    {members.every(m => m.userId !== currentUserId) && (
+                    {canJoinTeam && members.every(m => m.userId !== currentUserId) && (
                         <Button variant="secondary" size="sm" onClick={onJoin}>{t('join_team')}</Button>
                     )}
                     <PermissionGate permission={Permission.MANAGE_TASKS}>
@@ -158,10 +173,12 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                                     <td className="p-4 text-slate-400">{members.find(m => m.userId === task.assigneeId)?.name || t('unassigned')}</td>
                                     <td className="p-4 text-slate-400">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}</td>
                                     <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => openEdit(task)} className="text-cyan-400 hover:text-cyan-300 text-sm">{t('edit')}</button>
-                                            <button onClick={() => handleDeleteConfirm(task.id)} className="text-rose-400 hover:text-rose-300"><Trash2 className="w-4 h-4" /></button>
-                                        </div>
+                                        {canManageTasks ? (
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => openEdit(task)} className="text-cyan-400 hover:text-cyan-300 text-sm">{t('edit')}</button>
+                                                <button onClick={() => handleDeleteConfirm(task.id)} className="text-rose-400 hover:text-rose-300"><Trash2 className="w-4 h-4" /></button>
+                                            </div>
+                                        ) : null}
                                     </td>
                                 </tr>
                             ))}
@@ -196,23 +213,25 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                                     {colTasks.map(task => (
                                         <div
                                             key={task.id}
-                                            draggable
-                                            onDragStart={e => handleDragStart(e, task.id)}
-                                            onDragEnd={handleDragEnd}
-                                            onClick={() => openEdit(task)}
-                                            className={`bg-slate-800 p-3 rounded-lg border border-slate-700 hover:border-cyan-500/50 cursor-grab active:cursor-grabbing shadow-sm group transition-all ${draggedTaskId === task.id ? 'opacity-40 scale-95' : 'opacity-100'}`}
+                                            draggable={canManageTasks}
+                                            onDragStart={canManageTasks ? e => handleDragStart(e, task.id) : undefined}
+                                            onDragEnd={canManageTasks ? handleDragEnd : undefined}
+                                            onClick={canManageTasks ? () => openEdit(task) : undefined}
+                                            className={`bg-slate-800 p-3 rounded-lg border border-slate-700 ${canManageTasks ? 'hover:border-cyan-500/50 cursor-grab active:cursor-grabbing' : 'cursor-default'} shadow-sm group transition-all ${draggedTaskId === task.id ? 'opacity-40 scale-95' : 'opacity-100'}`}
                                         >
                                             <div className="flex items-start justify-between gap-1 mb-2">
                                                 <p className="font-medium text-white text-sm group-hover:text-cyan-400 transition-colors flex-1 min-w-0 truncate">{task.title}</p>
-                                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <GripVertical className="w-3 h-3 text-slate-500" />
-                                                    <button
-                                                        onClick={e => { e.stopPropagation(); handleDeleteConfirm(task.id); }}
-                                                        className="text-slate-500 hover:text-rose-400 transition-colors"
-                                                    >
-                                                        <Trash2 className="w-3 h-3" />
-                                                    </button>
-                                                </div>
+                                                {canManageTasks ? (
+                                                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <GripVertical className="w-3 h-3 text-slate-500" />
+                                                        <button
+                                                            onClick={e => { e.stopPropagation(); handleDeleteConfirm(task.id); }}
+                                                            className="text-slate-500 hover:text-rose-400 transition-colors"
+                                                        >
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                ) : null}
                                             </div>
                                             <div className="flex items-center justify-between text-xs text-slate-500">
                                                 <span className="flex items-center gap-1">
@@ -238,7 +257,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
                                     ))}
                                     {colTasks.length === 0 && (
                                         <div className={`h-16 rounded-lg border-2 border-dashed ${isOver ? 'border-cyan-500/60 bg-cyan-500/5' : 'border-slate-700/50'} flex items-center justify-center transition-all`}>
-                                            <p className="text-xs text-slate-600">{t('drop_here')}</p>
+                                            <p className="text-xs text-slate-600">{canManageTasks ? t('drop_here') : t('no_tasks')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -249,7 +268,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ projectId, tasks, milestones
             )}
 
             {/* Edit / Create Modal */}
-            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={selectedTask.id ? t('edit_task') : t('create_task')}>
+            <Modal isOpen={modalOpen && canManageTasks} onClose={() => setModalOpen(false)} title={selectedTask.id ? t('edit_task') : t('create_task')}>
                 <div className="space-y-4">
                     <Input name="title" label={t('title')} value={selectedTask.title || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedTask({ ...selectedTask, title: e.target.value })} required />
                     <TextArea name="description" label={t('description')} value={selectedTask.description || ''} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSelectedTask({ ...selectedTask, description: e.target.value })} />

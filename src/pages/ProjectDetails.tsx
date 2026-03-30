@@ -695,6 +695,8 @@ export const ProjectDetails: React.FC = () => {
               onJoin={() => handleAddMember(user?.id || '', user?.role as any)}
               currentUserId={user?.id || ''}
               defaultFilter={(user?.role === Role.QA || user?.role === Role.DEV) ? 'my-tasks' : 'all'}
+              canManageTasks={can(Permission.MANAGE_TASKS)}
+              canJoinTeam={!!user && isInternalRole(user.role)}
             />}
             {activeTab === 'time' && projectId && <TimeTab projectId={projectId} tasks={tasks} currentUserId={user?.id} />}
             {activeTab === 'timeline' && projectId && <TimelineTab projectId={projectId} tasks={tasks} onRefreshTasks={async () => { if (projectId) { const tsk = await api.projects.getTasks(projectId); setTasks(tsk); refreshReadiness(); } }} />}

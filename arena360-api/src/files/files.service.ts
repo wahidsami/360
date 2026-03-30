@@ -196,7 +196,7 @@ export class FilesService {
         // Verify project exists and user has access
         const project = await this.prisma.project.findFirst({
             where: { id: projectId, ...ScopeUtils.projectScope(user) },
-            select: { id: true, clientId: true }
+            select: { id: true }
         });
 
         if (!project) {
@@ -209,17 +209,8 @@ export class FilesService {
         return this.prisma.fileAsset.findMany({
             where: {
                 orgId: user.orgId,
-                OR: [
-                    {
-                        projectId,
-                        scopeType: 'PROJECT',
-                    },
-                    {
-                        clientId: project.clientId,
-                        scopeType: 'CLIENT',
-                        visibility: 'CLIENT',
-                    },
-                ],
+                projectId,
+                scopeType: 'PROJECT',
                 ...(isClientUser && { visibility: 'CLIENT' }),
             },
             include: {
