@@ -14,7 +14,7 @@ import { useAI } from '../contexts/AIContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PermissionsService } from '../services/permissions.service';
 import toast from 'react-hot-toast';
-import { PROJECT_TAB_DEFINITIONS, PROJECT_TAB_GROUPS, ProjectTabId } from '@/features/project-workspace/registry';
+import { buildDefaultProjectWorkspaceConfigDraft, PROJECT_TAB_DEFINITIONS, PROJECT_TAB_GROUPS, ProjectTabId } from '@/features/project-workspace/registry';
 import { resolveProjectWorkspace } from '@/features/project-workspace/resolver';
 
 export const ProjectDetails: React.FC = () => {
@@ -99,6 +99,12 @@ export const ProjectDetails: React.FC = () => {
         .map((tab) => tab.tabId),
     );
 
+    const fallbackClientWorkspaceConfig = !isInternalUser && !project?.workspaceConfig
+      ? {
+          tabs: buildDefaultProjectWorkspaceConfigDraft(project?.clientId).tabs,
+        }
+      : null;
+
     const shouldApplyWorkspaceTemplateToRole = Boolean(
       project?.workspaceConfig &&
       (
@@ -116,13 +122,14 @@ export const ProjectDetails: React.FC = () => {
     return resolveProjectWorkspace({
       visibleTabIds: roleVisibleTabIds,
       readOnlyTabIds: roleReadOnlyTabIds,
-      workspaceConfig: shouldApplyWorkspaceTemplateToRole && project?.workspaceConfig
-        ? {
-            tabs: normalizedWorkspaceTabs,
-          }
-        : null,
+      workspaceConfig:
+        shouldApplyWorkspaceTemplateToRole && project?.workspaceConfig
+          ? {
+              tabs: normalizedWorkspaceTabs,
+            }
+          : fallbackClientWorkspaceConfig,
     });
-  }, [project?.workspaceConfig, user?.role]);
+  }, [project?.clientId, project?.workspaceConfig, user?.role]);
 
   const tabStateMap = resolvedWorkspace.tabStates;
   const canInteractWithTab = React.useCallback((tabId: ProjectTabId) => tabStateMap[tabId] === 'visible_interactive', [tabStateMap]);

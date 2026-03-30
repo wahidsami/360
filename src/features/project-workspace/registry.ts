@@ -427,12 +427,20 @@ export function resolveDependentTabs(hiddenPrimaryTabs: ProjectTabId[]): Project
 }
 
 export function buildDefaultProjectWorkspaceConfigDraft(assignedClientId?: string): ProjectWorkspaceConfigDraft {
+  const defaultClientTabStates: Partial<Record<ProjectTabId, WorkspaceTabState>> = {
+    overview: 'visible_read_only',
+    discussions: 'visible_interactive',
+    updates: 'visible_read_only',
+    reports: 'visible_read_only',
+    files: 'visible_read_only',
+  };
+
   return {
     assignedClientId,
     audienceType: 'client',
     tabs: TEMPLATE_CONFIGURABLE_TAB_DEFINITIONS.map((definition, index) => ({
       tabId: definition.id,
-      state: definition.defaultClientState || 'hidden',
+      state: defaultClientTabStates[definition.id] || 'hidden',
       orderIndex: index + 1,
     })),
     overviewSections: [],
