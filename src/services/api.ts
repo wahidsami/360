@@ -440,11 +440,21 @@ export const api = {
       }
     },
     getActivity: async (clientId: string): Promise<ActivityLog[]> => {
-      // Backend Activity Service not yet implemented
-      return [];
+      try {
+        return await fetchApi(`/clients/${clientId}/activity`);
+      } catch (e) {
+        console.error('Failed to get client activity:', e);
+        return [];
+      }
     },
     logActivity: async (entityId: string, action: string, description: string, userId: string, userName: string) => {
-      // Backend Activity Service not yet implemented
+      console.debug('Client activity logging helper is not currently used.', {
+        entityId,
+        action,
+        description,
+        userId,
+        userName,
+      });
     },
     getMyClient: async (userId: string): Promise<Client | undefined> => {
       try {

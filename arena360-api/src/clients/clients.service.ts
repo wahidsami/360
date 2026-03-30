@@ -207,6 +207,61 @@ export class ClientsService {
         };
     }
 
+    async getActivity(id: string, user: UserWithRoles) {
+        await this.findOne(id, user);
+
+        const projects = await this.prisma.project.findMany({
+            where: {
+                orgId: user.orgId,
+                clientId: id,
+                deletedAt: null,
+            },
+            select: {
+                id: true,
+                name: true,
+            },
+        });
+
+        const projectIds = projects.map((project) => project.id);
+        if (projectIds.length === 0) {
+            return [];
+        }
+
+        const projectMap = new Map(projects.map((project) => [project.id, project.name]));
+
+        const feeds = await this.prisma.activityFeed.findMany({
+            where: {
+                orgId: user.orgId,
+                projectId: { in: projectIds },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 30,
+        });
+
+        const userIds = [...new Set(feeds.map((feed) => feed.userId))];
+        const users = userIds.length
+            ? await this.prisma.user.findMany({
+                where: { id: { in: userIds } },
+                select: { id: true, name: true },
+            })
+            : [];
+
+        const userMap = new Map(users.map((entry) => [entry.id, entry.name]));
+
+        return feeds.map((feed) => ({
+            id: feed.id,
+            entityId: feed.entityId ?? feed.id,
+            action: feed.action,
+            description: feed.projectId && projectMap.has(feed.projectId)
+                ? `${feed.description} (${projectMap.get(feed.projectId)})`
+                : feed.description,
+            userId: feed.userId,
+            userName: userMap.get(feed.userId) ?? 'Unknown',
+            timestamp: feed.createdAt.toISOString(),
+            type: feed.entityType as 'file' | 'update' | 'comment' | 'system',
+        }));
+    }
+
     async archive(id: string, user: UserWithRoles) {
         await this.findOne(id, user);
         return this.prisma.client.update({

@@ -30,6 +30,11 @@ export class ClientsController {
         return this.clientsService.getFinancialSummary(id, req.user);
     }
 
+    @Get(':id/activity')
+    getActivity(@Request() req: any, @Param('id') id: string) {
+        return this.clientsService.getActivity(id, req.user);
+    }
+
     @Patch(':id')
     update(@Request() req: any, @Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
         return this.clientsService.update(id, req.user, updateClientDto);

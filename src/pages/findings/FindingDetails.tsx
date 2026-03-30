@@ -17,7 +17,6 @@ interface RichFinding extends Finding {
   projectName: string;
   clientName: string;
   created: string;
-  timeline?: { id: string; action: string; user: string; date: string; detail?: string }[];
 }
 
 
@@ -43,6 +42,11 @@ export const FindingDetails: React.FC = () => {
   });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const formatTimelineAction = (action: string) =>
+    action
+      .replace(/^finding\./, '')
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, (match) => match.toUpperCase());
 
   useEffect(() => {
     if (findingId) setContext({ findingId });
@@ -59,31 +63,21 @@ export const FindingDetails: React.FC = () => {
     const load = async () => {
       if (!findingId) return;
       setLoading(true);
-      const basicFinding = await api.findings.get(findingId);
+      const [basicFinding, commentData, allUsers] = await Promise.all([
+        api.findings.get(findingId),
+        api.findings.getComments(findingId),
+        api.users.list(),
+      ]);
 
       if (basicFinding) {
-        // Enrich basic API data with mock details for the UI demo
-        const project = (await api.projects.list()).find(p => p.id === basicFinding.projectId);
-        const client = (await api.clients.list()).find(c => c.id === project?.clientId);
-
         setFinding({
           ...basicFinding,
-          projectName: project?.name || 'Unknown Project',
-          clientName: client?.name || 'Unknown Client',
-          created: basicFinding.createdAt || new Date().toISOString(),
-          timeline: [
-            { id: 't1', action: 'Created', user: basicFinding.reportedBy?.name || 'System', date: basicFinding.createdAt },
-            ...(basicFinding.updatedAt && basicFinding.updatedAt !== basicFinding.createdAt ? [
-              { id: 't2', action: 'Last Updated', user: 'System', date: basicFinding.updatedAt }
-            ] : [])
-          ]
+          projectName: basicFinding.project?.name || 'Unknown Project',
+          clientName: basicFinding.project?.client?.name || 'Unknown Client',
+          created: basicFinding.createdAt ? new Date(basicFinding.createdAt).toLocaleString() : 'Unknown',
         });
-
-        const commentData = await api.findings.getComments(findingId);
         setComments(commentData);
 
-        // Fetch all organization users and filter for internal ones (PM, DEV, OPS, etc.)
-        const allUsers = await api.users.list();
         const internalStaff = allUsers.filter(u => isInternalRole(u.role));
         setAssignableUsers(internalStaff);
       }
@@ -551,11 +545,11 @@ export const FindingDetails: React.FC = () => {
                     <div className={`absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 ${idx === 0 ? 'bg-slate-900 border-slate-500' : 'bg-cyan-900 border-cyan-500'}`}></div>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium text-slate-200">{event.action}</p>
+                        <p className="text-sm font-medium text-slate-200">{formatTimelineAction(event.action)}</p>
                         {event.detail && <p className="text-xs text-slate-400 mt-0.5">{event.detail}</p>}
                         <p className="text-xs text-slate-500 mt-1">by {event.user}</p>
                       </div>
-                      <span className="text-xs text-slate-600">{event.date}</span>
+                      <span className="text-xs text-slate-600">{new Date(event.date).toLocaleString()}</span>
                     </div>
                   </div>
                 ))}

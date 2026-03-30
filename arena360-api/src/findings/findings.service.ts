@@ -71,7 +71,17 @@ export class FindingsService {
             },
             include: {
                 project: {
-                    select: { id: true, name: true, clientId: true }
+                    select: {
+                        id: true,
+                        name: true,
+                        clientId: true,
+                        client: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    }
                 },
                 reportedBy: {
                     select: { id: true, name: true, email: true }
@@ -94,7 +104,35 @@ export class FindingsService {
             throw new ForbiddenException('You do not have access to this finding');
         }
 
-        return finding;
+        const timelineFeeds = await this.prisma.activityFeed.findMany({
+            where: {
+                orgId: user.orgId,
+                entityType: 'finding',
+                entityId: id,
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        const timelineUserIds = [...new Set(timelineFeeds.map((feed) => feed.userId))];
+        const timelineUsers = timelineUserIds.length
+            ? await this.prisma.user.findMany({
+                where: { id: { in: timelineUserIds } },
+                select: { id: true, name: true },
+            })
+            : [];
+
+        const timelineUserMap = new Map(timelineUsers.map((entry) => [entry.id, entry.name]));
+
+        return {
+            ...finding,
+            timeline: timelineFeeds.map((feed) => ({
+                id: feed.id,
+                action: feed.action,
+                user: timelineUserMap.get(feed.userId) ?? 'System',
+                date: feed.createdAt.toISOString(),
+                detail: feed.description,
+            })),
+        };
     }
 
     async findAllGlobal(user: UserWithRoles) {

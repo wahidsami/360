@@ -494,11 +494,24 @@ export interface Finding {
     email: string;
   };
   project?: {
+    id?: string;
     name: string;
+    clientId?: string;
+    client?: {
+      id?: string;
+      name: string;
+    };
   };
   updatedAt?: string;
   createdAt?: string;
   evidence?: EvidenceFile[];
+  timeline?: {
+    id: string;
+    action: string;
+    user: string;
+    date: string;
+    detail?: string;
+  }[];
 }
 
 export interface ProjectUpdate {
