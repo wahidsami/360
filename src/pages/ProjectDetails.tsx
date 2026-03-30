@@ -52,6 +52,7 @@ export const ProjectDetails: React.FC = () => {
       return resolveProjectWorkspace({ visibleTabIds: [] });
     }
 
+    const isInternalUser = isInternalRole(user.role);
     const roleVisibleTabIds = PermissionsService.getVisibleTabs(user.role)
       .filter((tabId): tabId is ProjectTabId => PROJECT_TAB_DEFINITIONS.some((definition) => definition.id === tabId));
 
@@ -98,15 +99,24 @@ export const ProjectDetails: React.FC = () => {
         .map((tab) => tab.tabId),
     );
 
+    const shouldApplyWorkspaceTemplateToRole = Boolean(
+      project?.workspaceConfig &&
+      (
+        project.workspaceConfig.audienceType === 'mixed' ||
+        project.workspaceConfig.audienceType === 'internal' ||
+        !isInternalUser
+      )
+    );
+
     const roleReadOnlyTabIds = PROJECT_TAB_DEFINITIONS
       .filter((definition) => PermissionsService.isTabReadOnly(user.role, definition.id))
-      .filter((definition) => !interactiveWorkspaceTabs.has(definition.id))
+      .filter((definition) => !shouldApplyWorkspaceTemplateToRole || !interactiveWorkspaceTabs.has(definition.id))
       .map((definition) => definition.id);
 
     return resolveProjectWorkspace({
       visibleTabIds: roleVisibleTabIds,
       readOnlyTabIds: roleReadOnlyTabIds,
-      workspaceConfig: project?.workspaceConfig
+      workspaceConfig: shouldApplyWorkspaceTemplateToRole && project?.workspaceConfig
         ? {
             tabs: normalizedWorkspaceTabs,
           }
