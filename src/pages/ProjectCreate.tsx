@@ -188,10 +188,12 @@ export const ProjectCreate: React.FC = () => {
           disabled={!formData.clientId}
         />
 
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('..')}>{t('cancel')}</Button>
-          <Button type="submit" disabled={loading} className="w-40">
-            <Save className="w-4 h-4 mr-2" />
+        <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:justify-end sm:items-center">
+          <Button type="button" variant="ghost" onClick={() => navigate('..')} className="sm:w-auto">
+            {t('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading} className="min-w-[10.5rem] whitespace-nowrap sm:w-auto">
+            <Save className="w-4 h-4 mr-2 shrink-0" />
             {loading ? 'Initializing...' : t('create_project')}
           </Button>
         </div>
