@@ -795,6 +795,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     const [replies, setReplies] = useState<DiscussionReply[]>([]);
     const [loadingReplies, setLoadingReplies] = useState(false);
     const [socketConnected, setSocketConnected] = useState(false);
+    const [roomSubscribed, setRoomSubscribed] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const pollTimerRef = useRef<number | null>(null);
     const pollDelayRef = useRef(5000);
@@ -1017,19 +1018,25 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
         });
         socketRef.current = socket;
 
-        socket.on('connect', async () => {
+        socket.on('connect', () => {
             setSocketConnected(true);
+            setRoomSubscribed(false);
             pollDelayRef.current = 5000;
-            socket.emit('project-discussions:join', { projectId });
-            await silentCatchUp();
+            socket.emit('project-discussions:join', { projectId }, async (response?: { ok?: boolean }) => {
+                const joined = response?.ok === true;
+                setRoomSubscribed(joined);
+                await silentCatchUp();
+            });
         });
 
         socket.on('disconnect', () => {
             setSocketConnected(false);
+            setRoomSubscribed(false);
         });
 
         socket.on('connect_error', () => {
             setSocketConnected(false);
+            setRoomSubscribed(false);
         });
 
         socket.on('discussion:thread-created', (payload: Discussion) => {
@@ -1075,7 +1082,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     }, [projectId, token, user]);
 
     useEffect(() => {
-        if (socketConnected) {
+        if (socketConnected && roomSubscribed) {
             if (pollTimerRef.current) {
                 window.clearTimeout(pollTimerRef.current);
                 pollTimerRef.current = null;
@@ -1102,7 +1109,17 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                 pollTimerRef.current = null;
             }
         };
-    }, [socketConnected, projectId]);
+    }, [socketConnected, roomSubscribed, projectId]);
+
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            void silentCatchUp();
+        }, 15000);
+
+        return () => {
+            window.clearInterval(interval);
+        };
+    }, [projectId]);
 
     // Group messages by day for dividers
     const grouped: { label: string; items: Discussion[] }[] = [];
@@ -1126,8 +1143,12 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                         <span className="font-bold text-white">{t('project_discussions')}</span>
                         <span className="text-slate-600 text-sm">·</span>
                         <span className="text-slate-500 text-sm">{t('threads_count', { count: threads.length })}</span>
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${socketConnected ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10' : 'text-amber-400 border-amber-500/20 bg-amber-500/10'}`}>
-                            {socketConnected ? 'Live' : 'Reconnecting'}
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                            socketConnected && roomSubscribed
+                                ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10'
+                                : 'text-amber-400 border-amber-500/20 bg-amber-500/10'
+                        }`}>
+                            {socketConnected && roomSubscribed ? 'Live' : 'Syncing'}
                         </span>
                     </div>
                     {canCreate ? (
