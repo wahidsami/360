@@ -931,8 +931,8 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         )}
 
         {has('pending-approvals') && (
-          <GlassCard className="xl:col-span-3 h-full overflow-hidden" title={t('pending_approvals')}>
-            <div className="flex h-full min-h-[148px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
+          <GlassCard className="xl:col-span-3 overflow-hidden self-start" title={t('pending_approvals')}>
+            <div className="space-y-4 rounded-3xl border border-slate-200/60 bg-slate-50/60 p-5 dark:border-slate-800/60 dark:bg-slate-950/25">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{t('awaiting_verification')}</p>
@@ -942,19 +942,17 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   <FileText className="h-5 w-5" />
                 </div>
               </div>
-              <div className="mt-auto pt-4">
-                <button
-                  type="button"
-                  onClick={scrollToLatestUpdates}
-                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 text-left transition-all hover:bg-slate-100/80 dark:border-slate-800/70 dark:bg-slate-900/50 dark:hover:bg-slate-900/80"
-                >
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={scrollToLatestUpdates}
+                className="flex w-full items-center justify-between rounded-2xl border border-slate-200/60 bg-white/50 px-4 py-3 text-left transition-all hover:bg-slate-100/80 dark:border-slate-800/70 dark:bg-slate-900/50 dark:hover:bg-slate-900/80"
+              >
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('latest_updates')}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.latestUpdates?.length ?? 0} {t('latest_updates').toLowerCase()}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-slate-400" />
+              </button>
             </div>
           </GlassCard>
         )}
