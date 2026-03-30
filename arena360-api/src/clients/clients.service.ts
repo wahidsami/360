@@ -6,6 +6,8 @@ import { GlobalRole } from '@prisma/client';
 
 @Injectable()
 export class ClientsService {
+    private readonly defaultAccessibilityTemplateCode = 'accessibility-audit';
+
     constructor(
         private prisma: PrismaService,
         private storage: StorageService
@@ -40,22 +42,70 @@ export class ClientsService {
         // Normalize status
         const status = createClientDto.status ? createClientDto.status.toUpperCase().replace(/-/g, '_') : undefined;
 
-        return this.prisma.client.create({
-            data: {
-                name: createClientDto.name,
-                industry: createClientDto.industry,
-                contactPerson: createClientDto.contactPerson,
-                email: createClientDto.email,
-                phone: createClientDto.phone,
-                website: createClientDto.website,
-                address: createClientDto.address,
-                notes: createClientDto.notes,
-                status: status as any,
-                billing: createClientDto.billing || undefined,
-                org: { connect: { id: user.orgId } },
-                // revenueYTD & outstandingBalance default to 0
-                lastActivity: new Date(),
-            },
+        return this.prisma.$transaction(async (tx) => {
+            const client = await tx.client.create({
+                data: {
+                    name: createClientDto.name,
+                    industry: createClientDto.industry,
+                    contactPerson: createClientDto.contactPerson,
+                    email: createClientDto.email,
+                    phone: createClientDto.phone,
+                    website: createClientDto.website,
+                    address: createClientDto.address,
+                    notes: createClientDto.notes,
+                    status: status as any,
+                    billing: createClientDto.billing || undefined,
+                    org: { connect: { id: user.orgId } },
+                    lastActivity: new Date(),
+                },
+            });
+
+            const template = await tx.reportBuilderTemplate.findFirst({
+                where: {
+                    orgId: user.orgId,
+                    category: 'ACCESSIBILITY',
+                    code: this.defaultAccessibilityTemplateCode,
+                    status: 'ACTIVE',
+                },
+                include: {
+                    versions: {
+                        where: { isPublished: true },
+                        orderBy: [{ versionNumber: 'desc' }],
+                        take: 1,
+                    },
+                },
+            }) ?? await tx.reportBuilderTemplate.findFirst({
+                where: {
+                    orgId: user.orgId,
+                    category: 'ACCESSIBILITY',
+                    status: 'ACTIVE',
+                },
+                include: {
+                    versions: {
+                        where: { isPublished: true },
+                        orderBy: [{ versionNumber: 'desc' }],
+                        take: 1,
+                    },
+                },
+                orderBy: [{ updatedAt: 'desc' }],
+            });
+
+            const publishedVersion = template?.versions?.[0];
+            if (template && publishedVersion) {
+                await tx.clientReportTemplateAssignment.create({
+                    data: {
+                        orgId: user.orgId,
+                        clientId: client.id,
+                        templateId: template.id,
+                        templateVersionId: publishedVersion.id,
+                        isDefault: true,
+                        isActive: true,
+                        assignedById: user.id,
+                    },
+                });
+            }
+
+            return client;
         });
     }
 
