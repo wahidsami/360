@@ -21,6 +21,6 @@ import { IntegrationsModule } from '../integrations/integrations.module';
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsGateway],
-  exports: [NotificationsService],
+  exports: [NotificationsService, NotificationsGateway],
 })
 export class NotificationsModule {}

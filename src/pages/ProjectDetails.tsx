@@ -408,17 +408,14 @@ export const ProjectDetails: React.FC = () => {
   };
 
   // === Discussion Handlers ===
-  const handleCreateDiscussion = async (title: string, body: string) => {
+  const handleCreateDiscussion = async (title: string, body: string, clientRequestId?: string) => {
     if (!projectId) return;
-    await api.projects.createDiscussion(projectId, title, body);
-    const d = await api.projects.getDiscussions(projectId);
-    setDiscussions(d);
+    return api.projects.createDiscussion(projectId, title, body, clientRequestId);
   };
 
   const handleDeleteDiscussion = async (discussionId: string) => {
     if (!projectId) return;
     await api.projects.deleteDiscussion(projectId, discussionId);
-    setDiscussions(prev => prev.filter(d => d.id !== discussionId));
   };
 
   const handleGetReplies = async (discussionId: string): Promise<DiscussionReply[]> => {
@@ -426,11 +423,9 @@ export const ProjectDetails: React.FC = () => {
     return api.projects.getReplies(projectId, discussionId);
   };
 
-  const handleCreateReply = async (discussionId: string, body: string) => {
+  const handleCreateReply = async (discussionId: string, body: string, clientRequestId?: string) => {
     if (!projectId) return;
-    await api.projects.createReply(projectId, discussionId, body);
-    const d = await api.projects.getDiscussions(projectId);
-    setDiscussions(d);
+    return api.projects.createReply(projectId, discussionId, body, clientRequestId);
   };
 
   const handleDeleteReply = async (discussionId: string, replyId: string) => {

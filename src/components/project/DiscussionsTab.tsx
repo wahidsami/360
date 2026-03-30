@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Discussion, DiscussionReply } from '@/types';
 import { Button } from '../ui/UIComponents';
+import { io, Socket } from 'socket.io-client';
 import {
     MessageSquare, Plus, Send, Trash2, ChevronRight, ChevronDown, X,
     Smile, Hash,
@@ -16,10 +17,10 @@ import toast from 'react-hot-toast';
 interface DiscussionsTabProps {
     projectId: string;
     discussions: Discussion[];
-    onCreateThread: (title: string, body: string) => Promise<void>;
+    onCreateThread: (title: string, body: string, clientRequestId?: string) => Promise<Discussion | undefined>;
     onDeleteThread: (discussionId: string) => Promise<void>;
     onGetReplies: (discussionId: string) => Promise<DiscussionReply[]>;
-    onCreateReply: (discussionId: string, body: string) => Promise<void>;
+    onCreateReply: (discussionId: string, body: string, clientRequestId?: string) => Promise<DiscussionReply | undefined>;
     onDeleteReply: (discussionId: string, replyId: string) => Promise<void>;
     canCreate?: boolean;
 }
@@ -58,6 +59,56 @@ function dayLabel(iso: string) {
     if (isToday(d)) return 'Today';
     if (isYesterday(d)) return 'Yesterday';
     return format(d, 'EEEE, MMMM d');
+}
+
+const DISCUSSION_WS_URL = import.meta.env.VITE_API_URL || '';
+
+function createTempId(prefix: 'discussion' | 'reply') {
+    return `temp-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createClientRequestId(prefix: 'discussion' | 'reply') {
+    return `client-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function sortThreads(items: Discussion[]) {
+    return [...items].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+function sortReplies(items: DiscussionReply[]) {
+    return [...items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+function mergeThreads(remote: Discussion[], local: Discussion[]) {
+    const merged = [...remote];
+    for (const item of local) {
+        const isTransient = item.syncState === 'pending' || item.syncState === 'failed';
+        if (!isTransient) continue;
+        const hasRemoteMatch = merged.some((remoteItem) =>
+            remoteItem.id === item.id ||
+            (item.clientRequestId && remoteItem.clientRequestId === item.clientRequestId)
+        );
+        if (!hasRemoteMatch) {
+            merged.push(item);
+        }
+    }
+    return sortThreads(merged);
+}
+
+function mergeReplies(remote: DiscussionReply[], local: DiscussionReply[]) {
+    const merged = [...remote];
+    for (const item of local) {
+        const isTransient = item.syncState === 'pending' || item.syncState === 'failed';
+        if (!isTransient) continue;
+        const hasRemoteMatch = merged.some((remoteItem) =>
+            remoteItem.id === item.id ||
+            (item.clientRequestId && remoteItem.clientRequestId === item.clientRequestId)
+        );
+        if (!hasRemoteMatch) {
+            merged.push(item);
+        }
+    }
+    return sortReplies(merged);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -124,6 +175,23 @@ const ReplyBadge: React.FC<{ discussion: Discussion; onClick: () => void }> = ({
             )}
             <ChevronRight className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover/rep:opacity-100 transition-opacity" />
         </button>
+    );
+};
+
+const SyncStateNotice: React.FC<{ state?: 'pending' | 'failed'; errorMessage?: string; onRetry?: () => void }> = ({ state, errorMessage, onRetry }) => {
+    if (!state) return null;
+    if (state === 'pending') {
+        return <span className="text-[11px] text-amber-400 font-medium">Sending…</span>;
+    }
+    return (
+        <div className="flex items-center gap-2 mt-2">
+            <span className="text-[11px] text-rose-400 font-medium">{errorMessage || 'Failed to send'}</span>
+            {onRetry ? (
+                <button type="button" onClick={onRetry} className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300">
+                    Retry
+                </button>
+            ) : null}
+        </div>
     );
 };
 
@@ -458,9 +526,9 @@ const NewThreadModal: React.FC<{ onClose: () => void; onSubmit: (t: string, b: s
                 if (finalBody) finalBody += '\n';
                 finalBody += links.join('\n');
             }
-            await onSubmit(title.trim(), finalBody);
             setAttachedFiles([]);
             onClose();
+            await onSubmit(title.trim(), finalBody);
         } finally { setLoading(false); }
     };
 
@@ -521,8 +589,9 @@ const ThreadPanel: React.FC<{
     onClose: () => void;
     onSendReply: (body: string) => Promise<void>;
     onDeleteReply: (reply: DiscussionReply) => Promise<void>;
+    onRetryReply: (reply: DiscussionReply) => Promise<void>;
     onDeleteThread: (discussion: Discussion) => Promise<void>;
-}> = ({ discussion, replies, loading, userId, onClose, onSendReply, onDeleteReply, onDeleteThread }) => {
+}> = ({ discussion, replies, loading, userId, onClose, onSendReply, onDeleteReply, onRetryReply, onDeleteThread }) => {
     const { t } = useTranslation();
     const [replyText, setReplyText] = useState('');
     const [sending, setSending] = useState(false);
@@ -599,6 +668,7 @@ const ThreadPanel: React.FC<{
                         </div>
                         <p className="text-sm font-semibold text-cyan-300 mt-0.5">{discussion.title}</p>
                         <p className="text-sm text-slate-300 mt-1 whitespace-pre-wrap leading-relaxed">{discussion.body}</p>
+                        <SyncStateNotice state={discussion.syncState} errorMessage={discussion.errorMessage} />
                     </div>
                     <HoverActions showDelete={userId === discussion.authorId} onDelete={() => onDeleteThread(discussion)} />
                 </div>
@@ -669,6 +739,11 @@ const ThreadPanel: React.FC<{
                                                 </div>
                                             );
                                         })()}
+                                        <SyncStateNotice
+                                            state={reply.syncState}
+                                            errorMessage={reply.errorMessage}
+                                            onRetry={reply.syncState === 'failed' ? () => onRetryReply(reply) : undefined}
+                                        />
                                     </div>
                                     <HoverActions showDelete={userId === reply.authorId} onDelete={() => onDeleteReply(reply)} />
                                 </div>
@@ -713,43 +788,325 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
 }) => {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const token = localStorage.getItem('auth_token') || '';
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [threads, setThreads] = useState<Discussion[]>(() => sortThreads(discussions));
     const [activeThread, setActiveThread] = useState<Discussion | null>(null);
     const [replies, setReplies] = useState<DiscussionReply[]>([]);
     const [loadingReplies, setLoadingReplies] = useState(false);
+    const [socketConnected, setSocketConnected] = useState(false);
+    const socketRef = useRef<Socket | null>(null);
+    const pollTimerRef = useRef<number | null>(null);
+    const pollDelayRef = useRef(5000);
+    const activeThreadIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        setThreads((current) => mergeThreads(discussions, current));
+    }, [discussions, projectId]);
+
+    useEffect(() => {
+        if (!activeThread) return;
+        const next = threads.find((thread) =>
+            thread.id === activeThread.id ||
+            (activeThread.clientRequestId && thread.clientRequestId === activeThread.clientRequestId)
+        );
+        if (!next) {
+            setActiveThread(null);
+            setReplies([]);
+            return;
+        }
+        if (next !== activeThread) {
+            setActiveThread(next);
+        }
+    }, [activeThread, threads]);
+
+    useEffect(() => {
+        activeThreadIdRef.current = activeThread?.id ?? null;
+    }, [activeThread?.id]);
+
+    const updateThreadMeta = (discussionId: string, patch: Partial<Discussion>) => {
+        setThreads((current) => sortThreads(current.map((thread) => (
+            thread.id === discussionId ? { ...thread, ...patch } : thread
+        ))));
+        setActiveThread((current) => current?.id === discussionId ? { ...current, ...patch } : current);
+    };
+
+    const refreshThreads = async () => {
+        const latest = await api.projects.getDiscussions(projectId);
+        setThreads((current) => mergeThreads(latest, current));
+    };
+
+    const refreshReplies = async (discussionId: string) => {
+        const latest = await onGetReplies(discussionId);
+        setReplies((current) => mergeReplies(latest, current.filter((reply) => reply.discussionId === discussionId)));
+    };
+
+    const silentCatchUp = async () => {
+        await refreshThreads();
+        if (activeThreadIdRef.current) {
+            await refreshReplies(activeThreadIdRef.current);
+        }
+    };
 
     const openThread = async (thread: Discussion) => {
         setActiveThread(thread);
         setLoadingReplies(true);
-        const r = await onGetReplies(thread.id);
-        setReplies(r);
-        setLoadingReplies(false);
+        try {
+            await refreshReplies(thread.id);
+        } finally {
+            setLoadingReplies(false);
+        }
     };
 
     const closeThread = () => { setActiveThread(null); setReplies([]); };
 
     const handleSendReply = async (body: string) => {
         if (!activeThread) return;
-        await onCreateReply(activeThread.id, body);
-        const r = await onGetReplies(activeThread.id);
-        setReplies(r);
+        const discussionId = activeThread.id;
+        const tempId = createTempId('reply');
+        const clientRequestId = createClientRequestId('reply');
+        const optimisticReply: DiscussionReply = {
+            id: tempId,
+            discussionId,
+            body,
+            authorId: user?.id || 'me',
+            authorName: user?.name || 'You',
+            authorAvatar: user?.avatar,
+            createdAt: new Date().toISOString(),
+            clientRequestId,
+            syncState: 'pending',
+        };
+
+        setReplies((current) => sortReplies([...current, optimisticReply]));
+
+        try {
+            const created = await onCreateReply(discussionId, body, clientRequestId);
+            if (created) {
+                setReplies((current) => sortReplies([
+                    ...current.filter((reply) => reply.id !== tempId && reply.clientRequestId !== clientRequestId && reply.id !== created.id),
+                    created,
+                ]));
+                updateThreadMeta(discussionId, {
+                    replyCount: (activeThread.replyCount || 0) + 1,
+                    lastReplyAt: created.createdAt,
+                    updatedAt: created.createdAt,
+                });
+            } else {
+                setReplies((current) => current.map((reply) => (
+                    reply.id === tempId ? { ...reply, syncState: 'failed', errorMessage: 'Failed to send reply.' } : reply
+                )));
+                await silentCatchUp();
+            }
+        } catch {
+            setReplies((current) => current.map((reply) => (
+                reply.id === tempId ? { ...reply, syncState: 'failed', errorMessage: 'Failed to send reply.' } : reply
+            )));
+            await silentCatchUp();
+        }
     };
 
     const handleDeleteReply = async (reply: DiscussionReply) => {
         if (!activeThread || !window.confirm('Delete this reply?')) return;
         await onDeleteReply(activeThread.id, reply.id);
         setReplies(prev => prev.filter(r => r.id !== reply.id));
+        await silentCatchUp();
+    };
+
+    const handleRetryReply = async (reply: DiscussionReply) => {
+        const nextRequestId = createClientRequestId('reply');
+        setReplies((current) => current.map((entry) => (
+            entry.id === reply.id
+                ? { ...entry, syncState: 'pending', errorMessage: undefined, clientRequestId: nextRequestId }
+                : entry
+        )));
+
+        const created = await onCreateReply(reply.discussionId, reply.body, nextRequestId);
+        if (created) {
+            setReplies((current) => sortReplies([
+                ...current.filter((entry) => entry.id !== reply.id && entry.clientRequestId !== nextRequestId && entry.id !== created.id),
+                created,
+            ]));
+            updateThreadMeta(reply.discussionId, {
+                replyCount: (activeThread?.replyCount || 0) + 1,
+                lastReplyAt: created.createdAt,
+                updatedAt: created.createdAt,
+            });
+        } else {
+            setReplies((current) => current.map((entry) => (
+                entry.id === reply.id ? { ...entry, syncState: 'failed', errorMessage: 'Failed to send reply.' } : entry
+            )));
+        }
     };
 
     const handleDeleteThread = async (thread: Discussion) => {
         if (!window.confirm(`Delete "${thread.title}"? All replies will be removed.`)) return;
         await onDeleteThread(thread.id);
-        if (activeThread?.id === thread.id) closeThread();
+        setThreads((current) => current.filter((entry) => entry.id !== thread.id));
+        if (activeThreadIdRef.current === thread.id) closeThread();
     };
+
+    const handleCreateThreadOptimistic = async (title: string, body: string) => {
+        const tempId = createTempId('discussion');
+        const clientRequestId = createClientRequestId('discussion');
+        const nowIso = new Date().toISOString();
+        const optimisticThread: Discussion = {
+            id: tempId,
+            projectId,
+            title,
+            body,
+            authorId: user?.id || 'me',
+            authorName: user?.name || 'You',
+            authorAvatar: user?.avatar,
+            replyCount: 0,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+            clientRequestId,
+            syncState: 'pending',
+        };
+
+        setThreads((current) => sortThreads([optimisticThread, ...current]));
+
+        try {
+            const created = await onCreateThread(title, body, clientRequestId);
+            if (created) {
+                setThreads((current) => sortThreads([
+                    created,
+                    ...current.filter((thread) => thread.id !== tempId && thread.clientRequestId !== clientRequestId && thread.id !== created.id),
+                ]));
+            } else {
+                setThreads((current) => current.map((thread) => (
+                    thread.id === tempId ? { ...thread, syncState: 'failed', errorMessage: 'Failed to post thread.' } : thread
+                )));
+            }
+        } catch {
+            setThreads((current) => current.map((thread) => (
+                thread.id === tempId ? { ...thread, syncState: 'failed', errorMessage: 'Failed to post thread.' } : thread
+            )));
+        }
+    };
+
+    const handleRetryThread = async (thread: Discussion) => {
+        const nextRequestId = createClientRequestId('discussion');
+        setThreads((current) => current.map((entry) => (
+            entry.id === thread.id
+                ? { ...entry, syncState: 'pending', errorMessage: undefined, clientRequestId: nextRequestId, updatedAt: new Date().toISOString() }
+                : entry
+        )));
+
+        const created = await onCreateThread(thread.title, thread.body, nextRequestId);
+        if (created) {
+            setThreads((current) => sortThreads([
+                created,
+                ...current.filter((entry) => entry.id !== thread.id && entry.clientRequestId !== nextRequestId && entry.id !== created.id),
+            ]));
+        } else {
+            setThreads((current) => current.map((entry) => (
+                entry.id === thread.id ? { ...entry, syncState: 'failed', errorMessage: 'Failed to post thread.' } : entry
+            )));
+        }
+    };
+
+    useEffect(() => {
+        if (!user || !token) return;
+
+        const socket = io(DISCUSSION_WS_URL, {
+            path: '/ws',
+            auth: { token },
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+        });
+        socketRef.current = socket;
+
+        socket.on('connect', async () => {
+            setSocketConnected(true);
+            pollDelayRef.current = 5000;
+            socket.emit('project-discussions:join', { projectId });
+            await silentCatchUp();
+        });
+
+        socket.on('disconnect', () => {
+            setSocketConnected(false);
+        });
+
+        socket.on('connect_error', () => {
+            setSocketConnected(false);
+        });
+
+        socket.on('discussion:thread-created', (payload: Discussion) => {
+            setThreads((current) => sortThreads([
+                payload,
+                ...current.filter((thread) => thread.id !== payload.id && (!payload.clientRequestId || thread.clientRequestId !== payload.clientRequestId)),
+            ]));
+        });
+
+        socket.on('discussion:thread-deleted', (payload: { discussionId: string }) => {
+            setThreads((current) => current.filter((thread) => thread.id !== payload.discussionId));
+            if (activeThreadIdRef.current === payload.discussionId) {
+                closeThread();
+            }
+        });
+
+        socket.on('discussion:reply-created', (payload: { discussionId: string; reply: DiscussionReply; discussion?: Partial<Discussion> }) => {
+            if (payload.discussion) {
+                updateThreadMeta(payload.discussionId, payload.discussion);
+            }
+            if (activeThreadIdRef.current === payload.discussionId) {
+                setReplies((current) => sortReplies([
+                    ...current.filter((reply) => reply.id !== payload.reply.id && (!payload.reply.clientRequestId || reply.clientRequestId !== payload.reply.clientRequestId)),
+                    payload.reply,
+                ]));
+            }
+        });
+
+        socket.on('discussion:reply-deleted', (payload: { discussionId: string; replyId: string; discussion?: Partial<Discussion> }) => {
+            if (payload.discussion) {
+                updateThreadMeta(payload.discussionId, payload.discussion);
+            }
+            if (activeThreadIdRef.current === payload.discussionId) {
+                setReplies((current) => current.filter((reply) => reply.id !== payload.replyId));
+            }
+        });
+
+        return () => {
+            socket.emit('project-discussions:leave', { projectId });
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [projectId, token, user]);
+
+    useEffect(() => {
+        if (socketConnected) {
+            if (pollTimerRef.current) {
+                window.clearTimeout(pollTimerRef.current);
+                pollTimerRef.current = null;
+            }
+            return;
+        }
+
+        const schedule = () => {
+            pollTimerRef.current = window.setTimeout(async () => {
+                try {
+                    await silentCatchUp();
+                } finally {
+                    pollDelayRef.current = Math.min(pollDelayRef.current * 2, 30000);
+                    schedule();
+                }
+            }, pollDelayRef.current);
+        };
+
+        schedule();
+
+        return () => {
+            if (pollTimerRef.current) {
+                window.clearTimeout(pollTimerRef.current);
+                pollTimerRef.current = null;
+            }
+        };
+    }, [socketConnected, projectId]);
 
     // Group messages by day for dividers
     const grouped: { label: string; items: Discussion[] }[] = [];
-    discussions.forEach(d => {
+    threads.forEach(d => {
         const lbl = dayLabel(d.createdAt);
         const last = grouped[grouped.length - 1];
         if (last?.label === lbl) last.items.push(d);
@@ -768,7 +1125,10 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                         <Hash className="w-5 h-5 text-slate-400" />
                         <span className="font-bold text-white">{t('project_discussions')}</span>
                         <span className="text-slate-600 text-sm">·</span>
-                        <span className="text-slate-500 text-sm">{t('threads_count', { count: discussions.length })}</span>
+                        <span className="text-slate-500 text-sm">{t('threads_count', { count: threads.length })}</span>
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${socketConnected ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10' : 'text-amber-400 border-amber-500/20 bg-amber-500/10'}`}>
+                            {socketConnected ? 'Live' : 'Reconnecting'}
+                        </span>
                     </div>
                     {canCreate ? (
                         <Button onClick={() => setIsModalOpen(true)} className="text-sm py-1.5 px-4">
@@ -779,7 +1139,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
 
                 {/* Message feed */}
                 <div className="flex-1 overflow-y-auto px-2 py-3">
-                    {discussions.length === 0 ? (
+                    {threads.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
                             <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
                                 <MessageSquare className="w-8 h-8 text-slate-600" />
@@ -835,6 +1195,11 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                                                         </span>
                                                     </div>
                                                     <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">{thread.body}</p>
+                                                    <SyncStateNotice
+                                                        state={thread.syncState}
+                                                        errorMessage={thread.errorMessage}
+                                                        onRetry={thread.syncState === 'failed' ? () => handleRetryThread(thread) : undefined}
+                                                    />
 
                                                     {/* Reply count row */}
                                                     <ReplyBadge discussion={thread} onClick={() => openThread(thread)} />
@@ -894,6 +1259,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                         onClose={closeThread}
                         onSendReply={handleSendReply}
                         onDeleteReply={handleDeleteReply}
+                        onRetryReply={handleRetryReply}
                         onDeleteThread={handleDeleteThread}
                     />
                 </div>
@@ -903,7 +1269,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
             {isModalOpen && canCreate && (
                 <NewThreadModal
                     onClose={() => setIsModalOpen(false)}
-                    onSubmit={onCreateThread}
+                    onSubmit={handleCreateThreadOptimistic}
                 />
             )}
         </div>

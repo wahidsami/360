@@ -342,6 +342,9 @@ export interface Discussion {
   lastReplyAt?: string;
   createdAt: string;
   updatedAt: string;
+  clientRequestId?: string;
+  syncState?: 'pending' | 'failed';
+  errorMessage?: string;
 }
 
 export interface DiscussionReply {
@@ -352,6 +355,9 @@ export interface DiscussionReply {
   authorName: string;
   authorAvatar?: string;
   createdAt: string;
+  clientRequestId?: string;
+  syncState?: 'pending' | 'failed';
+  errorMessage?: string;
 }
 
 export type ProjectStatus = 'planning' | 'in_progress' | 'testing' | 'deployed' | 'maintenance' | 'archived' | 'on_hold' | 'completed';

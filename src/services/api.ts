@@ -763,11 +763,11 @@ export const api = {
         return [];
       }
     },
-    createDiscussion: async (projectId: string, title: string, body: string): Promise<Discussion | undefined> => {
+    createDiscussion: async (projectId: string, title: string, body: string, clientRequestId?: string): Promise<Discussion | undefined> => {
       try {
         return await fetchApi(`/projects/${projectId}/discussions`, {
           method: 'POST',
-          body: JSON.stringify({ title, body })
+          body: JSON.stringify({ title, body, clientRequestId })
         });
       } catch (e) {
         console.error('Failed to create discussion:', e);
@@ -782,11 +782,11 @@ export const api = {
         return [];
       }
     },
-    createReply: async (projectId: string, discussionId: string, body: string): Promise<DiscussionReply | undefined> => {
+    createReply: async (projectId: string, discussionId: string, body: string, clientRequestId?: string): Promise<DiscussionReply | undefined> => {
       try {
         return await fetchApi(`/projects/${projectId}/discussions/${discussionId}/replies`, {
           method: 'POST',
-          body: JSON.stringify({ body })
+          body: JSON.stringify({ body, clientRequestId })
         });
       } catch (e) {
         console.error('Failed to create reply:', e);

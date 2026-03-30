@@ -1,4 +1,4 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateDiscussionDto {
     @IsString()
@@ -8,4 +8,8 @@ export class CreateDiscussionDto {
     @IsString()
     @MinLength(1)
     body: string;
+
+    @IsOptional()
+    @IsString()
+    clientRequestId?: string;
 }

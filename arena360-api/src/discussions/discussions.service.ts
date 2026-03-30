@@ -3,10 +3,44 @@ import { PrismaService } from '../common/prisma.service';
 import { UserWithRoles, ScopeUtils } from '../common/utils/scope.utils';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class DiscussionsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private readonly notificationsGateway: NotificationsGateway,
+    ) { }
+
+    private toDiscussionPayload(d: any, clientRequestId?: string) {
+        return {
+            id: d.id,
+            projectId: d.projectId,
+            title: d.title,
+            body: d.body,
+            authorId: d.authorId,
+            authorName: d.author.name,
+            authorAvatar: d.author.avatar,
+            replyCount: d._count?.replies ?? 0,
+            lastReplyAt: d.replies?.[0]?.createdAt ?? null,
+            createdAt: d.createdAt,
+            updatedAt: d.updatedAt,
+            ...(clientRequestId ? { clientRequestId } : {}),
+        };
+    }
+
+    private toReplyPayload(r: any, clientRequestId?: string) {
+        return {
+            id: r.id,
+            discussionId: r.discussionId,
+            body: r.body,
+            authorId: r.authorId,
+            authorName: r.author.name,
+            authorAvatar: r.author.avatar,
+            createdAt: r.createdAt,
+            ...(clientRequestId ? { clientRequestId } : {}),
+        };
+    }
 
     async listForProject(projectId: string, user: UserWithRoles) {
         // Verify project belongs to org
@@ -29,19 +63,7 @@ export class DiscussionsService {
             orderBy: { updatedAt: 'desc' }
         });
 
-        return discussions.map(d => ({
-            id: d.id,
-            projectId: d.projectId,
-            title: d.title,
-            body: d.body,
-            authorId: d.authorId,
-            authorName: d.author.name,
-            authorAvatar: d.author.avatar,
-            replyCount: d._count.replies,
-            lastReplyAt: d.replies[0]?.createdAt ?? null,
-            createdAt: d.createdAt,
-            updatedAt: d.updatedAt,
-        }));
+        return discussions.map((discussion) => this.toDiscussionPayload(discussion));
     }
 
     async createThread(projectId: string, user: UserWithRoles, dto: CreateDiscussionDto) {
@@ -59,22 +81,18 @@ export class DiscussionsService {
                 body: dto.body,
             },
             include: {
-                author: { select: { id: true, name: true, avatar: true } }
+                author: { select: { id: true, name: true, avatar: true } },
+                _count: { select: { replies: true } },
+                replies: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                },
             }
         });
 
-        return {
-            id: discussion.id,
-            projectId: discussion.projectId,
-            title: discussion.title,
-            body: discussion.body,
-            authorId: discussion.authorId,
-            authorName: discussion.author.name,
-            authorAvatar: discussion.author.avatar,
-            replyCount: 0,
-            createdAt: discussion.createdAt,
-            updatedAt: discussion.updatedAt,
-        };
+        const payload = this.toDiscussionPayload(discussion, dto.clientRequestId);
+        this.notificationsGateway.emitDiscussionEvent(projectId, 'discussion:thread-created', payload);
+        return payload;
     }
 
     async getReplies(projectId: string, discussionId: string, user: UserWithRoles) {
@@ -91,15 +109,7 @@ export class DiscussionsService {
             orderBy: { createdAt: 'asc' }
         });
 
-        return replies.map(r => ({
-            id: r.id,
-            discussionId: r.discussionId,
-            body: r.body,
-            authorId: r.authorId,
-            authorName: r.author.name,
-            authorAvatar: r.author.avatar,
-            createdAt: r.createdAt,
-        }));
+        return replies.map((reply) => this.toReplyPayload(reply));
     }
 
     async createReply(projectId: string, discussionId: string, user: UserWithRoles, dto: CreateReplyDto) {
@@ -121,20 +131,29 @@ export class DiscussionsService {
         });
 
         // Bump the discussion updatedAt
-        await this.prisma.discussion.update({
+        const updatedDiscussion = await this.prisma.discussion.update({
             where: { id: discussionId },
             data: { updatedAt: new Date() }
         });
 
-        return {
-            id: reply.id,
-            discussionId: reply.discussionId,
-            body: reply.body,
-            authorId: reply.authorId,
-            authorName: reply.author.name,
-            authorAvatar: reply.author.avatar,
-            createdAt: reply.createdAt,
-        };
+        const replyCount = await this.prisma.discussionReply.count({
+            where: { discussionId, orgId: user.orgId },
+        });
+
+        const replyPayload = this.toReplyPayload(reply, dto.clientRequestId);
+        this.notificationsGateway.emitDiscussionEvent(projectId, 'discussion:reply-created', {
+            projectId,
+            discussionId,
+            reply: replyPayload,
+            discussion: {
+                id: discussionId,
+                replyCount,
+                lastReplyAt: reply.createdAt,
+                updatedAt: updatedDiscussion.updatedAt,
+            },
+        });
+
+        return replyPayload;
     }
 
     async deleteThread(projectId: string, discussionId: string, user: UserWithRoles) {
@@ -149,9 +168,18 @@ export class DiscussionsService {
         }
 
         await this.prisma.discussion.delete({ where: { id: discussionId } });
+        this.notificationsGateway.emitDiscussionEvent(projectId, 'discussion:thread-deleted', {
+            projectId,
+            discussionId,
+        });
     }
 
     async deleteReply(projectId: string, discussionId: string, replyId: string, user: UserWithRoles) {
+        const discussion = await this.prisma.discussion.findFirst({
+            where: { id: discussionId, projectId, orgId: user.orgId }
+        });
+        if (!discussion) throw new NotFoundException('Discussion not found');
+
         const reply = await this.prisma.discussionReply.findFirst({
             where: { id: replyId, discussionId, orgId: user.orgId }
         });
@@ -163,5 +191,34 @@ export class DiscussionsService {
         }
 
         await this.prisma.discussionReply.delete({ where: { id: replyId } });
+
+        const latestReply = await this.prisma.discussionReply.findFirst({
+            where: { discussionId, orgId: user.orgId },
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true },
+        });
+
+        const replyCount = await this.prisma.discussionReply.count({
+            where: { discussionId, orgId: user.orgId },
+        });
+
+        const updatedDiscussion = await this.prisma.discussion.update({
+            where: { id: discussionId },
+            data: {
+                updatedAt: latestReply?.createdAt ?? discussion.createdAt,
+            },
+        });
+
+        this.notificationsGateway.emitDiscussionEvent(projectId, 'discussion:reply-deleted', {
+            projectId,
+            discussionId,
+            replyId,
+            discussion: {
+                id: discussionId,
+                replyCount,
+                lastReplyAt: latestReply?.createdAt ?? null,
+                updatedAt: updatedDiscussion.updatedAt,
+            },
+        });
     }
 }
