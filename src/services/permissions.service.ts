@@ -3,16 +3,13 @@ import { Role, Permission } from '../types';
 export class PermissionsService {
     private static readonly ROLE_TABS: Record<string, string[]> = {
         [Role.SUPER_ADMIN]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
-            'timeline', 'sprints', 'reports', 'time',
-            'recurring', 'files', 'team', 'financials', 'testing', 'activity', 'automations', 'compliance'],
+            'reports', 'team', 'files', 'financials'],
 
         [Role.OPS]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
-            'timeline', 'sprints', 'reports', 'time',
-            'recurring', 'files', 'team', 'financials', 'testing', 'activity', 'automations', 'compliance'],
+            'reports', 'team', 'files', 'financials'],
 
         [Role.PM]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
-            'timeline', 'sprints', 'reports', 'time',
-            'recurring', 'files', 'team', 'financials', 'testing', 'activity', 'automations', 'compliance'],
+            'reports', 'team', 'files', 'financials'],
 
         [Role.DEV]: ['overview', 'discussions', 'tasks', 'milestones', 'updates',
             'reports', 'team', 'files'],
