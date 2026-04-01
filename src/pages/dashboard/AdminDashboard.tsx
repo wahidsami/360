@@ -559,7 +559,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                     </div>
                   ) : (
                     <div className="max-h-[560px] overflow-y-auto pr-2">
-                      <div dir={isRtl ? 'rtl' : 'ltr'} className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
+                      <div dir="ltr" className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={complianceSeries}
@@ -597,13 +597,13 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                               type="category"
                               dataKey="shortName"
                               stroke={chartAxisColor}
-                              tick={{ fill: chartAxisColor }}
+                              tick={{ fill: chartAxisColor, textAnchor: isRtl ? 'start' : 'end' }}
                               fontSize={12}
                               tickLine={false}
                               axisLine={false}
                               orientation={isRtl ? 'right' : 'left'}
                               mirror={false}
-                              tickMargin={8}
+                              tickMargin={isRtl ? 14 : 8}
                               width={isRtl ? 168 : 156}
                             />
                             <Tooltip
