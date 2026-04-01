@@ -388,7 +388,7 @@ export const ProjectDetails: React.FC = () => {
       refreshReadiness();
     } catch (error) {
       console.error("Failed to upload file:", error);
-      alert("Failed to upload file. Please try again.");
+      toast.error("Failed to upload file. Please try again.");
     }
   };
 
@@ -405,7 +405,7 @@ export const ProjectDetails: React.FC = () => {
       setFiles(fl);
       refreshReadiness();
     } else {
-      alert('Failed to delete file. Please try again.');
+      toast.error('Failed to delete file. Please try again.');
     }
   };
 
@@ -555,7 +555,7 @@ export const ProjectDetails: React.FC = () => {
         navigate(editPath);
       } else {
         console.error("Permission Denied for Edit Project Action");
-        alert("You do not have permission to edit this mission's parameters. Please contact an administrator.");
+        toast.error("You do not have permission to edit this mission's parameters. Please contact an administrator.");
       }
     }
   };

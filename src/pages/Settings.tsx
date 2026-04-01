@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { Role } from '../types';
 import toast from 'react-hot-toast';
+import { useAppDialog } from '../contexts/DialogContext';
 
 type SsoConfigItem = {
   id: string;
@@ -24,6 +25,7 @@ type SsoConfigItem = {
 const Settings: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { confirm } = useAppDialog();
   const [org, setOrg] = useState<{ id: string; name: string; slug?: string | null; plan: string; logo?: string | null; primaryColor?: string | null; accentColor?: string | null; maxUsers: number; maxProjects: number; maxStorageMB: number } | null>(null);
   const [usage, setUsage] = useState<{ users: number; projects: number; storageUsedMB: number } | null>(null);
   const [orgName, setOrgName] = useState('');
@@ -261,7 +263,13 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteSso = async (id: string) => {
-    if (!confirm('Delete this SSO configuration?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete SSO Configuration',
+      message: 'Delete this SSO configuration?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.org.deleteSsoConfig(id);
       toast.success('Deleted');
@@ -327,7 +335,13 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteCf = async (id: string) => {
-    if (!confirm('Delete this custom field? Values will be removed.')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete Custom Field',
+      message: 'Delete this custom field? Values will be removed.',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.customFields.deleteDef(id);
       toast.success('Deleted');
@@ -381,7 +395,13 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteSla = async (id: string) => {
-    if (!confirm('Delete this SLA policy? Trackers will be removed.')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete SLA Policy',
+      message: 'Delete this SLA policy? Trackers will be removed.',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.sla.deletePolicy(id);
       toast.success('Deleted');

@@ -11,6 +11,7 @@ import { Finding, User, isInternalRole, Role, Permission } from '@/types';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useAI } from '@/contexts/AIContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 import toast from 'react-hot-toast';
 import { navigateBack } from '@/utils/navigation';
 
@@ -27,6 +28,7 @@ export const FindingDetails: React.FC = () => {
   const { findingId } = useParams();
   const { openAI, setContext } = useAI();
   const { user } = useAuth();
+  const { confirm, prompt } = useAppDialog();
   const [finding, setFinding] = useState<RichFinding | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [replyText, setReplyText] = useState('');
@@ -218,7 +220,14 @@ export const FindingDetails: React.FC = () => {
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!findingId || !window.confirm('Are you sure you want to delete this evidence?')) return;
+    if (!findingId) return;
+    const shouldDelete = await confirm({
+      title: 'Delete evidence',
+      message: 'Are you sure you want to delete this evidence?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
 
     try {
       const success = await api.findings.deleteFile(findingId, fileId);
@@ -613,8 +622,13 @@ export const FindingDetails: React.FC = () => {
                     <div className="pl-12 pt-2">
                       <button
                         className="text-[10px] text-cyan-500 hover:text-cyan-400 font-bold"
-                        onClick={() => {
-                          const txt = prompt("Enter your reply:");
+                        onClick={async () => {
+                          const txt = await prompt({
+                            title: 'Reply to thread',
+                            message: 'Enter your reply:',
+                            placeholder: 'Type your reply...',
+                            confirmText: 'Reply',
+                          });
                           if (txt) handlePostReply(thread.id, txt);
                         }}
                       >

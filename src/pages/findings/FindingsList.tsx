@@ -10,6 +10,7 @@ import { GlassCard, Button, Badge, Input, Select, KpiCard, Modal, TextArea } fro
 import { api } from '@/services/api';
 import { Finding, Project, Client, Role } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 interface FindingsListProps {
   initialFindings?: Finding[];
@@ -21,6 +22,7 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { confirm } = useAppDialog();
 
   const [findings, setFindings] = useState<Finding[]>(initialFindings || []);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -106,7 +108,13 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
   };
 
   const handleDeleteFinding = async (f: Finding) => {
-    if (!window.confirm(`Are you sure you want to delete "${f.title}"?`)) return;
+    const shouldDelete = await confirm({
+      title: 'Delete finding',
+      message: `Are you sure you want to delete "${f.title}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.projects.deleteFinding(f.projectId, f.id);
       toast.success('Finding deleted');

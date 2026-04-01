@@ -5,6 +5,7 @@ import { Button, GlassCard, Badge, Input, Select, Modal, ProgressBar } from '../
 import { Plus, Flag, Calendar, Trash2, Edit, CheckCircle, AlertCircle, ChevronDown, ChevronRight, CheckCircle2, Clock, PlayCircle } from 'lucide-react';
 import { PermissionGate } from '../PermissionGate';
 import { format } from 'date-fns';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 interface MilestonesTabProps {
     milestones: Milestone[];
@@ -14,6 +15,7 @@ interface MilestonesTabProps {
 
 export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpsert, onDelete }) => {
     const { t } = useTranslation();
+    const { confirm } = useAppDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMilestone, setEditingMilestone] = useState<Partial<Milestone> | null>(null);
     const [expandedMilestones, setExpandedMilestones] = useState<Record<string, boolean>>({});
@@ -49,9 +51,15 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm(t('confirm_delete_milestone'))) {
-            await onDelete(id);
-        }
+        const shouldDelete = await confirm({
+            title: t('delete_milestone') || 'Delete Milestone',
+            message: t('confirm_delete_milestone'),
+            confirmText: t('delete') || 'Delete',
+            cancelText: t('cancel') || 'Cancel',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
+        await onDelete(id);
     };
 
     // Sort: Pending first (sorted by date), then Completed

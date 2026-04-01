@@ -4,6 +4,7 @@ import { Workflow, Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-
 import { GlassCard, Button, Input, Label, Modal } from '../components/ui/UIComponents';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppDialog } from '../contexts/DialogContext';
 import { PermissionGate } from '../components/PermissionGate';
 import { Permission } from '../types';
 import toast from 'react-hot-toast';
@@ -36,6 +37,7 @@ export interface AutomationRuleType {
 const Automations: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { confirm } = useAppDialog();
   const [rules, setRules] = useState<AutomationRuleType[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -149,7 +151,13 @@ const Automations: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this automation rule?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete automation rule',
+      message: 'Delete this automation rule?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.automation.deleteRule(id);
       toast.success('Rule deleted');

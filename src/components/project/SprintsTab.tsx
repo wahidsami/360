@@ -7,6 +7,7 @@ import { Task as TaskType, Sprint, Permission } from '../../types';
 import { PermissionGate } from '../PermissionGate';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 interface SprintsTabProps {
   projectId: string;
@@ -17,6 +18,7 @@ interface SprintsTabProps {
 
 export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefreshTasks, onUpsertTask }) => {
   const { t } = useTranslation();
+  const { confirm } = useAppDialog();
   const [sprints, setSprints] = useState<(Sprint & { _count?: { tasks: number } })[]>([]);
   const [selectedSprintId, setSelectedSprintId] = useState<string | 'backlog' | undefined>(undefined);
   const [sprintTasks, setSprintTasks] = useState<TaskType[]>([]);
@@ -115,7 +117,13 @@ export const SprintsTab: React.FC<SprintsTabProps> = ({ projectId, tasks, onRefr
   };
 
   const handleDelete = async (sprintId: string) => {
-    if (!confirm('Delete this sprint? Tasks will move to backlog.')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete Sprint',
+      message: 'Delete this sprint? Tasks will move to backlog.',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.projects.deleteSprint(projectId, sprintId);
       if (selectedSprintId === sprintId) setSelectedSprintId('backlog');

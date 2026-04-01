@@ -5,6 +5,7 @@ import { ArrowLeft, Bot, Download, Eye, FileImage, FileText, Pencil, Plus, Searc
 import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, Modal, Select, TextArea } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 import { api } from '@/services/api';
 import { navigateBack } from '@/utils/navigation';
 import {
@@ -85,6 +86,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const { projectId, reportId } = useParams();
   const { user, hasPermission } = useAuth();
+  const { confirm } = useAppDialog();
 
   const isArabic = i18n.language === 'ar';
   const uiLocale: AccessibilityAuditOutputLocale = isArabic ? 'ar' : 'en';
@@ -490,7 +492,14 @@ export const ProjectReportWorkspace: React.FC = () => {
   };
 
   const handleDeleteEntry = async (entry: ProjectReportEntry) => {
-    if (!reportId || !window.confirm(`Delete "${entry.issueTitle}"?`)) return;
+    if (!reportId) return;
+    const shouldDelete = await confirm({
+      title: isArabic ? 'حذف النتيجة' : 'Delete result',
+      message: isArabic ? `حذف "${entry.issueTitle}"؟` : `Delete "${entry.issueTitle}"?`,
+      confirmText: isArabic ? 'حذف' : 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.reportBuilderProjects.deleteEntry(reportId, entry.id);
       await loadData();
@@ -502,7 +511,15 @@ export const ProjectReportWorkspace: React.FC = () => {
   };
 
   const handleDeleteEvidence = async (entry: ProjectReportEntry, media: ProjectReportEntryMedia) => {
-    if (!reportId || !window.confirm(`Remove "${media.fileAsset.filename || media.fileAsset.name || 'file'}"?`)) return;
+    if (!reportId) return;
+    const fileLabel = media.fileAsset.filename || media.fileAsset.name || 'file';
+    const shouldDelete = await confirm({
+      title: isArabic ? 'إزالة الدليل' : 'Remove evidence',
+      message: isArabic ? `إزالة "${fileLabel}"؟` : `Remove "${fileLabel}"?`,
+      confirmText: isArabic ? 'إزالة' : 'Remove',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.reportBuilderProjects.deleteEntryMedia(reportId, entry.id, media.id);
       await loadData();

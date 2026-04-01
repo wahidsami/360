@@ -10,6 +10,7 @@ import { GlassCard, Button, Badge, Input, Select, Label, CopyButton } from "@/co
 import { Modal } from "@/components/ui/Modal";
 import { api } from '@/services/api';
 import { Role, User, Permission, Client } from '@/types';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 if (!api?.users) {
   throw new Error("API client missing users namespace — check api import path.");
@@ -17,6 +18,7 @@ if (!api?.users) {
 
 export const UsersAdmin: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { confirm } = useAppDialog();
   const isArabic = i18n.language === 'ar';
   const copy = React.useMemo(
     () =>
@@ -378,7 +380,14 @@ export const UsersAdmin: React.FC = () => {
   };
 
   const handleDeleteUser = async (user: User) => {
-    if (!confirm(deleteUserConfirm)) return;
+    const shouldDelete = await confirm({
+      title: isArabic ? 'حذف المستخدم' : 'Delete User',
+      message: deleteUserConfirm,
+      confirmText: isArabic ? 'حذف' : 'Delete',
+      cancelText: isArabic ? 'إلغاء' : 'Cancel',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.users.delete(user.id);
       await loadData();

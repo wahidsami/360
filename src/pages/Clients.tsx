@@ -6,10 +6,12 @@ import { Client, Permission, Project } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, Input, Select } from '../components/ui/UIComponents';
 import { PermissionGate } from '../components/PermissionGate';
+import { useAppDialog } from '../contexts/DialogContext';
 
 export const ClientList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { confirm } = useAppDialog();
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
@@ -66,26 +68,40 @@ export const ClientList: React.FC = () => {
 
   const handleArchive = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(t('confirm_archive_client'))) {
-      await api.clients.archive(id);
-      loadData();
-    }
+    const shouldArchive = await confirm({
+      title: t('archive'),
+      message: t('confirm_archive_client'),
+      confirmText: t('archive'),
+      tone: 'danger',
+    });
+    if (!shouldArchive) return;
+    await api.clients.archive(id);
+    loadData();
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to completely delete this client?')) {
-      await api.clients.delete(id);
-      loadData();
-    }
+    const shouldDelete = await confirm({
+      title: 'Delete Client',
+      message: 'Are you sure you want to completely delete this client?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
+    await api.clients.delete(id);
+    loadData();
   };
 
   const handleRestore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(t('confirm_restore_client'))) {
-      await api.clients.restore(id);
-      loadData();
-    }
+    const shouldRestore = await confirm({
+      title: t('restore_client'),
+      message: t('confirm_restore_client'),
+      confirmText: t('restore_client'),
+    });
+    if (!shouldRestore) return;
+    await api.clients.restore(id);
+    loadData();
   };
 
   const industries = Array.from(new Set(clients.map(c => c.industry)));

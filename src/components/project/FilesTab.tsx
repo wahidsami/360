@@ -6,6 +6,7 @@ import { Upload, File, FileText, Image, Download, Eye, X, Trash2 } from 'lucide-
 import { DocumentViewer } from '../DocumentViewer';
 import { PermissionGate } from '../PermissionGate';
 import { formatDistanceToNow } from 'date-fns';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 interface FilesTabProps {
     files: FileAsset[];
@@ -18,6 +19,7 @@ interface FilesTabProps {
 
 export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload, onDelete, canUpload = false, canDelete = false }) => {
     const { t } = useTranslation();
+    const { alert, confirm } = useAppDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -34,7 +36,11 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedFile) {
-            alert(t('please_select_file'));
+            await alert({
+                title: t('upload_file'),
+                message: t('please_select_file'),
+                confirmText: t('ok') || 'OK',
+            });
             return;
         }
 
@@ -73,11 +79,19 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                 a.click();
                 document.body.removeChild(a);
             } else {
-                alert(t('download_url_not_available'));
+                await alert({
+                    title: t('download'),
+                    message: t('download_url_not_available'),
+                    confirmText: t('ok') || 'OK',
+                });
             }
         } catch (err) {
             console.error('Download failed', err);
-            alert(t('failed_to_download'));
+            await alert({
+                title: t('download'),
+                message: t('failed_to_download'),
+                confirmText: t('ok') || 'OK',
+            });
         } finally {
             setDownloadingId(null);
         }
@@ -99,7 +113,11 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
                     fileId: file.id
                 });
             } else {
-                alert(t('view_url_not_available'));
+                await alert({
+                    title: t('view'),
+                    message: t('view_url_not_available'),
+                    confirmText: t('ok') || 'OK',
+                });
             }
         } catch (err) {
             console.error('View failed', err);
@@ -109,14 +127,25 @@ export const FilesTab: React.FC<FilesTabProps> = ({ files, onUpload, onDownload,
     };
 
     const handleDelete = async (file: FileAsset) => {
-        if (!window.confirm(t('confirm_delete_file').replace('{{name}}', file.name))) return;
+        const shouldDelete = await confirm({
+            title: t('delete_file') || 'Delete File',
+            message: t('confirm_delete_file').replace('{{name}}', file.name),
+            confirmText: t('delete') || 'Delete',
+            cancelText: t('cancel') || 'Cancel',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
         if (onDelete) {
             setDownloadingId(file.id);
             try {
                 await onDelete(file.id);
             } catch (err) {
                 console.error('Delete failed', err);
-                alert(t('failed_to_delete_file'));
+                await alert({
+                    title: t('delete_file') || 'Delete File',
+                    message: t('failed_to_delete_file'),
+                    confirmText: t('ok') || 'OK',
+                });
             } finally {
                 setDownloadingId(null);
             }

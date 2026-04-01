@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AIProvider } from './contexts/AIContext';
+import { DialogProvider } from './contexts/DialogContext';
 import { Layout } from './components/Layout';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
@@ -85,6 +86,7 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <AuthProvider>
           <AIProvider>
+          <DialogProvider>
           <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
           <React.Suspense fallback={routeFallback}>
           <Routes>
@@ -144,6 +146,7 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
           </React.Suspense>
+          </DialogProvider>
           </AIProvider>
         </AuthProvider>
       </ErrorBoundary>

@@ -5,11 +5,13 @@ import { AlertCircle, CheckCircle2, ShieldAlert, AlertTriangle, Plus, Filter, Ar
 import { GlassCard, Button, Badge, Input, Select, Label, TextArea } from '../components/ui/UIComponents';
 import { api } from '@/services/api';
 import { Finding } from '@/types';
+import { useAppDialog } from '../contexts/DialogContext';
 import { Modal } from '../components/ui/Modal';
 
 export const Findings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { alert } = useAppDialog();
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isModalOpen, setModalOpen] = useState(false);
@@ -39,10 +41,14 @@ export const Findings: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalOpen(false);
-    alert("Finding created (Mock)");
+    await alert({
+      title: 'Mock Action',
+      message: 'Finding created (Mock)',
+      confirmText: 'OK',
+    });
   };
 
   return (

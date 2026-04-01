@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 /* ──────────────────────────────────────────────────────────────
@@ -331,7 +332,10 @@ const MessageInput: React.FC<{
     // Voice to text (Web Speech API)
     const handleVoice = () => {
         const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SR) { alert('Voice input is not supported in this browser.'); return; }
+        if (!SR) {
+            toast.error('Voice input is not supported in this browser.');
+            return;
+        }
         if (isListening) return;
         const recognition = new SR();
         recognition.lang = 'en-US';
@@ -787,6 +791,7 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     canCreate = false,
 }) => {
     const { t } = useTranslation();
+    const { confirm } = useAppDialog();
     const { user } = useAuth();
     const token = localStorage.getItem('auth_token') || '';
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -907,7 +912,14 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     };
 
     const handleDeleteReply = async (reply: DiscussionReply) => {
-        if (!activeThread || !window.confirm('Delete this reply?')) return;
+        if (!activeThread) return;
+        const shouldDelete = await confirm({
+            title: 'Delete Reply',
+            message: 'Delete this reply?',
+            confirmText: 'Delete',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
         await onDeleteReply(activeThread.id, reply.id);
         setReplies(prev => prev.filter(r => r.id !== reply.id));
         await silentCatchUp();
@@ -940,7 +952,13 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
     };
 
     const handleDeleteThread = async (thread: Discussion) => {
-        if (!window.confirm(`Delete "${thread.title}"? All replies will be removed.`)) return;
+        const shouldDelete = await confirm({
+            title: 'Delete Thread',
+            message: `Delete "${thread.title}"? All replies will be removed.`,
+            confirmText: 'Delete',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
         await onDeleteThread(thread.id);
         setThreads((current) => current.filter((entry) => entry.id !== thread.id));
         if (activeThreadIdRef.current === thread.id) closeThread();

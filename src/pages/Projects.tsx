@@ -6,10 +6,12 @@ import { Project, Client, Permission } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, Input, Select } from '../components/ui/UIComponents';
 import { PermissionGate } from '../components/PermissionGate';
+import { useAppDialog } from '../contexts/DialogContext';
 
 export const ProjectsList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { confirm } = useAppDialog();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Record<string, string>>({});
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -149,10 +151,15 @@ export const ProjectsList: React.FC = () => {
                           </Button>
                           <Button variant="ghost" size="sm" onClick={async (e) => {
                             e.stopPropagation();
-                            if (window.confirm('Are you sure you want to completely delete this project?')) {
-                              await api.projects.delete(p.id);
-                              loadData();
-                            }
+                            const shouldDelete = await confirm({
+                              title: 'Delete Project',
+                              message: 'Are you sure you want to completely delete this project?',
+                              confirmText: 'Delete',
+                              tone: 'danger',
+                            });
+                            if (!shouldDelete) return;
+                            await api.projects.delete(p.id);
+                            loadData();
                           }}>
                             <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
                           </Button>

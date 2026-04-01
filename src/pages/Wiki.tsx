@@ -4,10 +4,12 @@ import { BookOpen, Plus, Pencil, Trash2, Save, X, History } from 'lucide-react';
 import { GlassCard, Button, Input, Label, Modal } from '../components/ui/UIComponents';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
+import { useAppDialog } from '../contexts/DialogContext';
 
 type WikiPageItem = { id: string; slug: string; title: string; updatedAt: string };
 
 const Wiki: React.FC = () => {
+  const { confirm } = useAppDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const slugParam = searchParams.get('slug') || '';
   const [pages, setPages] = useState<WikiPageItem[]>([]);
@@ -88,7 +90,13 @@ const Wiki: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this wiki page?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete Wiki Page',
+      message: 'Delete this wiki page?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.wiki.delete(id);
       toast.success('Page deleted');

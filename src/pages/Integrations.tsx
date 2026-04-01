@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link2, Plus, Pencil, Trash2, MessageSquare, Github, Send } from 'lucide-react';
 import { GlassCard, Button, Input, Label, Modal } from '../components/ui/UIComponents';
 import { api } from '../services/api';
+import { useAppDialog } from '../contexts/DialogContext';
 import toast from 'react-hot-toast';
 
 type IntegrationItem = {
@@ -25,6 +26,7 @@ type WebhookItem = {
 
 const Integrations: React.FC = () => {
   const { t } = useTranslation();
+  const { confirm } = useAppDialog();
   const [integrations, setIntegrations] = useState<IntegrationItem[]>([]);
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +113,13 @@ const Integrations: React.FC = () => {
   };
 
   const deleteIntegration = async (id: string) => {
-    if (!confirm('Delete this integration?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete integration',
+      message: 'Delete this integration?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.integrations.delete(id);
       toast.success('Deleted');
@@ -177,7 +185,13 @@ const Integrations: React.FC = () => {
   };
 
   const deleteWebhook = async (id: string) => {
-    if (!confirm('Delete this webhook?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete webhook',
+      message: 'Delete this webhook?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.webhooks.delete(id);
       toast.success('Deleted');

@@ -5,6 +5,7 @@ import { Button, Input, Select, Badge, TextArea, Modal } from '../ui/UIComponent
 import { Plus, List, LayoutGrid, Clock, Trash2, GripVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CustomFieldsSection } from '../CustomFieldsSection';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 interface TasksTabProps {
     projectId: string;
@@ -45,6 +46,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({
     canJoinTeam = false,
 }) => {
     const { t } = useTranslation();
+    const { confirm } = useAppDialog();
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
     const [filter, setFilter] = useState<'all' | 'my-tasks'>(defaultFilter);
     const [modalOpen, setModalOpen] = useState(false);
@@ -72,8 +74,16 @@ export const TasksTab: React.FC<TasksTabProps> = ({
         if (selectedTask.title) { onUpsert(selectedTask); setModalOpen(false); }
     };
 
-    const handleDeleteConfirm = (id: string) => {
-        if (window.confirm(t('confirm_delete_task'))) onDelete(id);
+    const handleDeleteConfirm = async (id: string) => {
+        const shouldDelete = await confirm({
+            title: t('delete_task') || 'Delete Task',
+            message: t('confirm_delete_task'),
+            confirmText: t('delete') || 'Delete',
+            cancelText: t('cancel') || 'Cancel',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
+        onDelete(id);
     };
 
     // ---------- Drag & Drop ----------

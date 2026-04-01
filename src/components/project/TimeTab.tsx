@@ -4,6 +4,7 @@ import { Clock, Plus, Pencil, Trash2 } from 'lucide-react';
 import { GlassCard, Button, Input, Label, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { TimeEntry as TimeEntryType, Task } from '../../types';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 interface TimeTabProps {
   projectId: string;
@@ -13,6 +14,7 @@ interface TimeTabProps {
 
 export const TimeTab: React.FC<TimeTabProps> = ({ projectId, tasks, currentUserId }) => {
   const { t } = useTranslation();
+  const { confirm } = useAppDialog();
   const [entries, setEntries] = useState<(TimeEntryType & { task?: { id: string; title: string }; user?: { id: string; name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -86,7 +88,14 @@ export const TimeTab: React.FC<TimeTabProps> = ({ projectId, tasks, currentUserI
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!confirm(t('confirm_delete') || 'Delete this entry?')) return;
+    const shouldDelete = await confirm({
+      title: t('delete_time_entry') || 'Delete Time Entry',
+      message: t('confirm_delete') || 'Delete this entry?',
+      confirmText: t('delete') || 'Delete',
+      cancelText: t('cancel') || 'Cancel',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.timeEntries.delete(projectId, entryId);
       load();

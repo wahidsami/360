@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal';
 import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppDialog } from '../contexts/DialogContext';
 import { formatCurrency } from '../utils/currency';
 import { navigateBack } from '@/utils/navigation';
 
@@ -18,6 +19,7 @@ export const ClientDetails: React.FC = () => {
     const { clientId } = useParams();
     const navigate = useNavigate();
     const { can, user } = useAuth();
+    const { confirm } = useAppDialog();
     const isClientPortalUser = !!user && user.role.startsWith('CLIENT_');
 
     const [client, setClient] = useState<Client | undefined>();
@@ -173,7 +175,13 @@ export const ClientDetails: React.FC = () => {
 
     const handleRemoveMember = async (userId: string) => {
         if (!clientId) return;
-        if (!confirm(t('confirm_remove_member'))) return;
+        const shouldRemove = await confirm({
+            title: t('remove_member') || 'Remove member',
+            message: t('confirm_remove_member'),
+            confirmText: t('remove') || 'Remove',
+            tone: 'danger',
+        });
+        if (!shouldRemove) return;
         try {
             await api.clients.removeMember(clientId, userId);
             loadData();

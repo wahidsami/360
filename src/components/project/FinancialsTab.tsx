@@ -3,6 +3,7 @@ import { Contract, Invoice, Permission, isInternalRole } from '@/types';
 import { Button, GlassCard, Badge, Input, Modal, Select } from '../ui/UIComponents';
 import { Plus, FileText, DollarSign, Calendar, Download, Trash2, Edit, Send, Check, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAppDialog } from '../../contexts/DialogContext';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { useParams } from 'react-router-dom';
@@ -73,6 +74,7 @@ interface FinancialsTabProps {
 
 export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialContract, invoices: initialInvoices, onRefresh }) => {
     const { t } = useTranslation();
+    const { confirm } = useAppDialog();
     const { projectId } = useParams();
     const { user } = useAuth();
     const [activeView, setActiveView] = useState<'overview' | 'contracts' | 'invoices'>('overview');
@@ -184,7 +186,15 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
     };
 
     const handleDeleteContract = async (id: string) => {
-        if (!projectId || !confirm(t('confirm_delete'))) return;
+        if (!projectId) return;
+        const shouldDelete = await confirm({
+            title: t('delete_contract') || 'Delete Contract',
+            message: t('confirm_delete'),
+            confirmText: t('delete') || 'Delete',
+            cancelText: t('cancel') || 'Cancel',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
         await api.projects.deleteContract(projectId, id);
         refreshData();
     };
@@ -213,7 +223,15 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
     };
 
     const handleDeleteInvoice = async (id: string) => {
-        if (!projectId || !confirm(t('confirm_delete'))) return;
+        if (!projectId) return;
+        const shouldDelete = await confirm({
+            title: t('delete_invoice') || 'Delete Invoice',
+            message: t('confirm_delete'),
+            confirmText: t('delete') || 'Delete',
+            cancelText: t('cancel') || 'Cancel',
+            tone: 'danger',
+        });
+        if (!shouldDelete) return;
         await api.projects.deleteInvoice(projectId, id);
         refreshData();
     };

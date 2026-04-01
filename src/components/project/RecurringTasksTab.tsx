@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { GlassCard, Button, Modal } from '../ui/UIComponents';
 import { api } from '../../services/api';
 import { Repeat, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { useAppDialog } from '../../contexts/DialogContext';
 
 export type RecurringTaskTemplate = {
   id: string;
@@ -43,6 +44,7 @@ function formatRecurrence(rule: { frequency: string; interval?: number; weekday?
 
 export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId, onRefreshTasks }) => {
   const { t } = useTranslation();
+  const { confirm } = useAppDialog();
   const [templates, setTemplates] = useState<RecurringTaskTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -140,7 +142,13 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
   };
 
   const handleDelete = async (templateId: string) => {
-    if (!window.confirm('Delete this recurring task template?')) return;
+    const shouldDelete = await confirm({
+      title: 'Delete Template',
+      message: 'Delete this recurring task template?',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!shouldDelete) return;
     try {
       await api.projects.deleteRecurringTask(projectId, templateId);
       load();
