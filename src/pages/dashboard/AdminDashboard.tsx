@@ -558,7 +558,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                     </div>
                   ) : (
                     <div className="max-h-[560px] overflow-y-auto pr-2">
-                      <div className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
+                      <div dir="ltr" className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
                             <defs>
@@ -594,6 +594,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                               fontSize={12}
                               tickLine={false}
                               axisLine={false}
+                              orientation="left"
+                              mirror={false}
+                              tickMargin={8}
                               width={156}
                             />
                             <Tooltip

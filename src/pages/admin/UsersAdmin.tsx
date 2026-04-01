@@ -193,9 +193,7 @@ export const UsersAdmin: React.FC = () => {
   // State
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    internal: true,
-  });
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const loadData = useCallback(async () => {
     try {
@@ -323,7 +321,7 @@ export const UsersAdmin: React.FC = () => {
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups((current) => ({
       ...current,
-      [groupKey]: !(current[groupKey] ?? (groupKey === 'internal')),
+      [groupKey]: !(current[groupKey] ?? false),
     }));
   };
 
@@ -525,7 +523,7 @@ export const UsersAdmin: React.FC = () => {
           </div>
 
           {groupedUsers.map((group) => {
-            const isExpanded = expandedGroups[group.key] ?? (group.type === 'internal');
+            const isExpanded = expandedGroups[group.key] ?? false;
 
             return (
               <GlassCard key={group.key} className="p-0 overflow-hidden">
