@@ -5,7 +5,6 @@ import { GlassCard, Badge, Button } from '../ui/UIComponents';
 import { Activity, Flag, ArrowRight, CheckCircle, AlertCircle, PlusCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import toast from 'react-hot-toast';
 
 interface OverviewTabProps {
     project: Project;
@@ -261,15 +260,6 @@ function QuickActionsPanel({ project, onNavigate, onAction, onRefresh, overdueCo
                         </button>
                     )}
 
-                    {canSee('reports') && (
-                        <>
-                            <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
-                            <button onClick={() => { setIsOpen(false); toast('Export functionality coming soon!'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
-                                <span className="text-indigo-600">📊</span> Export Report
-                            </button>
-                        </>
-                    )}
-                    
                     <button onClick={() => {
                         setIsOpen(false);
                         if (onRefresh) onRefresh();

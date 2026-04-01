@@ -210,7 +210,7 @@ export const UsersAdmin: React.FC = () => {
         for (const user of usersData) {
           const primaryClientId = user.clientMemberships?.[0]?.clientId;
           if (primaryClientId && !(primaryClientId in next)) {
-            next[primaryClientId] = true;
+            next[primaryClientId] = false;
           }
         }
         return next;
@@ -323,7 +323,7 @@ export const UsersAdmin: React.FC = () => {
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups((current) => ({
       ...current,
-      [groupKey]: !(current[groupKey] ?? true),
+      [groupKey]: !(current[groupKey] ?? (groupKey === 'internal')),
     }));
   };
 
@@ -525,7 +525,7 @@ export const UsersAdmin: React.FC = () => {
           </div>
 
           {groupedUsers.map((group) => {
-            const isExpanded = expandedGroups[group.key] ?? true;
+            const isExpanded = expandedGroups[group.key] ?? (group.type === 'internal');
 
             return (
               <GlassCard key={group.key} className="p-0 overflow-hidden">
