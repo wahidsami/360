@@ -31,3 +31,6 @@ arena360-api/uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Local-only handover guides
+docs/Client_Onboarding_Tutorial_EN_AR.md
