@@ -7,6 +7,7 @@ import { GlassCard, Button, Input, Label, Select, TextArea } from '../components
 import { WorkspaceTemplateSelector } from '@/components/project/WorkspaceTemplateSelector';
 import { buildWorkspaceTemplateOptions, WorkspaceTemplateOption } from '@/features/project-workspace/helpers';
 import { Client, Project, ProjectStatus, ProjectHealth } from '../types';
+import { navigateBack } from '@/utils/navigation';
 
 export const ProjectEdit: React.FC = () => {
     const { t } = useTranslation();
@@ -22,6 +23,7 @@ export const ProjectEdit: React.FC = () => {
     const [workspaceOptions, setWorkspaceOptions] = useState<WorkspaceTemplateOption[]>([]);
     const [selectedWorkspaceOptionId, setSelectedWorkspaceOptionId] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const handleGoBack = () => navigateBack(navigate, projectId ? `/app/projects/${projectId}` : '/app/projects');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -153,7 +155,7 @@ export const ProjectEdit: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" onClick={() => navigate('..')}><ArrowLeft className="w-5 h-5" /></Button>
+                <Button variant="ghost" onClick={handleGoBack}><ArrowLeft className="w-5 h-5" /></Button>
                 <div>
                     <h1 className="text-3xl font-bold font-display text-white">{t('edit_project')}</h1>
                     <p className="text-slate-400">Update mission parameters and protocols.</p>
@@ -242,7 +244,7 @@ export const ProjectEdit: React.FC = () => {
                 />
 
                 <div className="flex justify-end gap-4">
-                    <Button type="button" variant="ghost" onClick={() => navigate('..')}>{t('cancel')}</Button>
+                    <Button type="button" variant="ghost" onClick={handleGoBack}>{t('cancel')}</Button>
                     <Button type="submit" disabled={loading} className="w-40">
                         <Save className="w-4 h-4 mr-2" />
                         {loading ? 'Updating...' : t('update_project')}

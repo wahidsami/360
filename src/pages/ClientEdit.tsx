@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { GlassCard, Button, Input, Label, Select, TextArea } from '../components/ui/UIComponents';
 import { ImageUpload } from '../components/ui/ImageUpload';
 import { Client, ClientStatus } from '../types';
+import { navigateBack } from '@/utils/navigation';
 
 export const ClientEdit: React.FC = () => {
   const { t } = useTranslation();
@@ -13,6 +14,7 @@ export const ClientEdit: React.FC = () => {
   const { clientId } = useParams();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const handleGoBack = () => navigateBack(navigate, clientId ? `/app/clients/${clientId}` : '/app/clients');
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | undefined>(undefined);
@@ -118,7 +120,7 @@ export const ClientEdit: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={() => navigate('..')}>
+        <Button variant="ghost" onClick={handleGoBack}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
@@ -205,7 +207,7 @@ export const ClientEdit: React.FC = () => {
         </GlassCard>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('..')}>{t('cancel')}</Button>
+          <Button type="button" variant="ghost" onClick={handleGoBack}>{t('cancel')}</Button>
           <Button type="submit" disabled={loading} className="w-40">
             <Save className="w-4 h-4 mr-2" />
             {loading ? 'Updating...' : t('update_client')}

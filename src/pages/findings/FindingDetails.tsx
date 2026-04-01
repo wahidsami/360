@@ -12,6 +12,7 @@ import { PermissionGate } from '@/components/PermissionGate';
 import { useAI } from '@/contexts/AIContext';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { navigateBack } from '@/utils/navigation';
 
 interface RichFinding extends Finding {
   projectName: string;
@@ -42,6 +43,7 @@ export const FindingDetails: React.FC = () => {
   });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const handleGoBack = () => navigateBack(navigate, '/app/findings');
   const formatTimelineAction = (action: string) =>
     action
       .replace(/^finding\./, '')
@@ -244,7 +246,7 @@ export const FindingDetails: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/app/findings')}>
+          <Button variant="ghost" onClick={handleGoBack}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>

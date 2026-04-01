@@ -7,12 +7,14 @@ import { GlassCard, Button, Input, Label, Select, TextArea } from '../components
 import { Client, ProjectStatus, ProjectHealth } from '../types';
 import { WorkspaceTemplateSelector } from '@/components/project/WorkspaceTemplateSelector';
 import { buildWorkspaceTemplateOptions, WorkspaceTemplateOption } from '@/features/project-workspace/helpers';
+import { navigateBack } from '@/utils/navigation';
 
 export const ProjectCreate: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preSelectedClientId = searchParams.get('clientId');
+  const handleGoBack = () => navigateBack(navigate, '/app/projects');
 
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,7 +113,7 @@ export const ProjectCreate: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={() => navigate('..')}><ArrowLeft className="w-5 h-5" /></Button>
+        <Button variant="ghost" onClick={handleGoBack}><ArrowLeft className="w-5 h-5" /></Button>
         <div>
           <h1 className="text-3xl font-bold font-display text-white">{t('create_project')}</h1>
           <p className="text-slate-400">Initialize a new mission protocol.</p>
@@ -189,7 +191,7 @@ export const ProjectCreate: React.FC = () => {
         />
 
         <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:justify-end sm:items-center">
-          <Button type="button" variant="ghost" onClick={() => navigate('..')} className="sm:w-auto">
+          <Button type="button" variant="ghost" onClick={handleGoBack} className="sm:w-auto">
             {t('cancel')}
           </Button>
           <Button type="submit" disabled={loading} className="min-w-[10.5rem] whitespace-nowrap sm:w-auto">

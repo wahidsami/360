@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Badge, Button, GlassCard, Input, Modal, Select, TextArea } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
+import { navigateBack } from '@/utils/navigation';
 import {
   ACCESSIBILITY_AUDIT_MAIN_CATEGORIES,
   AccessibilityAuditMainCategory,
@@ -581,11 +582,7 @@ export const ProjectReportWorkspace: React.FC = () => {
   }, [canGenerateExports, isArabic, loadData, previewLocale, reportId, resolveExportLocale]);
 
   const handleGoBack = React.useCallback(() => {
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-    navigate(`/app/projects/${projectId}`);
+    navigateBack(navigate, projectId ? `/app/projects/${projectId}` : '/app/projects');
   }, [navigate, projectId]);
 
   const handleDownloadLatestExport = async () => {

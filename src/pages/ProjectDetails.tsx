@@ -16,6 +16,7 @@ import { PermissionsService } from '../services/permissions.service';
 import toast from 'react-hot-toast';
 import { buildDefaultProjectWorkspaceConfigDraft, PROJECT_TAB_DEFINITIONS, PROJECT_TAB_GROUPS, ProjectTabId } from '@/features/project-workspace/registry';
 import { resolveProjectWorkspace } from '@/features/project-workspace/resolver';
+import { navigateBack } from '@/utils/navigation';
 
 export const ProjectDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -46,6 +47,7 @@ export const ProjectDetails: React.FC = () => {
   const [hasLoadedOverviewMeta, setHasLoadedOverviewMeta] = useState(false);
   const [isOverviewMetaStale, setIsOverviewMetaStale] = useState(false);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
+  const handleGoBack = () => navigateBack(navigate, '/app/projects');
 
   const resolvedWorkspace = React.useMemo(() => {
     if (!user) {
@@ -566,7 +568,7 @@ export const ProjectDetails: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex gap-4">
-          <Button variant="ghost" onClick={() => navigate('/app/projects')}><ArrowLeft className="w-5 h-5" /></Button>
+          <Button variant="ghost" onClick={handleGoBack}><ArrowLeft className="w-5 h-5" /></Button>
           <div>
 
             <h1 className="text-3xl font-bold font-display text-white">{project.name}</h1>

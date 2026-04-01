@@ -11,6 +11,7 @@ import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../utils/currency';
+import { navigateBack } from '@/utils/navigation';
 
 export const ClientDetails: React.FC = () => {
     const { t } = useTranslation();
@@ -39,6 +40,7 @@ export const ClientDetails: React.FC = () => {
     const [isFileModalOpen, setFileModalOpen] = useState(false);
     const [viewModal, setViewModal] = useState<{ isOpen: boolean; url: string; filename: string; mimeType: string; fileId: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleGoBack = () => navigateBack(navigate, '/app/clients');
 
     // Form States
     const [selectedUserId, setSelectedUserId] = useState('');
@@ -216,7 +218,7 @@ export const ClientDetails: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate('..')}><ArrowLeft className="w-5 h-5" /></Button>
+                    <Button variant="ghost" onClick={handleGoBack}><ArrowLeft className="w-5 h-5" /></Button>
                     <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-xl">
                         {client.logoUrl ? (
                             <img
