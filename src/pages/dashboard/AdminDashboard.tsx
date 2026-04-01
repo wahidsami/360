@@ -105,7 +105,8 @@ const MiniSparkline: React.FC<{ values: number[]; stroke: string; fill: string }
 };
 
 export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language?.startsWith('ar');
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -558,9 +559,14 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                     </div>
                   ) : (
                     <div className="max-h-[560px] overflow-y-auto pr-2">
-                      <div dir="ltr" className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
+                      <div dir={isRtl ? 'rtl' : 'ltr'} className="w-full min-h-[220px]" style={{ height: complianceChartHeight }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={complianceSeries} layout="vertical" margin={{ top: 8, right: 16, left: 4, bottom: 8 }} barCategoryGap="26%">
+                          <BarChart
+                            data={complianceSeries}
+                            layout="vertical"
+                            margin={{ top: 8, right: isRtl ? 176 : 16, left: isRtl ? 12 : 4, bottom: 8 }}
+                            barCategoryGap="26%"
+                          >
                             <defs>
                               <linearGradient id="complianceHigh" x1="0" y1="0" x2="1" y2="0">
                                 <stop offset="0%" stopColor="#22d3ee" />
@@ -579,6 +585,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                             <XAxis
                               type="number"
                               domain={[0, 100]}
+                              reversed={isRtl}
                               stroke={chartAxisColor}
                               tick={{ fill: chartAxisColor }}
                               fontSize={11}
@@ -594,10 +601,10 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                               fontSize={12}
                               tickLine={false}
                               axisLine={false}
-                              orientation="left"
+                              orientation={isRtl ? 'right' : 'left'}
                               mirror={false}
                               tickMargin={8}
-                              width={156}
+                              width={isRtl ? 168 : 156}
                             />
                             <Tooltip
                               cursor={{ fill: 'rgba(34, 211, 238, 0.08)' }}
@@ -612,7 +619,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                             />
                             <Bar
                               dataKey="compliancePercentage"
-                              radius={[0, 14, 14, 0]}
+                              radius={isRtl ? [14, 0, 0, 14] : [0, 14, 14, 0]}
                               maxBarSize={24}
                               onClick={(entry: any) => openReportWorkspace(entry)}
                               cursor="pointer"
