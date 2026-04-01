@@ -220,6 +220,8 @@ function QuickActionsPanel({ project, onNavigate, onAction, onRefresh, overdueCo
     const isClient = !!user && clientRoles.includes(user.role);
     const hasDeadline = !!(project?.deadline || project?.endDate);
 
+    if (isClient) return null;
+
     return (
         <div className="relative">
             <Button
