@@ -181,7 +181,7 @@
   }
 
   .font-brand-ar {
-    font-family: "Bahij Janna", "Cairo", sans-serif;
+    font-family: "Cairo", "Bahij Janna", sans-serif;
   }
 }
 
@@ -241,7 +241,7 @@
 
 @theme {
   --font-sans: "Inter", "Segoe UI", sans-serif;
-  --font-arabic: "Bahij Janna", "Cairo", sans-serif;
+  --font-arabic: "Cairo", "Bahij Janna", sans-serif;
   --font-display: "Orbitron", sans-serif;
 
   /* Global Tailwind color remap to brand identity */
@@ -394,7 +394,12 @@
 
   html[dir="rtl"] body,
   html[lang="ar"] body {
-    font-family: "Bahij Janna", "Cairo", sans-serif;
+    font-family: "Cairo", "Bahij Janna", sans-serif;
+  }
+
+  html[dir="rtl"] .font-display,
+  html[lang="ar"] .font-display {
+    font-family: "Cairo", "Bahij Janna", sans-serif;
   }
 }
 
