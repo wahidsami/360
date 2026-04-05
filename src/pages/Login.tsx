@@ -206,18 +206,6 @@ const Login: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/25 via-blue-600/25 to-indigo-600/30" />
 
-          {/* Content */}
-          <div className="relative z-10 flex h-full w-full p-8 lg:p-10 text-white animate-fade-in-right">
-            <div className={`w-full flex items-start ${isArabic ? 'justify-end' : 'justify-start'}`}>
-              <div className="bg-slate-950/35 backdrop-blur-md border border-white/25 rounded-2xl px-5 py-4 shadow-xl">
-                <img
-                  src="/dgalogo.svg"
-                  className="h-14 lg:h-16 w-auto max-w-[300px] object-contain"
-                  alt="Digital Government Authority logo"
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>
