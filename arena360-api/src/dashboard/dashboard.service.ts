@@ -393,25 +393,28 @@ export class DashboardService {
 
     async getClientStats(user: UserWithRoles) {
         // Client dashboard: show projects for client user's organization
-        const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER'];
+        const clientRoles = ['CLIENT_OWNER', 'CLIENT_MANAGER', 'CLIENT_MEMBER', 'VIEWER'];
         if (!clientRoles.includes(user.role)) {
             throw new Error('Client dashboard is for client users only');
         }
 
-        const memberships = await this.prisma.clientMember.findMany({
-            where: {
-                userId: user.id,
-                client: {
-                    orgId: user.orgId,
-                    deletedAt: null,
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+        // Access can come from direct client membership OR project membership.
+        // Some client users are assigned only to projects.
+        const clientIdsSet = new Set<string>(
+            (user.clientMemberships || []).map((membership) => membership.clientId),
+        );
+        const projectIdsSet = new Set<string>(
+            (user.projectMemberships || []).map((membership) => membership.projectId),
+        );
+        for (const membership of user.projectMemberships || []) {
+            const clientId = membership.project?.clientId;
+            if (clientId) clientIdsSet.add(clientId);
+        }
 
-        const clientIds = memberships.map((membership) => membership.clientId);
+        const clientIds = Array.from(clientIdsSet);
+        const assignedProjectIds = Array.from(projectIdsSet);
 
-        if (clientIds.length === 0) {
+        if (clientIds.length === 0 && assignedProjectIds.length === 0) {
             return {
                 activeProjects: 0,
                 nextMilestonesCount: 0,
@@ -423,12 +426,37 @@ export class DashboardService {
             };
         }
 
+        const projectAccessFilters: any[] = [];
+        if (clientIds.length > 0) {
+            projectAccessFilters.push({ clientId: { in: clientIds } });
+        }
+        if (assignedProjectIds.length > 0) {
+            projectAccessFilters.push({ id: { in: assignedProjectIds } });
+        }
+
         const projects = await this.prisma.project.findMany({
-            where: { clientId: { in: clientIds } },
+            where: {
+                orgId: user.orgId,
+                deletedAt: null,
+                OR: projectAccessFilters,
+            },
             orderBy: { updatedAt: 'desc' }
         });
 
         const projectIds = projects.map((project) => project.id);
+        const accessibleClientIds = Array.from(new Set(projects.map((project) => project.clientId)));
+
+        if (projectIds.length === 0) {
+            return {
+                activeProjects: 0,
+                nextMilestonesCount: 0,
+                latestUpdatesCount: 0,
+                pendingApprovals: 0,
+                sharedFilesCount: 0,
+                files: [],
+                myProjects: []
+            };
+        }
 
         const [upcomingMilestonesCount, sharedFilesCount, files, pendingApprovals] = await Promise.all([
             this.prisma.milestone.count({
@@ -444,8 +472,8 @@ export class DashboardService {
                     deletedAt: null,
                     visibility: 'CLIENT',
                     OR: [
-                        { clientId: { in: clientIds } },
-                        { project: { clientId: { in: clientIds } } },
+                        { clientId: { in: accessibleClientIds } },
+                        { projectId: { in: projectIds } },
                     ],
                 },
             }),
@@ -455,8 +483,8 @@ export class DashboardService {
                     deletedAt: null,
                     visibility: 'CLIENT',
                     OR: [
-                        { clientId: { in: clientIds } },
-                        { project: { clientId: { in: clientIds } } },
+                        { clientId: { in: accessibleClientIds } },
+                        { projectId: { in: projectIds } },
                     ],
                 },
                 orderBy: { createdAt: 'desc' },
@@ -480,6 +508,7 @@ export class DashboardService {
         const myProjects = projects.map(p => ({
             id: p.id,
             name: p.name,
+            deadline: p.endDate,
             progress: p.progress,
             health: p.health,
             status: p.status
