@@ -15,7 +15,7 @@ export const GlassCard = ({ children, className = '', title, ...props }: GlassCa
         className={`glass-card card shadow-sm dark:shadow-none p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-cyan-500/5 hover:-translate-y-1 ${className}`}
         {...props}
     >
-        {title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 tracking-tight">{title}</h3>}
+        {title && <h3 className="text-lg text-start font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 tracking-tight">{title}</h3>}
         {children}
     </div>
 );

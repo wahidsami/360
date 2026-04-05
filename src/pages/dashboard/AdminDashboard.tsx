@@ -25,7 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
-const DEFAULT_WIDGET_IDS = ['kpi-cards', 'client-compliance', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'pending-approvals', 'tools-panel'] as const;
+const DEFAULT_WIDGET_IDS = ['kpi-cards', 'client-compliance', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'tools-panel'] as const;
 const WIDGET_LABELS: Record<string, string> = {
   'kpi-cards': 'widget_kpi_cards',
   'tools-panel': 'widget_quick_actions',
@@ -33,7 +33,6 @@ const WIDGET_LABELS: Record<string, string> = {
   'client-compliance': 'widget_client_compliance_chart',
   'latest-updates': 'widget_latest_updates',
   'projects-at-risk': 'widget_projects_at_risk',
-  'pending-approvals': 'widget_pending_approvals',
 };
 
 type AnalyticsData = {
@@ -689,7 +688,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-2xl font-black text-slate-900 dark:text-white">{coveragePercentage}%</span>
-                  <span className="text-[9px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('audit_coverage')}</span>
+                  <span className="text-[9px] text-center leading-tight uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('audit_coverage')}</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -789,14 +788,25 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         <GlassCard className="xl:col-span-4 h-full overflow-hidden cursor-pointer" title={t('portfolio_health_snapshot')} onClick={() => navigate('/app/projects')}>
           {portfolioHealthData.length > 0 ? (
             showPortfolioHealthChart ? (
-              <div className="h-[220px] w-full">
+              <div dir="ltr" className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={portfolioHealthData} layout="vertical" margin={{ top: 8, right: 16, left: 12, bottom: 8 }}>
+                  <BarChart data={portfolioHealthData} layout="vertical" margin={{ top: 8, right: isRtl ? 132 : 16, left: isRtl ? 12 : 12, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} opacity={0.2} />
-                    <XAxis type="number" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} width={96} />
+                    <XAxis type="number" reversed={isRtl} stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke={chartAxisColor}
+                      tick={{ fill: chartAxisColor, textAnchor: isRtl ? 'start' : 'end' }}
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      orientation={isRtl ? 'right' : 'left'}
+                      tickMargin={isRtl ? 12 : 8}
+                      width={isRtl ? 120 : 96}
+                    />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [value, t('projects')]} />
-                    <Bar dataKey="count" radius={[0, 10, 10, 0]} maxBarSize={26}>
+                    <Bar dataKey="count" radius={isRtl ? [10, 0, 0, 10] : [0, 10, 10, 0]} maxBarSize={26}>
                       {portfolioHealthData.map((entry) => (
                         <Cell key={entry.name} fill={entry.fill} />
                       ))}
