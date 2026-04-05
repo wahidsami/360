@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 const Login: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { login, loginWith2fa } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -93,14 +93,14 @@ const Login: React.FC = () => {
         .animate-fade-in-right { animation: fade-in-right 0.8s ease-out 0.3s forwards; opacity: 0; }
       `}</style>
 
-      <div className="flex h-screen overflow-hidden">
+      <div className={`flex h-screen overflow-hidden ${i18n.language?.startsWith('ar') ? 'font-brand-ar' : 'font-brand-en'}`}>
 
         {/* ═══ LEFT PANEL — Login Form (40%) ═══ */}
         <div className="w-full md:w-2/5 bg-slate-950 flex flex-col justify-between p-8 lg:p-12 min-h-screen overflow-auto">
 
           {/* Top Logo — h-12 (48px) */}
-          <div className="flex items-center gap-3 animate-fade-in-up mb-8">
-            <img src="/arenalogo.png" className="h-12" alt="Arena 360" />
+          <div className="flex items-center gap-3 animate-fade-in-up mb-8 p-4">
+            <img src="/arenalogo.png" className="logo" alt="Arena 360" />
             <span className="text-xl font-bold text-white">{publicOrg?.name ?? 'Arena 360'}</span>
           </div>
 
@@ -132,12 +132,12 @@ const Login: React.FC = () => {
                     type="text" inputMode="numeric" autoComplete="one-time-code"
                     value={code2fa}
                     onChange={(e) => setCode2fa(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-white text-center text-2xl font-bold tracking-[0.3em] focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                    className="input w-full h-12 px-4 text-center text-2xl font-bold tracking-[0.3em] focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--ring))] focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                     placeholder="000000" maxLength={6}
                   />
                 </div>
                 <button type="submit" disabled={loading || code2fa.length !== 6}
-                  className="w-full h-12 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-base rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
+                  className="btn-primary w-full h-12 font-semibold text-base rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
                   {loading ? 'Verifying...' : 'Verify Code'}
                 </button>
                 <button type="button" onClick={() => { setStep2fa(null); setCode2fa(''); setError(null); }}
@@ -152,7 +152,7 @@ const Login: React.FC = () => {
                   <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">Email Address</label>
                   <input
                     type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                    className="w-full h-12 px-4 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                    className="input w-full h-12 px-4 text-base placeholder-slate-400 focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--ring))] focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                     placeholder="you@company.com"
                   />
                 </div>
@@ -166,7 +166,7 @@ const Login: React.FC = () => {
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required
-                      className="w-full h-12 px-4 pr-12 bg-[var(--app-surface)] border border-slate-700/50 dark:border-slate-800 rounded-xl text-base text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
+                      className="input w-full h-12 px-4 pr-12 text-base placeholder-slate-400 focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--ring))] focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
                       placeholder="••••••"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -179,7 +179,7 @@ const Login: React.FC = () => {
                 {/* Submit */}
                 <div className="animate-fade-in-up-delay2">
                   <button type="submit" disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-base rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
+                    className="btn-primary w-full h-12 font-semibold text-base rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
                         <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>

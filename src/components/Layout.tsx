@@ -19,6 +19,29 @@ import { api } from '../services/api';
 
 const API_WS_URL = import.meta.env.VITE_API_URL || '';
 
+const hexToHslTuple = (hex: string): string | null => {
+  const cleaned = hex.trim().replace('#', '');
+  if (!/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/.test(cleaned)) return null;
+  const full = cleaned.length === 3 ? cleaned.split('').map((c) => c + c).join('') : cleaned;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0;
+  if (delta !== 0) {
+    if (max === r) h = ((g - b) / delta) % 6;
+    else if (max === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+  }
+  const l = (max + min) / 2;
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
 const SidebarItem = ({ to, icon: Icon, label, onClick, isCollapsed }: any) => (
   <NavLink
     to={to}
@@ -74,7 +97,10 @@ export const Layout: React.FC = () => {
     api.org.get().then((o: any) => {
       setOrgBranding({ logo: o.logo, primaryColor: o.primaryColor, accentColor: o.accentColor });
       const root = document.documentElement.style;
-      if (o.primaryColor) root.setProperty('--brand-primary', o.primaryColor);
+      if (o.primaryColor) {
+        const hslTuple = hexToHslTuple(o.primaryColor);
+        if (hslTuple) root.setProperty('--brand-primary', hslTuple);
+      }
       if (o.accentColor) root.setProperty('--brand-accent', o.accentColor);
     }).catch(() => { });
   }, [user]);
@@ -201,7 +227,7 @@ export const Layout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-sans selection:bg-cyan-500/30 transition-colors duration-500">
+    <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-sans selection:bg-cyan-500/30 transition-colors duration-500 ${i18n.language === 'ar' ? 'font-brand-ar' : 'font-brand-en'}`}>
       {/* Background Ambience - Modified for light theme */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/5 dark:bg-cyan-900/10 rounded-full blur-[100px] animate-pulse-subtle" />
@@ -216,7 +242,7 @@ export const Layout: React.FC = () => {
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'} 
-        bg-white dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800
+        bg-white dark:bg-slate-900 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800
         transform transition-all duration-300 lg:transform-none flex flex-col shadow-xl lg:shadow-none
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0'}
       `}>
@@ -228,16 +254,16 @@ export const Layout: React.FC = () => {
           <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`} />
         </button>
 
-        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-slate-200 dark:border-slate-800 relative h-20`}>
+        <div className={`p-4 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 relative h-20`}>
           {!isCollapsed && (
-            <div className="h-[38px] flex items-center justify-center">
+            <div className="p-4 flex items-center justify-center">
               {orgBranding?.logo ? (
-                <img src={orgBranding.logo} alt="Logo" className="h-full object-contain max-w-[140px] dark:invert-0" />
+                <img src={orgBranding.logo} alt="Logo" className="logo max-w-[160px] dark:invert-0" />
               ) : (
                 <img
                   src="/arenalogo.png"
                   alt="Arena logo"
-                  className="h-full object-contain dark:brightness-0 dark:invert-1"
+                  className="logo max-w-[160px] dark:brightness-0 dark:invert-1"
                   style={{ filter: document.documentElement.classList.contains('theme-light') ? 'none' : 'brightness(0) invert(1)' }}
                 />
               )}

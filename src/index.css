@@ -1,12 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --app-bg: #020617;
-  --app-surface: #0f172a;
-  --app-text-base: #f8fafc;
-  --app-text-muted: #94a3b8;
-  --app-border: #1e293b;
+  /* New Identity Tokens */
+  --brand-primary: 255 45% 35%;
+  --brand-primary-foreground: 0 0% 100%;
+  --brand-secondary-blue: 210 100% 40%;
+  --brand-secondary-cyan: 190 80% 50%;
+  --brand-secondary-teal: 160 70% 40%;
+  --brand-bg: 0 0% 100%;
+  --brand-surface: 0 0% 100%;
+  --brand-text: 240 10% 15%;
+  --brand-text-muted: 240 5% 45%;
+  --brand-border: 240 10% 90%;
+  --brand-success: 160 70% 40%;
+  --brand-warning: 40 90% 50%;
+  --brand-error: 0 70% 50%;
+  --brand-info: 210 100% 50%;
+
+  /* Existing token mapping (safe override) */
+  --primary: var(--brand-primary);
+  --ring: var(--brand-primary);
+  --background: var(--brand-bg);
+  --card: var(--brand-surface);
+  --foreground: var(--brand-text);
+  --muted-foreground: var(--brand-text-muted);
+  --border: var(--brand-border);
+  --input: var(--brand-border);
+
+  /* App compatibility tokens */
+  --app-bg: hsl(var(--background));
+  --app-surface: hsl(var(--card));
+  --app-text-base: hsl(var(--foreground));
+  --app-text-muted: hsl(var(--muted-foreground));
+  --app-border: hsl(var(--border));
 
   /* Slate Scale Mapping for Dark Mode (Default) */
   --slate-50: #f8fafc;
@@ -21,8 +49,30 @@
   --slate-900: #0f172a;
   --slate-950: #020617;
 
-  --brand-primary: #06b6d4;
   --brand-accent: #6366f1;
+}
+
+.dark {
+  --brand-bg: 240 30% 8%;
+  --brand-surface: 240 25% 12%;
+  --brand-text: 0 0% 95%;
+  --brand-text-muted: 0 0% 70%;
+  --brand-border: 240 15% 25%;
+
+  --primary: var(--brand-primary);
+  --ring: var(--brand-primary);
+  --background: var(--brand-bg);
+  --card: var(--brand-surface);
+  --foreground: var(--brand-text);
+  --muted-foreground: var(--brand-text-muted);
+  --border: var(--brand-border);
+  --input: var(--brand-border);
+
+  --app-bg: hsl(var(--background));
+  --app-surface: hsl(var(--card));
+  --app-text-base: hsl(var(--foreground));
+  --app-text-muted: hsl(var(--muted-foreground));
+  --app-border: hsl(var(--border));
 }
 
 /* --- Light Theme Overrides (.theme-light) --- */
@@ -46,7 +96,7 @@
   /* Accent & Active States */
   --active-bg: #ecfeff; /* cyan-50 */
   --active-text: #0891b2; /* cyan-600 */
-  --brand-primary: #06b6d4;
+  --brand-primary: 255 45% 35%;
   --brand-accent: #3b82f6;
 
   /* Explicit Shadows for Light Surfaces */
@@ -68,6 +118,71 @@
   /* Ensure text-slate-900/950 are NOT white but also not pure black */
   --color-slate-900: #0f172a !important; 
   --color-slate-950: #020617 !important;
+}
+
+@layer components {
+  .btn-primary {
+    @apply text-white hover:opacity-90;
+    background-color: hsl(var(--brand-primary));
+  }
+
+  .card {
+    @apply rounded-2xl border;
+    background-color: hsl(var(--brand-surface));
+    border-color: hsl(var(--brand-border));
+  }
+
+  .input {
+    @apply rounded-xl border;
+    background-color: hsl(var(--brand-bg));
+    border-color: hsl(var(--brand-border));
+    color: hsl(var(--brand-text));
+  }
+
+  .logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .status-success {
+    background-color: hsl(var(--brand-success) / 0.1);
+    color: hsl(var(--brand-success));
+  }
+
+  .status-warning {
+    background-color: hsl(var(--brand-warning) / 0.1);
+    color: hsl(var(--brand-warning));
+  }
+
+  .status-error {
+    background-color: hsl(var(--brand-error) / 0.1);
+    color: hsl(var(--brand-error));
+  }
+
+  .status-info {
+    background-color: hsl(var(--brand-info) / 0.1);
+    color: hsl(var(--brand-info));
+  }
+
+  .text-brand-success { color: hsl(var(--brand-success)); }
+  .text-brand-warning { color: hsl(var(--brand-warning)); }
+  .text-brand-error { color: hsl(var(--brand-error)); }
+  .text-brand-info { color: hsl(var(--brand-info)); }
+  .bg-brand-success { background-color: hsl(var(--brand-success)); }
+  .bg-brand-warning { background-color: hsl(var(--brand-warning)); }
+  .bg-brand-error { background-color: hsl(var(--brand-error)); }
+  .bg-brand-info { background-color: hsl(var(--brand-info)); }
+}
+
+@layer utilities {
+  .font-brand-en {
+    font-family: "Inter", "Segoe UI", sans-serif;
+  }
+
+  .font-brand-ar {
+    font-family: "Bahij Janna", "Cairo", sans-serif;
+  }
 }
 
 /* Animations & Transitions */
@@ -120,7 +235,8 @@
 }
 
 @theme {
-  --font-sans: "Inter", "Cairo", sans-serif;
+  --font-sans: "Inter", "Segoe UI", sans-serif;
+  --font-arabic: "Bahij Janna", "Cairo", sans-serif;
   --font-display: "Orbitron", sans-serif;
 
   --color-slate-50: var(--slate-50);
@@ -145,7 +261,13 @@
   body {
     background-color: var(--app-bg);
     color: var(--app-text-base);
+    font-family: "Inter", "Segoe UI", sans-serif;
     transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  html[dir="rtl"] body,
+  html[lang="ar"] body {
+    font-family: "Bahij Janna", "Cairo", sans-serif;
   }
 }
 
@@ -204,7 +326,7 @@
 
 /* Dashboard Gradients */
 .bg-brand-gradient {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  background: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, var(--brand-accent) 100%);
 }
 
 /* Hide redundant dark blobs in light mode */

@@ -56,7 +56,7 @@ export const DevDashboard: React.FC<{ role: Role }> = ({ role }) => {
               {tasks.filter(t => t.status !== 'done').slice(0, 5).map(task => (
                 <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/30 hover:bg-white dark:hover:bg-slate-800/50 transition-all shadow-sm hover:shadow-md group cursor-pointer" onClick={() => navigate(`/app/projects/${task.projectId}`)}>
                   <div className="flex items-start gap-4">
-                    <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shadow-sm ${task.priority === 'urgent' ? 'bg-red-500 animate-pulse' : task.priority === 'high' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+                    <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shadow-sm ${task.priority === 'urgent' ? 'bg-red-500 animate-pulse' : task.priority === 'high' ? 'bg-brand-warning' : 'bg-cyan-500'}`} />
                     <div>
                       <p className="font-bold text-slate-800 dark:text-slate-200 tracking-tight">{task.title}</p>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-500 mt-1 uppercase tracking-widest">

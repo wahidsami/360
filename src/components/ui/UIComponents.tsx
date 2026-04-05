@@ -12,7 +12,7 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const GlassCard = ({ children, className = '', title, ...props }: GlassCardProps) => (
     <div
-        className={`glass-card bg-white dark:bg-slate-900 shadow-sm dark:shadow-none border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-cyan-500/5 hover:-translate-y-1 ${className}`}
+        className={`glass-card card shadow-sm dark:shadow-none p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-cyan-500/5 hover:-translate-y-1 ${className}`}
         {...props}
     >
         {title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 tracking-tight">{title}</h3>}
@@ -33,13 +33,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
-    const baseStyles = "inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-50 disabled:pointer-events-none";
+    const baseStyles = "inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))/0.4] disabled:opacity-50 disabled:pointer-events-none";
 
     const variants = {
-        primary: "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg shadow-cyan-500/20 dark:shadow-none",
+        primary: "btn-primary shadow-lg dark:shadow-none",
         secondary: "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
         ghost: "bg-transparent hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white",
-        danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 dark:shadow-none",
+        danger: "bg-[hsl(var(--brand-error))] hover:opacity-90 text-white shadow-lg dark:shadow-none",
         outline: "bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600"
     };
 
@@ -83,10 +83,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export const Badge = ({ children, variant = 'neutral', size = 'md', className = '', pulse = false, ...props }: BadgeProps) => {
     const variants = {
-        success: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
-        warning: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
+        success: "status-success border border-[hsl(var(--brand-success)/0.2)]",
+        warning: "status-warning border border-[hsl(var(--brand-warning)/0.2)]",
         danger: "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20",
-        info: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/20",
+        info: "status-info border border-[hsl(var(--brand-info)/0.2)]",
         neutral: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/20"
     };
 
@@ -115,7 +115,7 @@ export const Input = ({ label, className = '', id, ...props }: React.InputHTMLAt
             {label && <Label htmlFor={id}>{label}</Label>}
             <input
                 id={id}
-                className={`flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-2 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all ${className}`}
+                className={`input flex h-11 w-full px-4 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))/0.2] focus:border-[hsl(var(--ring))] transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -128,7 +128,7 @@ export const TextArea = ({ label, className = '', id, ...props }: React.Textarea
             {label && <Label htmlFor={id}>{label}</Label>}
             <textarea
                 id={id}
-                className={`flex min-h-[100px] w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-3 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all ${className}`}
+                className={`input flex min-h-[100px] w-full px-4 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))/0.2] focus:border-[hsl(var(--ring))] transition-all ${className}`}
                 {...props}
             />
         </div>
@@ -142,7 +142,7 @@ export const Select = ({ label, className = '', id, children, ...props }: React.
             <div className="relative">
                 <select
                     id={id}
-                    className={`flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/30 px-4 py-2 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 appearance-none transition-all ${className}`}
+                    className={`input flex h-11 w-full px-4 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))/0.2] focus:border-[hsl(var(--ring))] appearance-none transition-all ${className}`}
                     {...props}
                 >
                     {children}
@@ -185,7 +185,7 @@ export const KpiCard = ({ label, value, trend, trendUp, icon, compact = false, c
             <div className={`flex items-end ${compact ? 'gap-2' : 'gap-3'}`}>
                 <div className={`${compact ? 'text-3xl md:text-[2rem]' : 'text-4xl'} font-black text-slate-900 dark:text-white tracking-tight leading-none`}>{value}</div>
                 {trend !== undefined && (
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm ${trendUp ? 'status-success' : 'status-error'}`}>
                         {trendUp ? '+' : '-'} {trend}
                     </span>
                 )}
@@ -252,7 +252,7 @@ export const CopyButton = ({ value, className = '' }: { value: string; className
             title="Copy ID"
         >
             {copied ? (
-                <Check className="w-3 h-3 text-emerald-400 animate-in zoom-in duration-200" />
+                <Check className="w-3 h-3 text-brand-success animate-in zoom-in duration-200" />
             ) : (
                 <Copy className="w-3 h-3 text-slate-500 hover:text-cyan-400" />
             )}

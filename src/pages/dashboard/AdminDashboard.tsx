@@ -67,18 +67,18 @@ type AnalyticsData = {
 const severityColors: Record<string, string> = {
   CRITICAL: '#f43f5e',
   HIGH: '#fb7185',
-  MEDIUM: '#f59e0b',
-  LOW: '#22c55e',
+  MEDIUM: 'hsl(var(--brand-warning))',
+  LOW: 'hsl(var(--brand-success))',
 };
 
 const healthColors: Record<string, string> = {
-  HEALTHY: '#22c55e',
-  AT_RISK: '#f59e0b',
+  HEALTHY: 'hsl(var(--brand-success))',
+  AT_RISK: 'hsl(var(--brand-warning))',
   CRITICAL: '#f43f5e',
   ON_HOLD: '#64748b',
 };
 
-const statusColors = ['#06b6d4', '#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#f43f5e'];
+const statusColors = ['hsl(var(--brand-info))', '#3b82f6', '#8b5cf6', 'hsl(var(--brand-success))', 'hsl(var(--brand-warning))', '#f43f5e'];
 
 const prettifyLabel = (value: string) =>
   value
@@ -384,14 +384,14 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
         </div>
 
         <div className="grid gap-4">
-          <div className="rounded-[28px] border border-emerald-500/18 bg-gradient-to-br from-emerald-500/18 via-slate-900 to-slate-900 p-5">
+          <div className="rounded-[28px] border border-[hsl(var(--brand-success)/0.18)] bg-gradient-to-br from-[hsl(var(--brand-success)/0.18)] via-slate-900 to-slate-900 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-200">{t('operational_pulse')}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-success">{t('operational_pulse')}</p>
                 <p className="mt-2 text-2xl font-black text-white">{stats.projectsAtRisk?.length ?? 0}</p>
                 <p className="mt-1 text-xs text-slate-300">{t('projects_at_risk')}</p>
               </div>
-              <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-200">
+              <div className="rounded-2xl status-success p-3">
                 <ShieldCheck className="h-5 w-5" />
               </div>
             </div>
@@ -472,38 +472,38 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald-500/10">
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-400/12 blur-2xl" />
+          <div className="group relative overflow-hidden rounded-3xl border border-[hsl(var(--brand-success)/0.2)] bg-gradient-to-br from-[hsl(var(--brand-success)/0.16)] via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_hsl(var(--brand-success)/0.18)]">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[hsl(var(--brand-success)/0.12)] blur-2xl" />
             <div className="relative flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-200/90">{t('reviewed_checks')}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-success">{t('reviewed_checks')}</p>
                 <p className="mt-2 text-3xl font-black text-white">{stats.scoredChecks ?? 0}</p>
                 <p className="mt-1 text-xs text-slate-300">{t('pass_fail_partial_checks')}</p>
               </div>
-              <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-300">
+              <div className="rounded-2xl status-success p-3">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
             </div>
             <div className="mt-4 flex items-end justify-between gap-3">
-              <Badge variant="neutral" size="sm" className="border-emerald-400/20 bg-emerald-500/8 text-emerald-200">{stats.scoredChecks ?? 0} {t('total_label')}</Badge>
+              <Badge variant="neutral" size="sm" className="status-success border border-[hsl(var(--brand-success)/0.2)]">{stats.scoredChecks ?? 0} {t('total_label')}</Badge>
               <MiniSparkline values={reviewedSpark} stroke="#22c55e" fill="#22c55e" />
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/16 via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-amber-500/10">
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/12 blur-2xl" />
+          <div className="group relative overflow-hidden rounded-3xl border border-[hsl(var(--brand-warning)/0.2)] bg-gradient-to-br from-[hsl(var(--brand-warning)/0.16)] via-slate-900 to-slate-900 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_hsl(var(--brand-warning)/0.18)]">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[hsl(var(--brand-warning)/0.12)] blur-2xl" />
             <div className="relative flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-200/90">{t('checks_needing_attention')}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-warning">{t('checks_needing_attention')}</p>
                 <p className="mt-2 text-3xl font-black text-white">{stats.needsAttentionChecks ?? 0}</p>
                 <p className="mt-1 text-xs text-slate-300">{t('failed_and_partial_checks')}</p>
               </div>
-              <div className="rounded-2xl bg-amber-500/12 p-3 text-amber-300">
+              <div className="rounded-2xl status-warning p-3">
                 <ShieldAlert className="h-5 w-5" />
               </div>
             </div>
             <div className="mt-4 flex items-end justify-between gap-3">
-              <Badge variant="neutral" size="sm" className="border-amber-400/20 bg-amber-500/8 text-amber-200">{stats.needsAttentionChecks ?? 0} {t('flagged_label')}</Badge>
+              <Badge variant="neutral" size="sm" className="status-warning border border-[hsl(var(--brand-warning)/0.2)]">{stats.needsAttentionChecks ?? 0} {t('flagged_label')}</Badge>
               <MiniSparkline values={attentionSpark} stroke="#f59e0b" fill="#f59e0b" />
             </div>
           </div>
@@ -551,7 +551,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                             </div>
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-slate-400">{t('checks_needing_attention')}</span>
-                              <span className="font-black text-amber-300">{item.audited ? item.needsAttentionChecks : '--'}</span>
+                              <span className="font-black text-brand-warning">{item.audited ? item.needsAttentionChecks : '--'}</span>
                             </div>
                           </div>
                         </button>
@@ -644,22 +644,22 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                     <p className="mt-2 text-xs text-slate-300">{stats.auditedClients ?? 0} {t('audited_clients').toLowerCase()}</p>
                   </div>
                   {topPerformer && (
-                    <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-300">{t('top_client')}</p>
+                    <div className="rounded-3xl border border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.1)] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-success">{t('top_client')}</p>
                       <p className="mt-2 text-lg font-black text-white">{topPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('client_compliance_score')}</span>
-                        <span className="font-black text-emerald-300">{topPerformer.audited ? `${topPerformer.compliancePercentage}%` : t('not_audited_short')}</span>
+                        <span className="font-black text-brand-success">{topPerformer.audited ? `${topPerformer.compliancePercentage}%` : t('not_audited_short')}</span>
                       </div>
                     </div>
                   )}
                   {lowestPerformer && (
-                    <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-300">{t('needs_focus')}</p>
+                    <div className="rounded-3xl border border-[hsl(var(--brand-warning)/0.2)] bg-[hsl(var(--brand-warning)/0.1)] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-warning">{t('needs_focus')}</p>
                       <p className="mt-2 text-lg font-black text-white">{lowestPerformer.clientName}</p>
                       <div className="mt-3 flex items-center justify-between text-sm">
                         <span className="text-slate-300">{t('checks_needing_attention')}</span>
-                        <span className="font-black text-amber-300">{lowestPerformer.audited ? lowestPerformer.needsAttentionChecks : t('not_audited_short')}</span>
+                        <span className="font-black text-brand-warning">{lowestPerformer.audited ? lowestPerformer.needsAttentionChecks : t('not_audited_short')}</span>
                       </div>
                     </div>
                   )}
@@ -915,9 +915,9 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   </div>
                 ))
               ) : (
-                <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/8 p-5">
+                <div className="rounded-3xl border border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.08)] p-5">
                   <div className="flex items-start gap-4">
-                    <div className="rounded-2xl bg-emerald-500/12 p-3 text-emerald-300">
+                    <div className="rounded-2xl status-success p-3">
                       <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
@@ -928,7 +928,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                       <button
                         type="button"
                         onClick={() => navigate('/app/projects')}
-                        className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-200"
+                        className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-brand-success"
                       >
                         {t('view_all_projects')} <ArrowRight className="h-3.5 w-3.5" />
                       </button>
