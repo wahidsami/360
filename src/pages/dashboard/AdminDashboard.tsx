@@ -687,8 +687,7 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
                   </RadialBarChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-black text-slate-900 dark:text-white">{coveragePercentage}%</span>
-                  <span className="text-[9px] text-center leading-tight uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{t('audit_coverage')}</span>
+                  <span className="text-2xl font-black leading-none text-slate-900 dark:text-white">{coveragePercentage}%</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
