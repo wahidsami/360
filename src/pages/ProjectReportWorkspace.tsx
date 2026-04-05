@@ -134,6 +134,28 @@ const toDisplayText = (value: unknown): string => {
   return '';
 };
 
+const decodeMojibakeString = (value: string): string => {
+  if (!/[\u00D8\u00D9\u00DA\u00DB]/.test(value)) return value;
+
+  try {
+    const bytes = Uint8Array.from(Array.from(value).map((char) => char.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder('utf-8').decode(bytes);
+    if (/[\u0600-\u06FF]/.test(decoded)) return decoded;
+  } catch {
+    // no-op: keep original string
+  }
+
+  return value;
+};
+
+const decodeMojibakeRecord = <T extends Record<string, string>>(record: T): T => {
+  const fixed = {} as T;
+  (Object.keys(record) as Array<keyof T>).forEach((key) => {
+    fixed[key] = decodeMojibakeString(record[key]) as T[keyof T];
+  });
+  return fixed;
+};
+
 export const ProjectReportWorkspace: React.FC = () => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
@@ -143,9 +165,8 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const isArabic = i18n.language === 'ar';
   const uiLocale: AccessibilityAuditOutputLocale = isArabic ? 'ar' : 'en';
-  const copy = React.useMemo(
-    () =>
-      isArabic
+  const copy = React.useMemo(() => {
+      const localizedCopy = isArabic
         ? {
             loadingReport: 'Ø¬Ø§Ø±ÙŠ ØªØ­Ù…ÙŠÙ„ ØªÙ‚Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„...',
             reportNotFound: 'ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ ØªÙ‚Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„.',
@@ -343,16 +364,21 @@ export const ProjectReportWorkspace: React.FC = () => {
             reportLockedHelp: 'Once a report is submitted for review, findings and evidence stay frozen until PM or Admin returns it to draft.',
             statusUpdateSuccess: 'Report status updated.',
             statusUpdateError: 'Failed to update report status.'
-          },
+          };
+
+      return decodeMojibakeRecord(localizedCopy);
+    },
     [isArabic],
   );
 
+  const ar = React.useCallback((value: string) => decodeMojibakeString(value), []);
+
   const severityLabel = React.useCallback((severity: ProjectReportEntrySeverity) => {
     if (isArabic) {
-      return severity === 'HIGH' ? copy.high : severity === 'MEDIUM' ? copy.medium : severity === 'LOW' ? copy.low : 'Ø­Ø±Ø¬Ø©';
+      return severity === 'HIGH' ? copy.high : severity === 'MEDIUM' ? copy.medium : severity === 'LOW' ? copy.low : ar('Ø­Ø±Ø¬Ø©');
     }
     return severityCopy[severity] || severity;
-  }, [copy.high, copy.low, copy.medium, isArabic]);
+  }, [ar, copy.high, copy.low, copy.medium, isArabic]);
 
   const outcomeLabel = React.useCallback((outcome: ProjectReportEntryOutcome) => {
     if (outcome === 'PASS') return copy.outcomePass;
@@ -364,12 +390,12 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const evidenceActionLabel = React.useCallback((media: ProjectReportEntryMedia) => {
     if (isArabic) {
-      if (media.mediaType === 'IMAGE') return 'Ø¹Ø±Ø¶ Ø§Ù„ØµÙˆØ±Ø©';
-      if (media.mediaType === 'VIDEO') return 'Ø¹Ø±Ø¶ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ';
-      return 'Ø¹Ø±Ø¶ Ø§Ù„Ø¯Ù„ÙŠÙ„';
+      if (media.mediaType === 'IMAGE') return ar('Ø¹Ø±Ø¶ Ø§Ù„ØµÙˆØ±Ø©');
+      if (media.mediaType === 'VIDEO') return ar('Ø¹Ø±Ø¶ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ');
+      return ar('Ø¹Ø±Ø¶ Ø§Ù„Ø¯Ù„ÙŠÙ„');
     }
     return mediaActionLabel(media);
-  }, [isArabic]);
+  }, [ar, isArabic]);
 
   const reportStatusLabel = React.useCallback((status: string) => {
     if (status === 'DRAFT') return copy.statusDraft;
@@ -412,9 +438,9 @@ export const ProjectReportWorkspace: React.FC = () => {
   const canPublishReports = hasPermission(Permission.PUBLISH_PROJECT_REPORTS);
   const canGenerateExports = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
-  const exportPdfLabel = isArabic ? 'ØªØµØ¯ÙŠØ± PDF' : 'Export PDF';
-  const exportInProgressLabel = isArabic ? 'Ø¬Ø§Ø±Ù ØªØµØ¯ÙŠØ± PDF...' : 'Exporting PDF...';
-  const generateAiLabel = isArabic ? 'Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ø®Øµ Ø°ÙƒÙŠ' : 'Generate AI Summary';
+  const exportPdfLabel = isArabic ? ar('ØªØµØ¯ÙŠØ± PDF') : 'Export PDF';
+  const exportInProgressLabel = isArabic ? ar('Ø¬Ø§Ø±Ù ØªØµØ¯ÙŠØ± PDF...') : 'Exporting PDF...';
+  const generateAiLabel = isArabic ? ar('Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ø®Øµ Ø°ÙƒÙŠ') : 'Generate AI Summary';
   const generatingAiLabel = isArabic ? 'Generating...' : 'Generating...';
   const savingEntryLabel = isArabic ? 'Saving...' : 'Saving...';
   const uploadingEvidenceLabel = isArabic ? '\u062C\u0627\u0631\u064D \u0631\u0641\u0639 \u0627\u0644\u0623\u062F\u0644\u0629...' : 'Uploading evidence...';
@@ -655,10 +681,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       await loadData();
       setEntryModalOpen(false);
       resetEvidenceUploadUi();
-      toast.success(editingEntry ? (isArabic ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result updated.') : (isArabic ? 'ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result added.'));
+      toast.success(editingEntry ? (isArabic ? ar('ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù†ØªÙŠØ¬Ø©.') : 'Audit result updated.') : (isArabic ? ar('ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù†ØªÙŠØ¬Ø©.') : 'Audit result added.'));
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± Ø­ÙØ¸ Ù†ØªÙŠØ¬Ø© Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚.' : 'Failed to save audit result.'));
+      toast.error(error?.message || (isArabic ? ar('ØªØ¹Ø°Ø± Ø­ÙØ¸ Ù†ØªÙŠØ¬Ø© Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚.') : 'Failed to save audit result.'));
     } finally {
       savingEntryRef.current = false;
       setSavingEntry(false);
@@ -668,19 +694,19 @@ export const ProjectReportWorkspace: React.FC = () => {
   const handleDeleteEntry = async (entry: ProjectReportEntry) => {
     if (!reportId) return;
     const shouldDelete = await confirm({
-      title: isArabic ? 'Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©' : 'Delete result',
-      message: isArabic ? `Ø­Ø°Ù "${entry.issueTitle}"ØŸ` : `Delete "${entry.issueTitle}"?`,
-      confirmText: isArabic ? 'Ø­Ø°Ù' : 'Delete',
+      title: isArabic ? ar('Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©') : 'Delete result',
+      message: isArabic ? `${ar('Ø­Ø°Ù')} "${entry.issueTitle}"${ar('ØŸ')}` : `Delete "${entry.issueTitle}"?`,
+      confirmText: isArabic ? ar('Ø­Ø°Ù') : 'Delete',
       tone: 'danger',
     });
     if (!shouldDelete) return;
     try {
       await api.reportBuilderProjects.deleteEntry(reportId, entry.id);
       await loadData();
-      toast.success(isArabic ? 'ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result removed.');
+      toast.success(isArabic ? ar('ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ù†ØªÙŠØ¬Ø©.') : 'Audit result removed.');
     } catch (error) {
       console.error(error);
-      toast.error(isArabic ? 'ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Failed to delete audit result.');
+      toast.error(isArabic ? ar('ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©.') : 'Failed to delete audit result.');
     }
   };
 
@@ -688,9 +714,9 @@ export const ProjectReportWorkspace: React.FC = () => {
     if (!reportId) return;
     const fileLabel = media.fileAsset.filename || media.fileAsset.name || 'file';
     const shouldDelete = await confirm({
-      title: isArabic ? 'Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ø¯Ù„ÙŠÙ„' : 'Remove evidence',
-      message: isArabic ? `Ø¥Ø²Ø§Ù„Ø© "${fileLabel}"ØŸ` : `Remove "${fileLabel}"?`,
-      confirmText: isArabic ? 'Ø¥Ø²Ø§Ù„Ø©' : 'Remove',
+      title: isArabic ? ar('Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ø¯Ù„ÙŠÙ„') : 'Remove evidence',
+      message: isArabic ? `${ar('Ø¥Ø²Ø§Ù„Ø©')} "${fileLabel}"${ar('ØŸ')}` : `Remove "${fileLabel}"?`,
+      confirmText: isArabic ? ar('Ø¥Ø²Ø§Ù„Ø©') : 'Remove',
       tone: 'danger',
     });
     if (!shouldDelete) return;
@@ -744,10 +770,10 @@ export const ProjectReportWorkspace: React.FC = () => {
     try {
       await api.reportBuilderProjects.generateAiSummary(reportId);
       await loadData();
-      toast.success(isArabic ? 'ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.' : 'AI report narrative generated.');
+      toast.success(isArabic ? ar('ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.') : 'AI report narrative generated.');
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Failed to generate AI report narrative.'));
+      toast.error(error?.message || (isArabic ? ar('ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.') : 'Failed to generate AI report narrative.'));
     } finally {
       setGeneratingAi(false);
     }
@@ -763,10 +789,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
       }
-      toast.success(isArabic ? 'ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ù PDF Ø¨Ù†Ø¬Ø§Ø­.' : 'PDF exported successfully.');
+      toast.success(isArabic ? ar('ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ù PDF Ø¨Ù†Ø¬Ø§Ø­.') : 'PDF exported successfully.');
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± ØªØµØ¯ÙŠØ± Ù…Ù„Ù PDF.' : 'Failed to export PDF.'));
+      toast.error(error?.message || (isArabic ? ar('ØªØ¹Ø°Ø± ØªØµØ¯ÙŠØ± Ù…Ù„Ù PDF.') : 'Failed to export PDF.'));
     } finally {
       setExportingPdf(false);
     }
@@ -805,10 +831,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       const updated = await api.reportBuilderProjects.updateProjectReport(reportId, { outputLocale: locale });
       setReport(updated);
       setPreviewLocale(locale);
-      toast.success(isArabic ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Report language updated.');
+      toast.success(isArabic ? ar('ØªÙ… ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.') : 'Report language updated.');
     } catch (error) {
       console.error(error);
-      toast.error(isArabic ? 'ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Failed to update report language.');
+      toast.error(isArabic ? ar('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.') : 'Failed to update report language.');
     }
   };
 
@@ -864,11 +890,11 @@ export const ProjectReportWorkspace: React.FC = () => {
           {!isClientUser && canEditReport && (
             <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                {isArabic ? 'Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±' : 'Report Language'}
+                {isArabic ? ar('Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±') : 'Report Language'}
               </p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {isArabic
-                  ? 'Ø§Ø­ÙØ¸ Ù„ØºØ© Ø§Ù„Ø¥Ø®Ø±Ø§Ø¬ Ø§Ù„ØªÙŠ Ø³ÙŠÙØ±Ø§Ø¬Ø¹ ÙˆÙŠÙÙ†Ø´Ø± ÙˆÙŠÙØµØ¯Ø± Ø¨Ù‡Ø§ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚Ø±ÙŠØ±.'
+                  ? ar('Ø§Ø­ÙØ¸ Ù„ØºØ© Ø§Ù„Ø¥Ø®Ø±Ø§Ø¬ Ø§Ù„ØªÙŠ Ø³ÙŠÙØ±Ø§Ø¬Ø¹ ÙˆÙŠÙÙ†Ø´Ø± ÙˆÙŠÙØµØ¯Ø± Ø¨Ù‡Ø§ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚Ø±ÙŠØ±.')
                   : 'Save the output language this report should be reviewed, published, and exported in.'}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -944,7 +970,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.complianceScore}</p>
           <p className="mt-1.5 text-xl font-bold text-cyan-600 md:text-2xl">{summaryCounts.compliance}%</p>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'Ø¹Ù†ØµØ±Ù‹Ø§ ØªÙ… ØªÙ‚ÙŠÙŠÙ…Ù‡' : 'scored checks'}</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? ar('Ø¹Ù†ØµØ±Ù‹Ø§ ØªÙ… ØªÙ‚ÙŠÙŠÙ…Ù‡') : 'scored checks'}</p>
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
@@ -962,7 +988,7 @@ export const ProjectReportWorkspace: React.FC = () => {
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
           <p className="mt-1.5 text-xl font-bold text-slate-700 dark:text-slate-200 md:text-2xl">{summaryCounts.notTested}</p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {summaryCounts.notApplicable} {isArabic ? 'ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚' : 'not applicable'}
+            {summaryCounts.notApplicable} {isArabic ? ar('ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚') : 'not applicable'}
           </p>
         </GlassCard>
       </div>
@@ -1182,7 +1208,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             ) : (
               <GlassCard className="border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.1)] dark:border-[hsl(var(--brand-success)/0.2)] dark:bg-[hsl(var(--brand-success)/0.1)]">
                 <p className="text-sm text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]">
-                  {isArabic ? 'Ù„ÙŠØ³Øª Ù‡Ù†Ø§Ùƒ Ø­Ø§Ø¬Ø© Ù„ØªØ­Ø¯ÙŠØ¯ Ø´Ø¯Ø© Ø¹Ù†Ø¯Ù…Ø§ ØªÙƒÙˆÙ† Ø§Ù„Ù†ØªÙŠØ¬Ø© Ù†Ø§Ø¬Ø­Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ø®ØªØ¨Ø±Ø©.' : 'Severity is only needed when the result has an issue or is partially working.'}
+                  {isArabic ? ar('Ù„ÙŠØ³Øª Ù‡Ù†Ø§Ùƒ Ø­Ø§Ø¬Ø© Ù„ØªØ­Ø¯ÙŠØ¯ Ø´Ø¯Ø© Ø¹Ù†Ø¯Ù…Ø§ ØªÙƒÙˆÙ† Ø§Ù„Ù†ØªÙŠØ¬Ø© Ù†Ø§Ø¬Ø­Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ø®ØªØ¨Ø±Ø©.') : 'Severity is only needed when the result has an issue or is partially working.'}
                 </p>
               </GlassCard>
             )}
