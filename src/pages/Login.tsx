@@ -7,6 +7,7 @@ import { api } from '../services/api';
 
 const Login: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const isArabic = i18n.language?.startsWith('ar');
   const { login, loginWith2fa } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -93,7 +94,7 @@ const Login: React.FC = () => {
         .animate-fade-in-right { animation: fade-in-right 0.8s ease-out 0.3s forwards; opacity: 0; }
       `}</style>
 
-      <div className={`flex h-screen overflow-hidden ${i18n.language?.startsWith('ar') ? 'font-brand-ar' : 'font-brand-en'}`}>
+      <div className={`flex h-screen overflow-hidden ${isArabic ? 'font-brand-ar' : 'font-brand-en'}`}>
 
         {/* ═══ LEFT PANEL — Login Form (40%) ═══ */}
         <div className="w-full md:w-2/5 bg-slate-950 flex flex-col justify-between p-8 lg:p-12 min-h-screen overflow-auto">
@@ -206,13 +207,15 @@ const Login: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/25 via-blue-600/25 to-indigo-600/30" />
 
           {/* Content */}
-          <div className="relative z-10 flex items-center justify-center h-full w-full p-12 text-white animate-fade-in-right">
-            <div className="w-full flex items-center justify-center">
-              <img
-                src="/dgalogo.svg"
-                className="w-full max-w-[440px] h-auto object-contain"
-                alt="Digital Government Authority logo"
-              />
+          <div className="relative z-10 flex h-full w-full p-8 lg:p-10 text-white animate-fade-in-right">
+            <div className={`w-full flex items-start ${isArabic ? 'justify-end' : 'justify-start'}`}>
+              <div className="bg-slate-950/35 backdrop-blur-md border border-white/25 rounded-2xl px-5 py-4 shadow-xl">
+                <img
+                  src="/dgalogo.svg"
+                  className="h-14 lg:h-16 w-auto max-w-[300px] object-contain"
+                  alt="Digital Government Authority logo"
+                />
+              </div>
             </div>
           </div>
         </div>
