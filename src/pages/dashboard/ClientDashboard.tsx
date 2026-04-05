@@ -40,6 +40,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
 
    if (loading) return <div className="text-center p-10 text-slate-500">{t('loading_portal')}</div>;
    if (!stats) return <div className="text-center p-10 text-slate-500">{t('no_client_assoc')}</div>;
+   const showUnassignedBanner = !stats.myProjects || stats.myProjects.length === 0;
 
    return (
       <div className="space-y-10">
@@ -54,6 +55,13 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             <KpiCard label={t('pending_approvals')} value={stats.pendingApprovals ?? 0} icon={<Clock />} />
             <KpiCard label={t('shared_files')} value={stats.sharedFilesCount ?? 0} icon={<FileText />} />
          </div>
+
+         {showUnassignedBanner && (
+            <GlassCard className="border-[hsl(var(--brand-warning)/0.3)] bg-[hsl(var(--brand-warning)/0.08)]">
+               <p className="text-sm font-black text-[hsl(var(--brand-warning))]">{t('no_assignment_title')}</p>
+               <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{t('no_assignment_message')}</p>
+            </GlassCard>
+         )}
 
          <ToolsPanel role={role} />
 
