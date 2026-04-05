@@ -81,6 +81,33 @@ const getAuditOutcome = (entry?: Pick<ProjectReportEntry, 'auditOutcome' | 'rowD
 
 const getVersionTaxonomy = (version?: ReportBuilderTemplateVersion | null) => resolveAccessibilityTaxonomy(version?.taxonomyJson);
 
+const toText = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+};
+
+const normalizeCategoryValue = (value: unknown): AccessibilityAuditMainCategory | '' => {
+  if (
+    typeof value === 'string' &&
+    ACCESSIBILITY_AUDIT_MAIN_CATEGORIES.includes(value as AccessibilityAuditMainCategory)
+  ) {
+    return value as AccessibilityAuditMainCategory;
+  }
+  return '';
+};
+
+const normalizeWorkspaceEntry = (entry: ProjectReportEntry): ProjectReportEntry => ({
+  ...entry,
+  serviceName: toText(entry.serviceName),
+  issueTitle: toText(entry.issueTitle),
+  issueDescription: toText(entry.issueDescription),
+  category: normalizeCategoryValue(entry.category),
+  subcategory: toText(entry.subcategory),
+  pageUrl: toText(entry.pageUrl),
+  recommendation: toText(entry.recommendation),
+});
+
 export const ProjectReportWorkspace: React.FC = () => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
@@ -412,7 +439,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         api.reportBuilderProjects.listEntries(reportId),
       ]);
       setReport(reportData);
-      setEntries(entryData);
+      setEntries((entryData || []).map(normalizeWorkspaceEntry));
       setPreviewLocale(reportData.outputLocale || getAccessibilityOutputLocale(reportData.templateVersion));
     } catch (error) {
       console.error(error);
