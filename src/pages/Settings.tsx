@@ -713,8 +713,13 @@ const Settings: React.FC = () => {
         <div className="space-y-2">
           <Label>Theme</Label>
           <div className="flex gap-2">
-            <button type="button" onClick={() => handleThemeChange('dark')} className={`px-4 py-2 rounded-lg border ${theme === 'dark' ? 'bg-slate-700 border-cyan-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500'}`}>Dark</button>
-            <button type="button" onClick={() => handleThemeChange('light')} className={`px-4 py-2 rounded-lg border ${theme === 'light' ? 'bg-slate-200 border-cyan-500 text-slate-900' : 'border-slate-400 text-slate-500 hover:border-slate-500'}`}>Light</button>
+            <button
+              type="button"
+              onClick={() => handleThemeChange('dark')}
+              className="px-4 py-2 rounded-lg border bg-slate-700 border-cyan-500 text-white"
+            >
+              Dark
+            </button>
           </div>
         </div>
       </GlassCard>
