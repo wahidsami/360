@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Bot, Download, Eye, FileImage, FileText, Pencil, Plus, Search, Sparkles, Trash2, Upload, Video } from 'lucide-react';
@@ -142,103 +142,103 @@ export const ProjectReportWorkspace: React.FC = () => {
     () =>
       isArabic
         ? {
-            loadingReport: 'جاري تحميل تقرير إمكانية الوصول...',
-            reportNotFound: 'تعذر العثور على تقرير إمكانية الوصول.',
-            reportVersion: 'إصدار الأداة',
-            performedBy: 'تم التنفيذ بواسطة',
-            unknown: 'غير معروف',
-            clientReadOnly: 'وصول العميل للقراءة فقط. تظهر هنا فقط تقارير إمكانية الوصول المنشورة والمرئية للعميل.',
-            loadingPreview: 'جاري تحميل المعاينة...',
-            previewReport: 'معاينة التقرير',
-            downloadLatestExport: 'تنزيل آخر نسخة',
-            addFinding: 'إضافة نتيجة تدقيق',
-            totalFindings: 'إجمالي النتائج',
-            complianceScore: 'نسبة الامتثال',
-            workingChecks: 'ما يعمل بشكل صحيح',
-            needsAttention: 'يحتاج معالجة',
-            partialChecks: 'يعمل جزئيا',
-            notTested: 'لم يتم اختباره',
-            high: 'عالية',
-            medium: 'متوسطة',
-            low: 'منخفضة',
-            aiReportSummary: 'ملخص التقرير بالذكاء الاصطناعي',
-            introduction: 'المقدمة',
-            executiveSummary: 'الملخص التنفيذي',
-            strengthsSummary: 'ما يعمل بشكل جيد',
-            complianceSummary: 'ملخص الامتثال',
-            recommendationsSummary: 'ملخص التوصيات',
-            findingsList: 'قائمة الملاحظات',
-            findingsListDescription: 'سجل بسيط لنتائج التدقيق يوضح ما يعمل وما يحتاج معالجة، مع الحفاظ على نفس التصنيفات المعتمدة في الأداة.',
-            searchFindings: 'ابحث في الملاحظات',
-            allSeverities: 'كل مستويات الشدة',
-            allOutcomes: 'كل النتائج',
-            allCategories: 'كل التصنيفات',
-            serviceName: 'اسم الخدمة / الوحدة',
-            issueTitle: 'عنوان المشكلة',
-            outcome: 'النتيجة',
-            severity: 'الشدة',
-            category: 'التصنيف',
-            subcategory: 'التصنيف الفرعي',
-            pageUrl: 'رابط الصفحة',
-            media: 'الوسائط',
-            actions: 'الإجراءات',
-            clickHere: 'اضغط هنا',
-            remove: 'إزالة',
-            noFindings: 'لا توجد ملاحظات تطابق عوامل التصفية الحالية بعد.',
-            editFinding: 'تعديل نتيجة التدقيق',
-            newObservation: 'نتيجة تدقيق جديدة',
-            basicInformation: 'المعلومات الأساسية',
-            auditResult: 'نتيجة التدقيق',
-            auditResultHelp: 'اختر هل هذا الجزء يعمل بشكل صحيح أم يحتاج معالجة.',
-            outcomePass: 'يعمل بشكل صحيح',
-            outcomeFail: 'وجدنا مشكلة',
-            outcomePartial: 'يعمل جزئيا',
-            outcomeNotApplicable: 'غير منطبق',
-            outcomeNotTested: 'لم يتم اختباره',
-            servicePlaceholder: 'مثال: تدفق الدفع عبر الجوال',
-            issueTitlePlaceholder: 'وصف قصير وواضح للمشكلة',
-            issueDescription: 'وصف المشكلة',
-            issueDescriptionPlaceholder: 'شرح تفصيلي لعائق إمكانية الوصول...',
-            positiveNotePlaceholder: 'اكتب ببساطة ما الذي يعمل بشكل جيد هنا...',
-            severityClassification: 'تصنيف الشدة',
-            accessibilityCategory: 'تصنيف إمكانية الوصول',
-            mainCategory: 'التصنيف الرئيسي',
-            subcategoryLabelOptional: 'التصنيف الفرعي (اختياري)',
-            subcategoryHelpOptional: 'يمكن ترك التصنيف الفرعي فارغًا عندما تكون النتيجة إيجابية أو غير منطبقة أو غير مختبرة.',
-            selectCategory: 'اختر التصنيف',
-            selectSubcategory: 'اختر التصنيف الفرعي',
-            evidenceMedia: 'وسائط الإثبات',
-            imageProof: 'إثبات بالصورة',
-            videoDemo: 'عرض فيديو',
-            digitalLocation: 'الموقع الرقمي',
-            exactPageUrl: 'رابط الصفحة الدقيق',
+            loadingReport: 'Ø¬Ø§Ø±ÙŠ ØªØ­Ù…ÙŠÙ„ ØªÙ‚Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„...',
+            reportNotFound: 'ØªØ¹Ø°Ø± Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ ØªÙ‚Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„.',
+            reportVersion: 'Ø¥ØµØ¯Ø§Ø± Ø§Ù„Ø£Ø¯Ø§Ø©',
+            performedBy: 'ØªÙ… Ø§Ù„ØªÙ†ÙÙŠØ° Ø¨ÙˆØ§Ø³Ø·Ø©',
+            unknown: 'ØºÙŠØ± Ù…Ø¹Ø±ÙˆÙ',
+            clientReadOnly: 'ÙˆØµÙˆÙ„ Ø§Ù„Ø¹Ù…ÙŠÙ„ Ù„Ù„Ù‚Ø±Ø§Ø¡Ø© ÙÙ‚Ø·. ØªØ¸Ù‡Ø± Ù‡Ù†Ø§ ÙÙ‚Ø· ØªÙ‚Ø§Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„ Ø§Ù„Ù…Ù†Ø´ÙˆØ±Ø© ÙˆØ§Ù„Ù…Ø±Ø¦ÙŠØ© Ù„Ù„Ø¹Ù…ÙŠÙ„.',
+            loadingPreview: 'Ø¬Ø§Ø±ÙŠ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ø¹Ø§ÙŠÙ†Ø©...',
+            previewReport: 'Ù…Ø¹Ø§ÙŠÙ†Ø© Ø§Ù„ØªÙ‚Ø±ÙŠØ±',
+            downloadLatestExport: 'ØªÙ†Ø²ÙŠÙ„ Ø¢Ø®Ø± Ù†Ø³Ø®Ø©',
+            addFinding: 'Ø¥Ø¶Ø§ÙØ© Ù†ØªÙŠØ¬Ø© ØªØ¯Ù‚ÙŠÙ‚',
+            totalFindings: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù†ØªØ§Ø¦Ø¬',
+            complianceScore: 'Ù†Ø³Ø¨Ø© Ø§Ù„Ø§Ù…ØªØ«Ø§Ù„',
+            workingChecks: 'Ù…Ø§ ÙŠØ¹Ù…Ù„ Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­',
+            needsAttention: 'ÙŠØ­ØªØ§Ø¬ Ù…Ø¹Ø§Ù„Ø¬Ø©',
+            partialChecks: 'ÙŠØ¹Ù…Ù„ Ø¬Ø²Ø¦ÙŠØ§',
+            notTested: 'Ù„Ù… ÙŠØªÙ… Ø§Ø®ØªØ¨Ø§Ø±Ù‡',
+            high: 'Ø¹Ø§Ù„ÙŠØ©',
+            medium: 'Ù…ØªÙˆØ³Ø·Ø©',
+            low: 'Ù…Ù†Ø®ÙØ¶Ø©',
+            aiReportSummary: 'Ù…Ù„Ø®Øµ Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ø¨Ø§Ù„Ø°ÙƒØ§Ø¡ Ø§Ù„Ø§ØµØ·Ù†Ø§Ø¹ÙŠ',
+            introduction: 'Ø§Ù„Ù…Ù‚Ø¯Ù…Ø©',
+            executiveSummary: 'Ø§Ù„Ù…Ù„Ø®Øµ Ø§Ù„ØªÙ†ÙÙŠØ°ÙŠ',
+            strengthsSummary: 'Ù…Ø§ ÙŠØ¹Ù…Ù„ Ø¨Ø´ÙƒÙ„ Ø¬ÙŠØ¯',
+            complianceSummary: 'Ù…Ù„Ø®Øµ Ø§Ù„Ø§Ù…ØªØ«Ø§Ù„',
+            recommendationsSummary: 'Ù…Ù„Ø®Øµ Ø§Ù„ØªÙˆØµÙŠØ§Øª',
+            findingsList: 'Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª',
+            findingsListDescription: 'Ø³Ø¬Ù„ Ø¨Ø³ÙŠØ· Ù„Ù†ØªØ§Ø¦Ø¬ Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚ ÙŠÙˆØ¶Ø­ Ù…Ø§ ÙŠØ¹Ù…Ù„ ÙˆÙ…Ø§ ÙŠØ­ØªØ§Ø¬ Ù…Ø¹Ø§Ù„Ø¬Ø©ØŒ Ù…Ø¹ Ø§Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ù†ÙØ³ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø© ÙÙŠ Ø§Ù„Ø£Ø¯Ø§Ø©.',
+            searchFindings: 'Ø§Ø¨Ø­Ø« ÙÙŠ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª',
+            allSeverities: 'ÙƒÙ„ Ù…Ø³ØªÙˆÙŠØ§Øª Ø§Ù„Ø´Ø¯Ø©',
+            allOutcomes: 'ÙƒÙ„ Ø§Ù„Ù†ØªØ§Ø¦Ø¬',
+            allCategories: 'ÙƒÙ„ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª',
+            serviceName: 'Ø§Ø³Ù… Ø§Ù„Ø®Ø¯Ù…Ø© / Ø§Ù„ÙˆØ­Ø¯Ø©',
+            issueTitle: 'Ø¹Ù†ÙˆØ§Ù† Ø§Ù„Ù…Ø´ÙƒÙ„Ø©',
+            outcome: 'Ø§Ù„Ù†ØªÙŠØ¬Ø©',
+            severity: 'Ø§Ù„Ø´Ø¯Ø©',
+            category: 'Ø§Ù„ØªØµÙ†ÙŠÙ',
+            subcategory: 'Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„ÙØ±Ø¹ÙŠ',
+            pageUrl: 'Ø±Ø§Ø¨Ø· Ø§Ù„ØµÙØ­Ø©',
+            media: 'Ø§Ù„ÙˆØ³Ø§Ø¦Ø·',
+            actions: 'Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª',
+            clickHere: 'Ø§Ø¶ØºØ· Ù‡Ù†Ø§',
+            remove: 'Ø¥Ø²Ø§Ù„Ø©',
+            noFindings: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù„Ø§Ø­Ø¸Ø§Øª ØªØ·Ø§Ø¨Ù‚ Ø¹ÙˆØ§Ù…Ù„ Ø§Ù„ØªØµÙÙŠØ© Ø§Ù„Ø­Ø§Ù„ÙŠØ© Ø¨Ø¹Ø¯.',
+            editFinding: 'ØªØ¹Ø¯ÙŠÙ„ Ù†ØªÙŠØ¬Ø© Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚',
+            newObservation: 'Ù†ØªÙŠØ¬Ø© ØªØ¯Ù‚ÙŠÙ‚ Ø¬Ø¯ÙŠØ¯Ø©',
+            basicInformation: 'Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ©',
+            auditResult: 'Ù†ØªÙŠØ¬Ø© Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚',
+            auditResultHelp: 'Ø§Ø®ØªØ± Ù‡Ù„ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ø²Ø¡ ÙŠØ¹Ù…Ù„ Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­ Ø£Ù… ÙŠØ­ØªØ§Ø¬ Ù…Ø¹Ø§Ù„Ø¬Ø©.',
+            outcomePass: 'ÙŠØ¹Ù…Ù„ Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­',
+            outcomeFail: 'ÙˆØ¬Ø¯Ù†Ø§ Ù…Ø´ÙƒÙ„Ø©',
+            outcomePartial: 'ÙŠØ¹Ù…Ù„ Ø¬Ø²Ø¦ÙŠØ§',
+            outcomeNotApplicable: 'ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚',
+            outcomeNotTested: 'Ù„Ù… ÙŠØªÙ… Ø§Ø®ØªØ¨Ø§Ø±Ù‡',
+            servicePlaceholder: 'Ù…Ø«Ø§Ù„: ØªØ¯ÙÙ‚ Ø§Ù„Ø¯ÙØ¹ Ø¹Ø¨Ø± Ø§Ù„Ø¬ÙˆØ§Ù„',
+            issueTitlePlaceholder: 'ÙˆØµÙ Ù‚ØµÙŠØ± ÙˆÙˆØ§Ø¶Ø­ Ù„Ù„Ù…Ø´ÙƒÙ„Ø©',
+            issueDescription: 'ÙˆØµÙ Ø§Ù„Ù…Ø´ÙƒÙ„Ø©',
+            issueDescriptionPlaceholder: 'Ø´Ø±Ø­ ØªÙØµÙŠÙ„ÙŠ Ù„Ø¹Ø§Ø¦Ù‚ Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„...',
+            positiveNotePlaceholder: 'Ø§ÙƒØªØ¨ Ø¨Ø¨Ø³Ø§Ø·Ø© Ù…Ø§ Ø§Ù„Ø°ÙŠ ÙŠØ¹Ù…Ù„ Ø¨Ø´ÙƒÙ„ Ø¬ÙŠØ¯ Ù‡Ù†Ø§...',
+            severityClassification: 'ØªØµÙ†ÙŠÙ Ø§Ù„Ø´Ø¯Ø©',
+            accessibilityCategory: 'ØªØµÙ†ÙŠÙ Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„',
+            mainCategory: 'Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠ',
+            subcategoryLabelOptional: 'Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„ÙØ±Ø¹ÙŠ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
+            subcategoryHelpOptional: 'ÙŠÙ…ÙƒÙ† ØªØ±Ùƒ Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„ÙØ±Ø¹ÙŠ ÙØ§Ø±ØºÙ‹Ø§ Ø¹Ù†Ø¯Ù…Ø§ ØªÙƒÙˆÙ† Ø§Ù„Ù†ØªÙŠØ¬Ø© Ø¥ÙŠØ¬Ø§Ø¨ÙŠØ© Ø£Ùˆ ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ø®ØªØ¨Ø±Ø©.',
+            selectCategory: 'Ø§Ø®ØªØ± Ø§Ù„ØªØµÙ†ÙŠÙ',
+            selectSubcategory: 'Ø§Ø®ØªØ± Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„ÙØ±Ø¹ÙŠ',
+            evidenceMedia: 'ÙˆØ³Ø§Ø¦Ø· Ø§Ù„Ø¥Ø«Ø¨Ø§Øª',
+            imageProof: 'Ø¥Ø«Ø¨Ø§Øª Ø¨Ø§Ù„ØµÙˆØ±Ø©',
+            videoDemo: 'Ø¹Ø±Ø¶ ÙÙŠØ¯ÙŠÙˆ',
+            digitalLocation: 'Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ø§Ù„Ø±Ù‚Ù…ÙŠ',
+            exactPageUrl: 'Ø±Ø§Ø¨Ø· Ø§Ù„ØµÙØ­Ø© Ø§Ù„Ø¯Ù‚ÙŠÙ‚',
             pageUrlPlaceholder: 'https://app.client.com/specific-route',
-            developerRecommendations: 'توصيات لفريق التطوير',
-            remediationSteps: 'خطوات المعالجة',
-            remediationPlaceholder: 'إرشادات محددة لفريق التطوير لمعالجة هذه المشكلة...',
-            recommendationOptionalHelp: 'يفضل كتابة خطوات المعالجة فقط عند وجود مشكلة أو حالة جزئية.',
-            existingEvidence: 'الأدلة الحالية',
-            cancel: 'إلغاء',
-            updateFinding: 'تحديث الملاحظة',
-            commitFinding: 'حفظ الملاحظة',
-            reportPreview: 'معاينة تقرير إمكانية الوصول',
-            previewDescription: 'تُعرض هذه المعاينة من مسار HTML/PDF في الخلفية وتُظهر شكل التقرير النهائي باستخدام الملاحظات والأدلة الحالية.',
+            developerRecommendations: 'ØªÙˆØµÙŠØ§Øª Ù„ÙØ±ÙŠÙ‚ Ø§Ù„ØªØ·ÙˆÙŠØ±',
+            remediationSteps: 'Ø®Ø·ÙˆØ§Øª Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø©',
+            remediationPlaceholder: 'Ø¥Ø±Ø´Ø§Ø¯Ø§Øª Ù…Ø­Ø¯Ø¯Ø© Ù„ÙØ±ÙŠÙ‚ Ø§Ù„ØªØ·ÙˆÙŠØ± Ù„Ù…Ø¹Ø§Ù„Ø¬Ø© Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø´ÙƒÙ„Ø©...',
+            recommendationOptionalHelp: 'ÙŠÙØ¶Ù„ ÙƒØªØ§Ø¨Ø© Ø®Ø·ÙˆØ§Øª Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø© ÙÙ‚Ø· Ø¹Ù†Ø¯ ÙˆØ¬ÙˆØ¯ Ù…Ø´ÙƒÙ„Ø© Ø£Ùˆ Ø­Ø§Ù„Ø© Ø¬Ø²Ø¦ÙŠØ©.',
+            existingEvidence: 'Ø§Ù„Ø£Ø¯Ù„Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©',
+            cancel: 'Ø¥Ù„ØºØ§Ø¡',
+            updateFinding: 'ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©',
+            commitFinding: 'Ø­ÙØ¸ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©',
+            reportPreview: 'Ù…Ø¹Ø§ÙŠÙ†Ø© ØªÙ‚Ø±ÙŠØ± Ø¥Ù…ÙƒØ§Ù†ÙŠØ© Ø§Ù„ÙˆØµÙˆÙ„',
+            previewDescription: 'ØªÙØ¹Ø±Ø¶ Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø¹Ø§ÙŠÙ†Ø© Ù…Ù† Ù…Ø³Ø§Ø± HTML/PDF ÙÙŠ Ø§Ù„Ø®Ù„ÙÙŠØ© ÙˆØªÙØ¸Ù‡Ø± Ø´ÙƒÙ„ Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª ÙˆØ§Ù„Ø£Ø¯Ù„Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©.',
             english: 'English',
-            arabic: 'العربية',
-            printPdf: 'طباعة / حفظ PDF',
-            statusDraft: 'مسودة',
-            statusInReview: 'قيد المراجعة',
-            statusApproved: 'معتمد',
-            statusPublished: 'منشور',
-            statusArchived: 'مؤرشف',
-            submitForReview: 'إرسال للمراجعة',
-            approveReport: 'اعتماد التقرير',
-            publishReport: 'نشر للعميل',
-            returnToDraft: 'إعادة إلى المسودة',
-            reportLockedTitle: 'الملاحظات مقفلة خارج حالة المسودة',
-            reportLockedHelp: 'بعد إرسال التقرير للمراجعة، تتوقف تعديلات الملاحظات والأدلة حتى يعيد PM أو Admin التقرير إلى المسودة.',
-            statusUpdateSuccess: 'تم تحديث حالة التقرير.',
-            statusUpdateError: 'فشل تحديث حالة التقرير.'
+            arabic: 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©',
+            printPdf: 'Ø·Ø¨Ø§Ø¹Ø© / Ø­ÙØ¸ PDF',
+            statusDraft: 'Ù…Ø³ÙˆØ¯Ø©',
+            statusInReview: 'Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©',
+            statusApproved: 'Ù…Ø¹ØªÙ…Ø¯',
+            statusPublished: 'Ù…Ù†Ø´ÙˆØ±',
+            statusArchived: 'Ù…Ø¤Ø±Ø´Ù',
+            submitForReview: 'Ø¥Ø±Ø³Ø§Ù„ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©',
+            approveReport: 'Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„ØªÙ‚Ø±ÙŠØ±',
+            publishReport: 'Ù†Ø´Ø± Ù„Ù„Ø¹Ù…ÙŠÙ„',
+            returnToDraft: 'Ø¥Ø¹Ø§Ø¯Ø© Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø³ÙˆØ¯Ø©',
+            reportLockedTitle: 'Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù…Ù‚ÙÙ„Ø© Ø®Ø§Ø±Ø¬ Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ø³ÙˆØ¯Ø©',
+            reportLockedHelp: 'Ø¨Ø¹Ø¯ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©ØŒ ØªØªÙˆÙ‚Ù ØªØ¹Ø¯ÙŠÙ„Ø§Øª Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª ÙˆØ§Ù„Ø£Ø¯Ù„Ø© Ø­ØªÙ‰ ÙŠØ¹ÙŠØ¯ PM Ø£Ùˆ Admin Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø³ÙˆØ¯Ø©.',
+            statusUpdateSuccess: 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.',
+            statusUpdateError: 'ÙØ´Ù„ ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.'
           }
         : {
             loadingReport: 'Loading accessibility report...',
@@ -323,7 +323,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             reportPreview: 'Accessibility Report Preview',
             previewDescription: 'This preview is rendered from the backend HTML/PDF pipeline and shows the final accessibility report layout using the current findings and evidence.',
             english: 'English',
-            arabic: 'العربية',
+            arabic: 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©',
             printPdf: 'Print / Save PDF',
             statusDraft: 'DRAFT',
             statusInReview: 'IN REVIEW',
@@ -344,7 +344,7 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const severityLabel = React.useCallback((severity: ProjectReportEntrySeverity) => {
     if (isArabic) {
-      return severity === 'HIGH' ? copy.high : severity === 'MEDIUM' ? copy.medium : severity === 'LOW' ? copy.low : 'حرجة';
+      return severity === 'HIGH' ? copy.high : severity === 'MEDIUM' ? copy.medium : severity === 'LOW' ? copy.low : 'Ø­Ø±Ø¬Ø©';
     }
     return severityCopy[severity] || severity;
   }, [copy.high, copy.low, copy.medium, isArabic]);
@@ -359,9 +359,9 @@ export const ProjectReportWorkspace: React.FC = () => {
 
   const evidenceActionLabel = React.useCallback((media: ProjectReportEntryMedia) => {
     if (isArabic) {
-      if (media.mediaType === 'IMAGE') return 'عرض الصورة';
-      if (media.mediaType === 'VIDEO') return 'عرض الفيديو';
-      return 'عرض الدليل';
+      if (media.mediaType === 'IMAGE') return 'Ø¹Ø±Ø¶ Ø§Ù„ØµÙˆØ±Ø©';
+      if (media.mediaType === 'VIDEO') return 'Ø¹Ø±Ø¶ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ';
+      return 'Ø¹Ø±Ø¶ Ø§Ù„Ø¯Ù„ÙŠÙ„';
     }
     return mediaActionLabel(media);
   }, [isArabic]);
@@ -389,6 +389,8 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [previewLocale, setPreviewLocale] = React.useState<AccessibilityAuditOutputLocale>('en');
   const [exportingPdf, setExportingPdf] = React.useState(false);
   const [generatingAi, setGeneratingAi] = React.useState(false);
+  const [savingEntry, setSavingEntry] = React.useState(false);
+  const savingEntryRef = React.useRef(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
   const [outcomeFilter, setOutcomeFilter] = React.useState<'ALL' | ProjectReportEntryOutcome>('ALL');
@@ -399,10 +401,11 @@ export const ProjectReportWorkspace: React.FC = () => {
   const canPublishReports = hasPermission(Permission.PUBLISH_PROJECT_REPORTS);
   const canGenerateExports = hasPermission(Permission.GENERATE_PROJECT_REPORT_EXPORTS);
   const isClientUser = user?.role === Role.CLIENT_OWNER || user?.role === Role.CLIENT_MANAGER || user?.role === Role.CLIENT_MEMBER;
-  const exportPdfLabel = isArabic ? 'تصدير PDF' : 'Export PDF';
-  const exportInProgressLabel = isArabic ? 'جارٍ تصدير PDF...' : 'Exporting PDF...';
-  const generateAiLabel = isArabic ? 'إنشاء ملخص ذكي' : 'Generate AI Summary';
-  const generatingAiLabel = isArabic ? 'إنشاء النصوص الذكية...' : 'Generating AI narrative...';
+  const exportPdfLabel = isArabic ? 'ØªØµØ¯ÙŠØ± PDF' : 'Export PDF';
+  const exportInProgressLabel = isArabic ? 'Ø¬Ø§Ø±Ù ØªØµØ¯ÙŠØ± PDF...' : 'Exporting PDF...';
+  const generateAiLabel = isArabic ? 'Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ø®Øµ Ø°ÙƒÙŠ' : 'Generate AI Summary';
+  const generatingAiLabel = isArabic ? 'Generating...' : 'Generating...';
+  const savingEntryLabel = isArabic ? 'Saving...' : 'Saving...';
 
   const taxonomy = React.useMemo(() => getVersionTaxonomy(report?.templateVersion), [report?.templateVersion]);
   const availableCategories = React.useMemo(
@@ -513,6 +516,10 @@ export const ProjectReportWorkspace: React.FC = () => {
   const handleSaveEntry = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!reportId) return;
+    if (savingEntryRef.current) return;
+
+    savingEntryRef.current = true;
+    setSavingEntry(true);
 
     const payload = {
       serviceName: entryDraft.serviceName.trim(),
@@ -538,29 +545,32 @@ export const ProjectReportWorkspace: React.FC = () => {
       await uploadSelectedEvidence(savedEntry);
       await loadData();
       setEntryModalOpen(false);
-      toast.success(editingEntry ? (isArabic ? 'تم تحديث النتيجة.' : 'Audit result updated.') : (isArabic ? 'تمت إضافة النتيجة.' : 'Audit result added.'));
+      toast.success(editingEntry ? (isArabic ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result updated.') : (isArabic ? 'ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result added.'));
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'تعذر حفظ نتيجة التدقيق.' : 'Failed to save audit result.'));
+      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± Ø­ÙØ¸ Ù†ØªÙŠØ¬Ø© Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚.' : 'Failed to save audit result.'));
+    } finally {
+      savingEntryRef.current = false;
+      setSavingEntry(false);
     }
   };
 
   const handleDeleteEntry = async (entry: ProjectReportEntry) => {
     if (!reportId) return;
     const shouldDelete = await confirm({
-      title: isArabic ? 'حذف النتيجة' : 'Delete result',
-      message: isArabic ? `حذف "${entry.issueTitle}"؟` : `Delete "${entry.issueTitle}"?`,
-      confirmText: isArabic ? 'حذف' : 'Delete',
+      title: isArabic ? 'Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©' : 'Delete result',
+      message: isArabic ? `Ø­Ø°Ù "${entry.issueTitle}"ØŸ` : `Delete "${entry.issueTitle}"?`,
+      confirmText: isArabic ? 'Ø­Ø°Ù' : 'Delete',
       tone: 'danger',
     });
     if (!shouldDelete) return;
     try {
       await api.reportBuilderProjects.deleteEntry(reportId, entry.id);
       await loadData();
-      toast.success(isArabic ? 'تمت إزالة النتيجة.' : 'Audit result removed.');
+      toast.success(isArabic ? 'ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result removed.');
     } catch (error) {
       console.error(error);
-      toast.error(isArabic ? 'تعذر حذف النتيجة.' : 'Failed to delete audit result.');
+      toast.error(isArabic ? 'ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Failed to delete audit result.');
     }
   };
 
@@ -568,9 +578,9 @@ export const ProjectReportWorkspace: React.FC = () => {
     if (!reportId) return;
     const fileLabel = media.fileAsset.filename || media.fileAsset.name || 'file';
     const shouldDelete = await confirm({
-      title: isArabic ? 'إزالة الدليل' : 'Remove evidence',
-      message: isArabic ? `إزالة "${fileLabel}"؟` : `Remove "${fileLabel}"?`,
-      confirmText: isArabic ? 'إزالة' : 'Remove',
+      title: isArabic ? 'Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ø¯Ù„ÙŠÙ„' : 'Remove evidence',
+      message: isArabic ? `Ø¥Ø²Ø§Ù„Ø© "${fileLabel}"ØŸ` : `Remove "${fileLabel}"?`,
+      confirmText: isArabic ? 'Ø¥Ø²Ø§Ù„Ø©' : 'Remove',
       tone: 'danger',
     });
     if (!shouldDelete) return;
@@ -624,10 +634,10 @@ export const ProjectReportWorkspace: React.FC = () => {
     try {
       await api.reportBuilderProjects.generateAiSummary(reportId);
       await loadData();
-      toast.success(isArabic ? 'تم إنشاء النصوص الذكية للتقرير.' : 'AI report narrative generated.');
+      toast.success(isArabic ? 'ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.' : 'AI report narrative generated.');
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'تعذر إنشاء النصوص الذكية للتقرير.' : 'Failed to generate AI report narrative.'));
+      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù†ØµÙˆØµ Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Failed to generate AI report narrative.'));
     } finally {
       setGeneratingAi(false);
     }
@@ -643,10 +653,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
       }
-      toast.success(isArabic ? 'تم إنشاء ملف PDF بنجاح.' : 'PDF exported successfully.');
+      toast.success(isArabic ? 'ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ù PDF Ø¨Ù†Ø¬Ø§Ø­.' : 'PDF exported successfully.');
     } catch (error: any) {
       console.error(error);
-      toast.error(error?.message || (isArabic ? 'تعذر تصدير ملف PDF.' : 'Failed to export PDF.'));
+      toast.error(error?.message || (isArabic ? 'ØªØ¹Ø°Ø± ØªØµØ¯ÙŠØ± Ù…Ù„Ù PDF.' : 'Failed to export PDF.'));
     } finally {
       setExportingPdf(false);
     }
@@ -685,10 +695,10 @@ export const ProjectReportWorkspace: React.FC = () => {
       const updated = await api.reportBuilderProjects.updateProjectReport(reportId, { outputLocale: locale });
       setReport(updated);
       setPreviewLocale(locale);
-      toast.success(isArabic ? 'تم تحديث لغة التقرير.' : 'Report language updated.');
+      toast.success(isArabic ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Report language updated.');
     } catch (error) {
       console.error(error);
-      toast.error(isArabic ? 'تعذر تحديث لغة التقرير.' : 'Failed to update report language.');
+      toast.error(isArabic ? 'ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±.' : 'Failed to update report language.');
     }
   };
 
@@ -744,11 +754,11 @@ export const ProjectReportWorkspace: React.FC = () => {
           {!isClientUser && canEditReport && (
             <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                {isArabic ? 'لغة التقرير' : 'Report Language'}
+                {isArabic ? 'Ù„ØºØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±' : 'Report Language'}
               </p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {isArabic
-                  ? 'احفظ لغة الإخراج التي سيُراجع ويُنشر ويُصدر بها هذا التقرير.'
+                  ? 'Ø§Ø­ÙØ¸ Ù„ØºØ© Ø§Ù„Ø¥Ø®Ø±Ø§Ø¬ Ø§Ù„ØªÙŠ Ø³ÙŠÙØ±Ø§Ø¬Ø¹ ÙˆÙŠÙÙ†Ø´Ø± ÙˆÙŠÙØµØ¯Ø± Ø¨Ù‡Ø§ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚Ø±ÙŠØ±.'
                   : 'Save the output language this report should be reviewed, published, and exported in.'}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -824,7 +834,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.complianceScore}</p>
           <p className="mt-1.5 text-xl font-bold text-cyan-600 md:text-2xl">{summaryCounts.compliance}%</p>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'عنصرًا تم تقييمه' : 'scored checks'}</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{summaryCounts.scoredChecks} {isArabic ? 'Ø¹Ù†ØµØ±Ù‹Ø§ ØªÙ… ØªÙ‚ÙŠÙŠÙ…Ù‡' : 'scored checks'}</p>
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
@@ -842,7 +852,7 @@ export const ProjectReportWorkspace: React.FC = () => {
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
           <p className="mt-1.5 text-xl font-bold text-slate-700 dark:text-slate-200 md:text-2xl">{summaryCounts.notTested}</p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {summaryCounts.notApplicable} {isArabic ? 'غير منطبق' : 'not applicable'}
+            {summaryCounts.notApplicable} {isArabic ? 'ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚' : 'not applicable'}
           </p>
         </GlassCard>
       </div>
@@ -1062,7 +1072,7 @@ export const ProjectReportWorkspace: React.FC = () => {
             ) : (
               <GlassCard className="border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.1)] dark:border-[hsl(var(--brand-success)/0.2)] dark:bg-[hsl(var(--brand-success)/0.1)]">
                 <p className="text-sm text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]">
-                  {isArabic ? 'ليست هناك حاجة لتحديد شدة عندما تكون النتيجة ناجحة أو غير منطبقة أو غير مختبرة.' : 'Severity is only needed when the result has an issue or is partially working.'}
+                  {isArabic ? 'Ù„ÙŠØ³Øª Ù‡Ù†Ø§Ùƒ Ø­Ø§Ø¬Ø© Ù„ØªØ­Ø¯ÙŠØ¯ Ø´Ø¯Ø© Ø¹Ù†Ø¯Ù…Ø§ ØªÙƒÙˆÙ† Ø§Ù„Ù†ØªÙŠØ¬Ø© Ù†Ø§Ø¬Ø­Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ù†Ø·Ø¨Ù‚Ø© Ø£Ùˆ ØºÙŠØ± Ù…Ø®ØªØ¨Ø±Ø©.' : 'Severity is only needed when the result has an issue or is partially working.'}
                 </p>
               </GlassCard>
             )}
@@ -1148,8 +1158,8 @@ export const ProjectReportWorkspace: React.FC = () => {
           )}
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
-            <Button type="button" variant="ghost" onClick={() => setEntryModalOpen(false)}>{copy.cancel}</Button>
-            <Button type="submit">{editingEntry ? copy.updateFinding : copy.commitFinding}</Button>
+            <Button type="button" variant="ghost" onClick={() => setEntryModalOpen(false)} disabled={savingEntry}>{copy.cancel}</Button>
+            <Button type="submit" disabled={savingEntry}>{savingEntry ? savingEntryLabel : (editingEntry ? copy.updateFinding : copy.commitFinding)}</Button>
           </div>
         </form>
       </Modal>
@@ -1182,6 +1192,7 @@ export const ProjectReportWorkspace: React.FC = () => {
 };
 
 export default ProjectReportWorkspace;
+
 
 
 
