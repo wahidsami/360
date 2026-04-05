@@ -37,6 +37,37 @@ import { FileCategory, FileScopeType, FileVisibility, GlobalRole, ProjectReportM
 export class ReportBuilderService {
   private readonly logger = new Logger(ReportBuilderService.name);
   private readonly canonicalAccessibilityTemplateCode = 'accessibility-audit';
+  private static readonly cp1252ReverseMap: Record<number, number> = {
+    0x20ac: 0x80,
+    0x201a: 0x82,
+    0x0192: 0x83,
+    0x201e: 0x84,
+    0x2026: 0x85,
+    0x2020: 0x86,
+    0x2021: 0x87,
+    0x02c6: 0x88,
+    0x2030: 0x89,
+    0x0160: 0x8a,
+    0x2039: 0x8b,
+    0x0152: 0x8c,
+    0x017d: 0x8e,
+    0x2018: 0x91,
+    0x2019: 0x92,
+    0x201c: 0x93,
+    0x201d: 0x94,
+    0x2022: 0x95,
+    0x2013: 0x96,
+    0x2014: 0x97,
+    0x02dc: 0x98,
+    0x2122: 0x99,
+    0x0161: 0x9a,
+    0x203a: 0x9b,
+    0x0153: 0x9c,
+    0x017e: 0x9e,
+    0x0178: 0x9f,
+  };
+  private static readonly mojibakeMarkerRegex =
+    /[ØÙÚÛ]|[\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -500,8 +531,36 @@ export class ReportBuilderService {
     }
   }
 
-  private escapeHtml(value?: string | null) {
-    return (value ?? '')
+  private cp1252CharToByte(char: string): number | null {
+    const codePoint = char.codePointAt(0);
+    if (typeof codePoint !== 'number') return null;
+    if (codePoint <= 0xff) return codePoint;
+    if (codePoint in ReportBuilderService.cp1252ReverseMap) {
+      return ReportBuilderService.cp1252ReverseMap[codePoint];
+    }
+    return null;
+  }
+
+  private decodeMojibakeString(value: string): string {
+    if (!ReportBuilderService.mojibakeMarkerRegex.test(value)) return value;
+
+    try {
+      const bytes: number[] = [];
+      for (const char of Array.from(value)) {
+        const byte = this.cp1252CharToByte(char);
+        if (byte == null) return value;
+        bytes.push(byte);
+      }
+
+      const decoded = Buffer.from(bytes).toString('utf8');
+      return /[\u0600-\u06FF]/.test(decoded) ? decoded : value;
+    } catch {
+      return value;
+    }
+  }
+
+  private escapeHtml(value?: unknown) {
+    return this.normalizeDisplayText(value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -509,15 +568,35 @@ export class ReportBuilderService {
       .replace(/'/g, '&#39;');
   }
 
-  private normalizeDisplayText(value?: string | null) {
-    if (!value) return '';
-    if (!/[??]/.test(value)) return value;
-    try {
-      const decoded = Buffer.from(value, 'latin1').toString('utf8');
-      return /[\u0600-\u06FF]/.test(decoded) ? decoded : value;
-    } catch {
-      return value;
+  private normalizeDisplayText(value?: unknown): string {
+    if (value == null) return '';
+    if (typeof value === 'string') {
+      return this.decodeMojibakeString(value);
     }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => this.normalizeDisplayText(item))
+        .filter(Boolean)
+        .join('\n');
+    }
+    if (typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      const preferredKeys = ['text', 'value', 'label', 'title', 'description', 'message', 'summary', 'content'];
+      for (const key of preferredKeys) {
+        const candidate = this.normalizeDisplayText(record[key]);
+        if (candidate) return candidate;
+      }
+      return Object.entries(record)
+        .map(([key, nested]) => {
+          const nestedText = this.normalizeDisplayText(nested);
+          return nestedText ? `${key}: ${nestedText}` : key;
+        })
+        .join('\n');
+    }
+    return '';
   }
 
   private getTemplateLocale(version?: { schemaJson?: any; pdfConfigJson?: any } | null) {
@@ -821,7 +900,7 @@ export class ReportBuilderService {
     };
   }
 
-  private buildRecommendationBullets(summaryText: string | null | undefined, entries: Array<{ recommendation?: string | null }>, locale: 'ar' | 'en') {
+  private buildRecommendationBullets(summaryText: unknown, entries: Array<{ recommendation?: string | null }>, locale: 'ar' | 'en') {
     const directBullets = this.normalizeDisplayText(summaryText)
       .split(/\n+/)
       .map((line) => line.replace(/^[\s•\-\u2022]+/, '').trim())
@@ -1036,7 +1115,7 @@ export class ReportBuilderService {
         ? { locale: previewData.locale, direction: previewData.direction }
         : this.getTemplateLocale(report?.templateVersion);
     const labels = this.getPreviewLabels(localeConfig.locale);
-    const summary = (report.summaryJson || {}) as Record<string, string>;
+    const summary = (report.summaryJson || {}) as Record<string, unknown>;
     const isRtl = localeConfig.direction === 'rtl';
     const reportTitle = this.normalizeDisplayText(report?.title) || labels.coverTag;
     const clientName = this.normalizeDisplayText(report?.client?.name) || labels.client;
