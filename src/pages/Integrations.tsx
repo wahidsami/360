@@ -238,11 +238,11 @@ const Integrations: React.FC = () => {
                 {integrations.map((i) => (
                   <div key={i.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
                     <div className="flex items-center gap-3">
-                      {i.type === 'SLACK' ? <MessageSquare className="w-5 h-5 text-emerald-400" /> : <Github className="w-5 h-5 text-slate-200" />}
+                      {i.type === 'SLACK' ? <MessageSquare className="w-5 h-5 text-[hsl(var(--brand-success))]" /> : <Github className="w-5 h-5 text-slate-200" />}
                       <div>
                         <span className="font-medium text-white">{i.name}</span>
                         <span className="ml-2 text-slate-500 text-sm">{i.type}</span>
-                        {!i.enabled && <span className="ml-2 text-amber-400 text-xs">Disabled</span>}
+                        {!i.enabled && <span className="ml-2 text-[hsl(var(--brand-warning))] text-xs">Disabled</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -284,7 +284,7 @@ const Integrations: React.FC = () => {
                       <span className="font-medium text-white">{w.name}</span>
                       <span className="ml-2 text-slate-500 text-xs truncate max-w-xs inline-block">{w.url}</span>
                       {w.events?.length > 0 && <div className="text-slate-500 text-xs mt-1">Events: {w.events.join(', ')}</div>}
-                      {!w.enabled && <span className="ml-2 text-amber-400 text-xs">Disabled</span>}
+                      {!w.enabled && <span className="ml-2 text-[hsl(var(--brand-warning))] text-xs">Disabled</span>}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => openWebhookModal(w)}><Pencil className="w-4 h-4" /></Button>

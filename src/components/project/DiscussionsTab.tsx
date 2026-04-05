@@ -32,9 +32,9 @@ interface DiscussionsTabProps {
 const AVATAR_COLORS = [
     'from-cyan-500 to-blue-600',
     'from-purple-500 to-pink-600',
-    'from-emerald-500 to-teal-600',
+    'from-[hsl(var(--brand-success))] to-teal-600',
     'from-orange-500 to-red-600',
-    'from-yellow-500 to-amber-600',
+    'from-[hsl(var(--brand-warning))] to-[hsl(var(--brand-warning))]',
     'from-indigo-500 to-violet-600',
 ];
 
@@ -182,7 +182,7 @@ const ReplyBadge: React.FC<{ discussion: Discussion; onClick: () => void }> = ({
 const SyncStateNotice: React.FC<{ state?: 'pending' | 'failed'; errorMessage?: string; onRetry?: () => void }> = ({ state, errorMessage, onRetry }) => {
     if (!state) return null;
     if (state === 'pending') {
-        return <span className="text-[11px] text-amber-400 font-medium">Sending…</span>;
+        return <span className="text-[11px] text-[hsl(var(--brand-warning))] font-medium">Sending…</span>;
     }
     return (
         <div className="flex items-center gap-2 mt-2">
@@ -1163,8 +1163,8 @@ export const DiscussionsTab: React.FC<DiscussionsTabProps> = ({
                         <span className="text-slate-500 text-sm">{t('threads_count', { count: threads.length })}</span>
                         <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
                             socketConnected && roomSubscribed
-                                ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10'
-                                : 'text-amber-400 border-amber-500/20 bg-amber-500/10'
+                                ? 'text-[hsl(var(--brand-success))] border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.1)]'
+                                : 'text-[hsl(var(--brand-warning))] border-[hsl(var(--brand-warning)/0.2)] bg-[hsl(var(--brand-warning)/0.1)]'
                         }`}>
                             {socketConnected && roomSubscribed ? 'Live' : 'Syncing'}
                         </span>

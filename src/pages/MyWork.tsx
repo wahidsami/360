@@ -83,7 +83,7 @@ export const MyWork: React.FC = () => {
                           filteredTasks.map(task => (
                               <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30 hover:bg-slate-800/50 transition-colors group cursor-pointer" onClick={() => navigate(`/app/projects/${task.projectId}`)}>
                                   <div className="flex items-start gap-3">
-                                      <div className={`mt-1 w-2 h-2 rounded-full ${task.priority === 'urgent' ? 'bg-red-500' : task.priority === 'high' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+                                      <div className={`mt-1 w-2 h-2 rounded-full ${task.priority === 'urgent' ? 'bg-red-500' : task.priority === 'high' ? 'bg-[hsl(var(--brand-warning))]' : 'bg-cyan-500'}`} />
                                       <div>
                                           <p className="font-medium text-slate-200">{task.title}</p>
                                           <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">

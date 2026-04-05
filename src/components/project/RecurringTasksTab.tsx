@@ -289,7 +289,7 @@ export const RecurringTasksTab: React.FC<RecurringTasksTabProps> = ({ projectId,
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-slate-200">{t.title}</span>
                   <span className="text-xs text-slate-500 uppercase">{t.priority}</span>
-                  {!t.isActive && <span className="text-xs text-amber-500">Paused</span>}
+                  {!t.isActive && <span className="text-xs text-[hsl(var(--brand-warning))]">Paused</span>}
                 </div>
                 <p className="text-sm text-slate-500 mt-0.5">
                   {formatRecurrence(t.recurrenceRule)}

@@ -774,7 +774,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.workingChecks}</p>
-          <p className="mt-1.5 text-xl font-bold text-emerald-600 md:text-2xl">{summaryCounts.pass}</p>
+          <p className="mt-1.5 text-xl font-bold text-[hsl(var(--brand-success))] md:text-2xl">{summaryCounts.pass}</p>
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.needsAttention}</p>
@@ -782,7 +782,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.partialChecks}</p>
-          <p className="mt-1.5 text-xl font-bold text-amber-500 md:text-2xl">{summaryCounts.partial}</p>
+          <p className="mt-1.5 text-xl font-bold text-[hsl(var(--brand-warning))] md:text-2xl">{summaryCounts.partial}</p>
         </GlassCard>
         <GlassCard className="p-3 md:p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{copy.notTested}</p>
@@ -794,9 +794,9 @@ export const ProjectReportWorkspace: React.FC = () => {
       </div>
 
       {!isDraftReport && !isClientUser && (
-        <GlassCard className="border-amber-200/70 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/10">
-          <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">{copy.reportLockedTitle}</p>
-          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">{copy.reportLockedHelp}</p>
+        <GlassCard className="border-[hsl(var(--brand-warning)/0.2)] bg-[hsl(var(--brand-warning)/0.1)] dark:border-[hsl(var(--brand-warning)/0.2)] dark:bg-[hsl(var(--brand-warning)/0.1)]">
+          <p className="text-sm font-semibold text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">{copy.reportLockedTitle}</p>
+          <p className="mt-1 text-sm text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">{copy.reportLockedHelp}</p>
         </GlassCard>
       )}
 
@@ -971,8 +971,8 @@ export const ProjectReportWorkspace: React.FC = () => {
           </section>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-emerald-500">
-              <span className="h-6 w-1 rounded-full bg-emerald-500" /> {copy.auditResult}
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-[hsl(var(--brand-success))]">
+              <span className="h-6 w-1 rounded-full bg-[hsl(var(--brand-success))]" /> {copy.auditResult}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">{copy.auditResultHelp}</p>
             <div className="grid gap-3 md:grid-cols-5">
@@ -1006,8 +1006,8 @@ export const ProjectReportWorkspace: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <GlassCard className="border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">
+              <GlassCard className="border-[hsl(var(--brand-success)/0.2)] bg-[hsl(var(--brand-success)/0.1)] dark:border-[hsl(var(--brand-success)/0.2)] dark:bg-[hsl(var(--brand-success)/0.1)]">
+                <p className="text-sm text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]">
                   {isArabic ? 'ليست هناك حاجة لتحديد شدة عندما تكون النتيجة ناجحة أو غير منطبقة أو غير مختبرة.' : 'Severity is only needed when the result has an issue or is partially working.'}
                 </p>
               </GlassCard>
@@ -1036,8 +1036,8 @@ export const ProjectReportWorkspace: React.FC = () => {
           </section>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-emerald-500">
-              <span className="h-6 w-1 rounded-full bg-emerald-500" /> {copy.evidenceMedia}
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-[hsl(var(--brand-success))]">
+              <span className="h-6 w-1 rounded-full bg-[hsl(var(--brand-success))]" /> {copy.evidenceMedia}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>

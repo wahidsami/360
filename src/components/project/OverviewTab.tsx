@@ -42,7 +42,7 @@ function ChecklistSection({ title, items, isComplete, onAction, onNavigate }: { 
             >
                 <div className="flex items-center gap-2">
                     <Badge variant="neutral" className="bg-cyan-500/10 text-cyan-400 border-cyan-400/20 uppercase text-[9px] tracking-widest font-black">{title}</Badge>
-                    <CheckCircle className={`w-3.5 h-3.5 ${isComplete ? 'text-emerald-500' : 'text-slate-700'}`} />
+                    <CheckCircle className={`w-3.5 h-3.5 ${isComplete ? 'text-[hsl(var(--brand-success))]' : 'text-slate-700'}`} />
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-[10px] text-slate-500 font-bold">{items.filter(i => i.status === 'complete').length}/{items.length}</span>
@@ -197,7 +197,7 @@ function PredictiveInsights({ project, tasks, milestones, metrics }: { project: 
             </div>
             <div className="space-y-2">
                 {insights.map((insight, idx) => (
-                    <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border ${insight.severity === 'high' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-700 dark:text-amber-300'}`}>
+                    <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border ${insight.severity === 'high' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-[hsl(var(--brand-warning)/0.1)] dark:bg-[hsl(var(--brand-warning)/0.1)] border-[hsl(var(--brand-warning)/0.2)] dark:border-[hsl(var(--brand-warning)/0.2)] text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]'}`}>
                         <span className="text-lg mt-0.5">{insight.icon}</span>
                         <div>
                             <p className="text-sm font-bold leading-tight mb-0.5">{insight.message}</p>
@@ -235,12 +235,12 @@ function QuickActionsPanel({ project, onNavigate, onAction, onRefresh, overdueCo
                 <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in slide-in-from-top-2 duration-200">
                     {canSee('tasks') && !isClient && (
                         <button onClick={() => { setIsOpen(false); onNavigate?.('tasks'); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
-                            <PlusCircle className="w-4 h-4 text-emerald-500" /> {t('add_task')}
+                            <PlusCircle className="w-4 h-4 text-[hsl(var(--brand-success))]" /> {t('add_task')}
                         </button>
                     )}
                     {!isClient && (
                         <button onClick={() => { setIsOpen(false); onAction?.({ type: 'open_edit_project' }); }} className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
-                            <span className="text-amber-500">📅</span> {t(hasDeadline ? 'edit_deadline' : 'set_deadline')}
+                            <span className="text-[hsl(var(--brand-warning))]">📅</span> {t(hasDeadline ? 'edit_deadline' : 'set_deadline')}
                         </button>
                     )}
                     {canSee('updates') && (
@@ -433,14 +433,14 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                             <div key={s} className="flex items-center">
                                                 <div className="flex flex-col items-center relative">
                                                     <div
-                                                        className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-800 border-slate-600'}`}
+                                                        className={`w-4 h-4 rounded-full border-2 z-10 ${isCurrent ? 'bg-cyan-400 border-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : isPassed ? 'bg-[hsl(var(--brand-success))] border-[hsl(var(--brand-success)/0.25)]' : 'bg-slate-800 border-slate-600'}`}
                                                         title={t(`stage_${s.toLowerCase()}`)}
                                                     />
-                                                    <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-emerald-500/90' : 'text-slate-500'}`}>
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isCurrent ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : isPassed ? 'text-[hsl(var(--brand-success)/0.9)]' : 'text-slate-500'}`}>
                                                         {t(`stage_${s.toLowerCase()}`)}
                                                     </span>
                                                 </div>
-                                                {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-emerald-500/60' : 'bg-slate-700'}`} />}
+                                                {idx < 4 && <div className={`w-8 sm:w-12 h-0.5 ${isPassed ? 'bg-[hsl(var(--brand-success)/0.6)]' : 'bg-slate-700'}`} />}
                                             </div>
                                         );
                                     })}
@@ -461,7 +461,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('workflow_readiness', { defaultValue: 'WORKFLOW READINESS' })}</h4>
                                             <p className="text-sm font-black text-slate-900 dark:text-white">{readiness?.stats?.completedRequired || 0} of {readiness?.stats?.totalRequired || 0} {t('setup_checks_complete')}</p>
                                             <p className="text-[10px] text-cyan-600 dark:text-cyan-400/80 font-bold mt-1">{readiness?.stageExplanation || 'Initial project parameters and team setup required.'}</p>
-                                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${activeBlockerCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]'}`}>
                                                 {activeBlockerCount > 0 ? `${activeBlockerCount} active blockers flagged` : 'No active blockers'}
                                             </p>
                                         </div>
@@ -529,12 +529,12 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     <div className="space-y-3 mb-5">
                         <div className="flex h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                            <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${(completedTasks / (taskCount || 1)) * 100}%` }} title="Done" />
+                            <div className="bg-[hsl(var(--brand-success))] transition-all duration-500" style={{ width: `${(completedTasks / (taskCount || 1)) * 100}%` }} title="Done" />
                             <div className="bg-blue-500 transition-all duration-500" style={{ width: `${(activeTasks / (taskCount || 1)) * 100}%` }} title="Active" />
                             <div className="bg-rose-500 transition-all duration-500" style={{ width: `${(overdueTasks / (taskCount || 1)) * 100}%` }} title="Overdue" />
                         </div>
                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">
-                            <span className="text-emerald-600 dark:text-emerald-500/80">{completedTasks} D</span>
+                            <span className="text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success)/0.8)]">{completedTasks} D</span>
                             <span className="text-blue-600 dark:text-blue-400/80">{activeTasks} A</span>
                             <span className={overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400/80' : ''}>{overdueTasks} O</span>
                         </div>
@@ -543,7 +543,7 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                     <div className="mb-5 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/30 p-3">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0">
-                                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <div className="p-2 rounded-lg bg-[hsl(var(--brand-warning)/0.1)] dark:bg-[hsl(var(--brand-warning)/0.1)] text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">
                                     <Flag className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0">
@@ -619,10 +619,10 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
 
                     {unresolvedFindings === 0 ? (
                         <div className="flex-grow flex flex-col items-center justify-center py-6 text-center">
-                            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center mb-4 transition-all group-hover:scale-110">
-                                <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                            <div className="w-12 h-12 rounded-full bg-[hsl(var(--brand-success)/0.12)] dark:bg-[hsl(var(--brand-success)/0.1)] border border-[hsl(var(--brand-success)/0.2)] dark:border-[hsl(var(--brand-success)/0.2)] flex items-center justify-center mb-4 transition-all group-hover:scale-110">
+                                <CheckCircle className="w-7 h-7 text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]" />
                             </div>
-                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400 mb-1">{t('clean_state')}</p>
+                            <p className="text-base font-black text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))] mb-1">{t('clean_state')}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{resolvedFindings} resolved historically</p>
                         </div>
                     ) : (
@@ -644,8 +644,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                                 )}
                                 {findingsBySeverity.MEDIUM && findingsBySeverity.MEDIUM > 0 && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                        <span className="text-sm font-black text-amber-700 dark:text-amber-400 w-6">{findingsBySeverity.MEDIUM}</span>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[hsl(var(--brand-warning))]" />
+                                        <span className="text-sm font-black text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))] w-6">{findingsBySeverity.MEDIUM}</span>
                                         <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest">Medium</span>
                                     </div>
                                 )}
@@ -751,8 +751,8 @@ export const OverviewTab: React.FC<OverviewTabProps & { onRefresh?: () => void }
                             </table>
 
                             {availableMembers.length > 0 && (
-                                <div className="mt-4 p-2 bg-emerald-500/10 rounded border border-emerald-500/20 text-center">
-                                    <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
+                                <div className="mt-4 p-2 bg-[hsl(var(--brand-success)/0.1)] rounded border border-[hsl(var(--brand-success)/0.2)] text-center">
+                                    <span className="text-[9px] text-[hsl(var(--brand-success))] font-bold uppercase tracking-wider">
                                         {availableMembers.length} {t('members_available')}
                                     </span>
                                 </div>

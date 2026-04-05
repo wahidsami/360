@@ -27,8 +27,8 @@ const KANBAN_COLUMNS = [
     { id: 'blocked', label: 'blocked', color: 'text-rose-400', border: 'border-rose-800' },
     { id: 'todo', label: 'todo', color: 'text-blue-400', border: 'border-blue-800' },
     { id: 'in_progress', label: 'in_progress', color: 'text-cyan-400', border: 'border-cyan-800' },
-    { id: 'review', label: 'review', color: 'text-amber-400', border: 'border-amber-800' },
-    { id: 'done', label: 'done', color: 'text-emerald-400', border: 'border-emerald-800' },
+    { id: 'review', label: 'review', color: 'text-[hsl(var(--brand-warning))]', border: 'border-[hsl(var(--brand-warning)/0.35)]' },
+    { id: 'done', label: 'done', color: 'text-[hsl(var(--brand-success))]', border: 'border-[hsl(var(--brand-success)/0.35)]' },
 ];
 
 export const TasksTab: React.FC<TasksTabProps> = ({
@@ -124,7 +124,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({
     };
 
     const priorityDot = (p: string) => {
-        const c = p === 'urgent' ? 'bg-rose-500' : p === 'high' ? 'bg-amber-500' : p === 'medium' ? 'bg-blue-500' : 'bg-slate-500';
+        const c = p === 'urgent' ? 'bg-rose-500' : p === 'high' ? 'bg-[hsl(var(--brand-warning))]' : p === 'medium' ? 'bg-blue-500' : 'bg-slate-500';
         return <span className={`inline-block w-2 h-2 rounded-full ${c} mr-1`} />;
     };
 

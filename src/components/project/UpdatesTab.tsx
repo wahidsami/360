@@ -50,7 +50,7 @@ export const UpdatesTab: React.FC<UpdatesTabProps> = ({ updates, onPost, canPost
                 {sortedUpdates.map((update) => (
                     <div key={update.id} className="ml-6 relative">
                         {/* Dot */}
-                        <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-slate-900 ${update.type === 'milestone' ? 'bg-emerald-500' :
+                        <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-slate-900 ${update.type === 'milestone' ? 'bg-[hsl(var(--brand-success))]' :
                             update.type === 'technical' ? 'bg-cyan-500' : 'bg-slate-500'
                             }`}></div>
 

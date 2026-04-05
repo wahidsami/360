@@ -205,8 +205,8 @@ export const FindingsList: React.FC<FindingsListProps> = ({ initialFindings, pro
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KpiCard label={t('critical_issues')} value={findings.filter(f => f.severity.toLowerCase() === 'critical').length} icon={<ShieldAlert className="text-rose-500" />} />
-        <KpiCard label={t('open_findings')} value={findings.filter(f => f.status.toLowerCase() === 'open').length} icon={<AlertCircle className="text-amber-500" />} />
-        <KpiCard label={t('resolution_rate')} value={findings.length ? `${Math.round((findings.filter(f => f.status.toLowerCase() === 'closed').length / findings.length) * 100)}%` : '0%'} icon={<CheckCircle className="text-emerald-500" />} trend={12} />
+        <KpiCard label={t('open_findings')} value={findings.filter(f => f.status.toLowerCase() === 'open').length} icon={<AlertCircle className="text-[hsl(var(--brand-warning))]" />} />
+        <KpiCard label={t('resolution_rate')} value={findings.length ? `${Math.round((findings.filter(f => f.status.toLowerCase() === 'closed').length / findings.length) * 100)}%` : '0%'} icon={<CheckCircle className="text-[hsl(var(--brand-success))]" />} trend={12} />
         <KpiCard label={t('avg_resolution_time')} value="4.2 days" icon={<Calendar className="text-cyan-500" />} />
       </div>
 

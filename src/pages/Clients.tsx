@@ -214,7 +214,7 @@ export const ClientList: React.FC = () => {
                       <span className="font-mono text-cyan-400 font-bold">{getActiveProjectCount(client.id)}</span>
                     </td>
                     <td className="p-6">
-                      <span className={`font-mono ${client.outstandingBalance > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      <span className={`font-mono ${client.outstandingBalance > 0 ? 'text-rose-400' : 'text-[hsl(var(--brand-success))]'}`}>
                         {client.billing?.currency || 'USD'} {client.outstandingBalance.toLocaleString()}
                       </span>
                     </td>
@@ -228,15 +228,15 @@ export const ClientList: React.FC = () => {
                         </Button>
                         <PermissionGate permission={Permission.MANAGE_CLIENTS}>
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clients/${client.id}/edit`)}>
-                            <Edit className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                            <Edit className="w-4 h-4 text-slate-400 hover:text-[hsl(var(--brand-warning))]" />
                           </Button>
                           {client.status === 'archived' ? (
                             <Button variant="ghost" size="sm" onClick={(e) => handleRestore(client.id, e)} title={t('restore_client')}>
-                              <RotateCcw className="w-4 h-4 text-slate-400 hover:text-emerald-400" />
+                              <RotateCcw className="w-4 h-4 text-slate-400 hover:text-[hsl(var(--brand-success))]" />
                             </Button>
                           ) : (
                             <Button variant="ghost" size="sm" onClick={(e) => handleArchive(client.id, e)} title={t('archive')}>
-                              <Archive className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                              <Archive className="w-4 h-4 text-slate-400 hover:text-[hsl(var(--brand-warning))]" />
                             </Button>
                           )}
                           <Button variant="ghost" size="sm" onClick={(e) => handleDelete(client.id, e)}>

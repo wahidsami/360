@@ -79,11 +79,11 @@ export const WorkspaceTemplateSelector: React.FC<WorkspaceTemplateSelectorProps>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/40">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Interactive</p>
-                  <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.interactiveCount}</p>
+                  <p className="mt-1 text-2xl font-black text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]">{summary.interactiveCount}</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/40">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Read only</p>
-                  <p className="mt-1 text-2xl font-black text-amber-600 dark:text-amber-400">{summary.readOnlyCount}</p>
+                  <p className="mt-1 text-2xl font-black text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">{summary.readOnlyCount}</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/40">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Hidden</p>
@@ -110,7 +110,7 @@ export const WorkspaceTemplateSelector: React.FC<WorkspaceTemplateSelectorProps>
       )}
 
       {error && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+        <div className="rounded-2xl border border-[hsl(var(--brand-warning)/0.2)] bg-[hsl(var(--brand-warning)/0.1)] p-4 text-sm text-[hsl(var(--brand-warning))] dark:border-[hsl(var(--brand-warning)/0.2)] dark:bg-[hsl(var(--brand-warning)/0.1)] dark:text-[hsl(var(--brand-warning))]">
           {error}
         </div>
       )}

@@ -54,7 +54,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     onClick={triggerUpload}
                     className={`
             relative w-24 h-24 rounded-full border-2 border-dashed border-slate-600 
-            flex items-center justify-center cursor-pointer hover:border-emerald-500/50 hover:bg-slate-800/50 transition-all group overflow-hidden
+            flex items-center justify-center cursor-pointer hover:border-[hsl(var(--brand-success)/0.5)] hover:bg-slate-800/50 transition-all group overflow-hidden
             ${preview ? 'border-none' : ''}
           `}
                 >
@@ -65,7 +65,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <Upload className="w-8 h-8 text-slate-500 group-hover:text-emerald-400" />
+                        <Upload className="w-8 h-8 text-slate-500 group-hover:text-[hsl(var(--brand-success))]" />
                     )}
 
                     <input

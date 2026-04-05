@@ -389,7 +389,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
               <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_template_coverage')}</p>
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{templateSummary.interactiveCount + templateSummary.readOnlyCount}</p>
             </div>
-            <ShieldCheck className="h-5 w-5 text-emerald-500" />
+            <ShieldCheck className="h-5 w-5 text-[hsl(var(--brand-success))]" />
           </div>
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
             {t('workspace_coverage_summary', {
@@ -499,11 +499,11 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_interactive')}</p>
-                    <p className="mt-2 text-2xl font-black text-emerald-600 dark:text-emerald-400">{templateSummary.interactiveCount}</p>
+                    <p className="mt-2 text-2xl font-black text-[hsl(var(--brand-success))] dark:text-[hsl(var(--brand-success))]">{templateSummary.interactiveCount}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_read_only')}</p>
-                    <p className="mt-2 text-2xl font-black text-amber-600 dark:text-amber-400">{templateSummary.readOnlyCount}</p>
+                    <p className="mt-2 text-2xl font-black text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">{templateSummary.readOnlyCount}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('workspace_hidden')}</p>
@@ -512,9 +512,9 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 </div>
 
                 {dependencyWarnings.length > 0 && (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
-                    <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{t('workspace_dependency_warnings')}</p>
-                    <div className="mt-2 space-y-2 text-sm text-amber-800 dark:text-amber-300">
+                  <div className="rounded-2xl border border-[hsl(var(--brand-warning)/0.2)] bg-[hsl(var(--brand-warning)/0.1)] p-4 dark:border-[hsl(var(--brand-warning)/0.2)] dark:bg-[hsl(var(--brand-warning)/0.1)]">
+                    <p className="text-sm font-bold text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">{t('workspace_dependency_warnings')}</p>
+                    <div className="mt-2 space-y-2 text-sm text-[hsl(var(--brand-warning))] dark:text-[hsl(var(--brand-warning))]">
                       {dependencyWarnings.map((warning) => (
                         <p key={warning.tabId}>
                           <span className="font-semibold">{getTabLabel(warning.tabId)}</span> {t('workspace_depends_on')}{' '}

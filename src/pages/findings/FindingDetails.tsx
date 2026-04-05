@@ -306,7 +306,7 @@ export const FindingDetails: React.FC = () => {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
+                    className="bg-[hsl(var(--brand-success))] hover:bg-[hsl(var(--brand-success))] border-[hsl(var(--brand-success)/0.2)]"
                     onClick={() => handleStatusUpdate('closed')}
                   >
                     <CheckCircle className="w-4 h-4 mr-2" /> {t('verify_fixed')}
@@ -325,7 +325,7 @@ export const FindingDetails: React.FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/20"
+                  className="bg-[hsl(var(--brand-success))] hover:bg-[hsl(var(--brand-success))] border-[hsl(var(--brand-success)/0.2)]"
                   onClick={() => handleStatusUpdate('closed')}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" /> {t('mark_closed')}
@@ -607,7 +607,7 @@ export const FindingDetails: React.FC = () => {
                           <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
                             <div className="flex justify-between items-center mb-1">
                               <div className="flex items-center gap-2">
-                                <span className={`text-sm font-bold ${reply.author?.role?.includes('CLIENT') ? 'text-amber-400' : 'text-slate-200'}`}>{reply.author?.name}</span>
+                                <span className={`text-sm font-bold ${reply.author?.role?.includes('CLIENT') ? 'text-[hsl(var(--brand-warning))]' : 'text-slate-200'}`}>{reply.author?.name}</span>
                                 {reply.author?.role?.includes('CLIENT') && <Badge variant="warning" className="py-0 px-1.5 text-[10px]">Client</Badge>}
                               </div>
                               <span className="text-[10px] text-slate-500">{new Date(reply.createdAt).toLocaleString()}</span>

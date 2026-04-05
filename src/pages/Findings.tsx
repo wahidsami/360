@@ -35,8 +35,8 @@ export const Findings: React.FC = () => {
   const getSeverityIcon = (sev: string) => {
     switch (sev) {
       case 'critical': return <ShieldAlert className="w-5 h-5 text-rose-500" />;
-      case 'high': return <AlertCircle className="w-5 h-5 text-amber-500" />;
-      case 'medium': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+      case 'high': return <AlertCircle className="w-5 h-5 text-[hsl(var(--brand-warning))]" />;
+      case 'medium': return <AlertTriangle className="w-5 h-5 text-[hsl(var(--brand-warning))]" />;
       default: return <CheckCircle2 className="w-5 h-5 text-slate-500" />;
     }
   };
@@ -73,13 +73,13 @@ export const Findings: React.FC = () => {
             <ShieldAlert className="w-5 h-5 text-rose-500" />
           </div>
         </GlassCard>
-        <GlassCard className="p-4 border-amber-500/30 bg-amber-900/10">
+        <GlassCard className="p-4 border-[hsl(var(--brand-warning)/0.3)] bg-[hsl(var(--brand-warning)/0.1)]">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-amber-400 uppercase">High Priority</p>
+              <p className="text-xs font-semibold text-[hsl(var(--brand-warning))] uppercase">High Priority</p>
               <p className="text-2xl font-bold text-white mt-1">{findings.filter(f => f.severity === 'high').length}</p>
             </div>
-            <AlertCircle className="w-5 h-5 text-amber-500" />
+            <AlertCircle className="w-5 h-5 text-[hsl(var(--brand-warning))]" />
           </div>
         </GlassCard>
         <GlassCard className="p-4">
@@ -94,10 +94,10 @@ export const Findings: React.FC = () => {
         <GlassCard className="p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-emerald-400 uppercase">Remediated</p>
+              <p className="text-xs font-semibold text-[hsl(var(--brand-success))] uppercase">Remediated</p>
               <p className="text-2xl font-bold text-white mt-1">{findings.filter(f => f.status === 'closed').length}</p>
             </div>
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+            <CheckCircle2 className="w-5 h-5 text-[hsl(var(--brand-success))]" />
           </div>
         </GlassCard>
       </div>
@@ -134,7 +134,7 @@ export const Findings: React.FC = () => {
               className={`
                 group hover:bg-slate-800/50 transition-all border-l-4 
                 ${f.severity.toLowerCase() === 'critical' ? 'border-l-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.1)]' :
-                  f.severity.toLowerCase() === 'high' ? 'border-l-amber-500' : 'border-l-slate-600'}
+                  f.severity.toLowerCase() === 'high' ? 'border-l-[hsl(var(--brand-warning))]' : 'border-l-slate-600'}
               `}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -170,7 +170,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ milestones, onUpse
                                                 return (
                                                     <div key={task.id} className="group/task flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={task.status === 'DONE' ? 'text-emerald-500' : task.status === 'IN_PROGRESS' ? 'text-cyan-500' : 'text-slate-500'}>
+                                                            <div className={task.status === 'DONE' ? 'text-[hsl(var(--brand-success))]' : task.status === 'IN_PROGRESS' ? 'text-cyan-500' : 'text-slate-500'}>
                                                                 {task.status === 'DONE' ? <CheckCircle2 className="w-4 h-4" /> : task.status === 'IN_PROGRESS' ? <PlayCircle className="w-4 h-4 animate-pulse" /> : <Clock className="w-4 h-4" />}
                                                             </div>
                                                             <div>

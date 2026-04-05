@@ -52,8 +52,8 @@ const AcceptInvite: React.FC = () => {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle className="w-8 h-8 text-emerald-500" />
+                    <div className="w-16 h-16 bg-[hsl(var(--brand-success)/0.2)] rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle className="w-8 h-8 text-[hsl(var(--brand-success))]" />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-2">Account Activated!</h2>
                     <p className="text-slate-400 mb-6">Your password has been set successfully. Use your email and new password to login.</p>

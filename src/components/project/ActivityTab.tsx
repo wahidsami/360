@@ -13,7 +13,7 @@ interface ActivityTabProps {
 const iconByType = (type?: string) => {
   switch (type) {
     case 'task': return <CheckSquare className="w-4 h-4 text-cyan-500" />;
-    case 'finding': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+    case 'finding': return <AlertCircle className="w-4 h-4 text-[hsl(var(--brand-warning))]" />;
     case 'file': return <FileText className="w-4 h-4 text-slate-400" />;
     default: return <Activity className="w-4 h-4 text-slate-500" />;
   }

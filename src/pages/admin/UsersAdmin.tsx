@@ -617,7 +617,7 @@ export const UsersAdmin: React.FC = () => {
                               <td className="p-4">
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2">
-                                    <CheckCircle className={`w-4 h-4 ${user.isActive === false ? 'text-slate-500' : 'text-emerald-500'}`} />
+                                    <CheckCircle className={`w-4 h-4 ${user.isActive === false ? 'text-slate-500' : 'text-[hsl(var(--brand-success))]'}`} />
                                     <span className="text-slate-300">{user.isActive === false ? copy.inactive : copy.active}</span>
                                   </div>
                                   {user.latestInvite && (
@@ -873,9 +873,9 @@ export const UsersAdmin: React.FC = () => {
       <Modal isOpen={!!inviteResult} onClose={() => setInviteResult(null)} title={copy.userCreated}>
         {inviteResult && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
-              <p className="text-sm text-emerald-300">
+            <div className="flex items-center gap-3 p-3 bg-[hsl(var(--brand-success)/0.1)] border border-[hsl(var(--brand-success)/0.2)] rounded-lg">
+              <CheckCircle className="w-5 h-5 text-[hsl(var(--brand-success))] shrink-0" />
+              <p className="text-sm text-[hsl(var(--brand-success))]">
                 {copy.inviteSent} <strong>{inviteResult.email}</strong>
               </p>
             </div>

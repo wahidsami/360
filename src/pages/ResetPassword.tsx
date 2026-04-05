@@ -59,7 +59,7 @@ const ResetPassword: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-slate-900/40 backdrop-blur-xl border border-slate-700 rounded-2xl p-8 text-center">
-          <KeyRound className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <KeyRound className="w-12 h-12 text-[hsl(var(--brand-warning))] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Invalid link</h2>
           <p className="text-slate-400 text-sm mb-6">
             This reset link is missing the token. Please use the link from your email or request a new one.

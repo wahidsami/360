@@ -293,18 +293,18 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <GlassCard className="p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <DollarSign className="w-16 h-16 text-emerald-400" />
+                        <DollarSign className="w-16 h-16 text-[hsl(var(--brand-success))]" />
                     </div>
                     <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">{t('total_paid')}</p>
                     <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-white"><SarSymbol /> {totalPaid.toLocaleString()}</span>
-                        <span className="text-sm text-emerald-400">+12%</span>
+                        <span className="text-sm text-[hsl(var(--brand-success))]">+12%</span>
                     </div>
                 </GlassCard>
 
                 <GlassCard className="p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <FileText className="w-16 h-16 text-amber-400" />
+                        <FileText className="w-16 h-16 text-[hsl(var(--brand-warning))]" />
                     </div>
                     <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">{t('outstanding')}</p>
                     <div className="mt-2 flex items-baseline gap-2">
@@ -414,7 +414,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                         <>
                                                             {hasPending && isInternalRole(user?.role) && (
                                                                 <>
-                                                                    <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
+                                                                    <Button variant="ghost" size="sm" className="text-[hsl(var(--brand-success))]" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
                                                                     <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
                                                                 </>
                                                             )}
@@ -443,7 +443,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                             invoices.map(invoice => (
                                 <div key={invoice.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                        <div className="p-3 bg-[hsl(var(--brand-success)/0.1)] rounded-lg text-[hsl(var(--brand-success))]">
                                             <DollarSign className="w-6 h-6" />
                                         </div>
                                         <div className="flex flex-col">
@@ -484,7 +484,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                         <>
                                                             {hasPending && isInternalRole(user?.role) && (
                                                                 <>
-                                                                    <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
+                                                                    <Button variant="ghost" size="sm" className="text-[hsl(var(--brand-success))]" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'approve' })}><Check className="w-4 h-4" /></Button>
                                                                     <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => setReviewModal({ id: pendingStep!.id, action: 'reject' })}><X className="w-4 h-4" /></Button>
                                                                 </>
                                                             )}
@@ -492,7 +492,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                                                 <Button variant="ghost" size="sm" className="text-cyan-400" onClick={() => handleRequestApproval('INVOICE', invoice.id)}><Send className="w-4 h-4 mr-1" /> {t('request_approval')}</Button>
                                                             )}
                                                             {(invoice.status === 'issued' || invoice.status === 'ISSUED') && (
-                                                                <Button variant="ghost" size="sm" className="text-emerald-400" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> {t('pay_with_card')}</Button>
+                                                                <Button variant="ghost" size="sm" className="text-[hsl(var(--brand-success))]" onClick={() => openPayModal(invoice)} disabled={payLoading}><CreditCard className="w-4 h-4 mr-1" /> {t('pay_with_card')}</Button>
                                                             )}
                                                             <Button variant="ghost" size="sm" onClick={() => openEditInvoice(invoice)}><Edit className="w-4 h-4" /></Button>
                                                             <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteInvoice(invoice.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -521,7 +521,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ contract: initialC
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-white">{formatSAR(i.amount)}</p>
-                                        <span className={`text-xs ${i.status === 'paid' ? 'text-emerald-400' : i.status === 'overdue' ? 'text-rose-400' : 'text-amber-400'}`}>{i.status}</span>
+                                        <span className={`text-xs ${i.status === 'paid' ? 'text-[hsl(var(--brand-success))]' : i.status === 'overdue' ? 'text-rose-400' : 'text-[hsl(var(--brand-warning))]'}`}>{i.status}</span>
                                     </div>
                                 </div>
                             ))}

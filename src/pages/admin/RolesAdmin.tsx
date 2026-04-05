@@ -40,7 +40,7 @@ export const RolesAdmin: React.FC = () => {
           <h1 className="text-3xl font-bold font-display text-white">{t('admin')} / Roles</h1>
           <p className="text-slate-400">Access Control Matrix and Role Definitions.</p>
         </div>
-        <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg flex items-center gap-2 text-amber-400 text-sm">
+        <div className="bg-[hsl(var(--brand-warning)/0.1)] border border-[hsl(var(--brand-warning)/0.2)] px-4 py-2 rounded-lg flex items-center gap-2 text-[hsl(var(--brand-warning))] text-sm">
           <AlertTriangle className="w-4 h-4" />
           <span>Editing permissions is currently disabled in this environment.</span>
         </div>
@@ -96,8 +96,8 @@ export const RolesAdmin: React.FC = () => {
                         return (
                           <td key={cat.label} className="p-4 text-center">
                             {active ? (
-                              <div className="mx-auto w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              <div className="mx-auto w-6 h-6 rounded-full bg-[hsl(var(--brand-success)/0.1)] flex items-center justify-center">
+                                <Check className="w-3.5 h-3.5 text-[hsl(var(--brand-success))]" />
                               </div>
                             ) : (
                               <div className="mx-auto w-1 h-1 rounded-full bg-slate-700" />

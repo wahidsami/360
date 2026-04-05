@@ -147,7 +147,7 @@ export const ProjectsList: React.FC = () => {
                         <Button variant="ghost" size="sm" onClick={() => navigate(p.id)}><Eye className="w-4 h-4" /></Button>
                         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`${p.id}/edit`); }}>
-                            <Folder className="w-4 h-4 text-slate-400 hover:text-amber-400" />
+                            <Folder className="w-4 h-4 text-slate-400 hover:text-[hsl(var(--brand-warning))]" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={async (e) => {
                             e.stopPropagation();

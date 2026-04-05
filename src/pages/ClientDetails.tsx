@@ -301,11 +301,11 @@ export const ClientDetails: React.FC = () => {
                                             <div>
                                                 <div className="flex justify-between text-xs mb-1">
                                                     <span className="text-slate-400">Revenue YTD</span>
-                                                    <span className="text-emerald-400">
+                                                    <span className="text-[hsl(var(--brand-success))]">
                                                         {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
+                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-[hsl(var(--brand-success))] h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
                                             </div>
                                             <div>
                                                 <div className="flex justify-between text-xs mb-1">
@@ -515,7 +515,7 @@ export const ClientDetails: React.FC = () => {
                                 <p className="text-slate-500 text-sm">Active Contract</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-emerald-400 text-sm font-medium">
+                                <span className="text-[hsl(var(--brand-success))] text-sm font-medium">
                                     {financialSummary.nextContractEndDate
                                         ? `Exp: ${new Date(financialSummary.nextContractEndDate).toLocaleDateString()}`
                                         : 'No expiry set'}

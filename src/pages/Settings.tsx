@@ -487,7 +487,7 @@ const Settings: React.FC = () => {
                     <span className="ml-2 text-slate-500 text-sm">{c.provider}</span>
                     {c.provider === 'GOOGLE' && c.clientId && <span className="ml-2 text-slate-600 text-xs">Client ID: {c.clientId.slice(0, 12)}…</span>}
                     {c.provider === 'SAML' && c.entryPoint && <span className="ml-2 text-slate-600 text-xs">Entry: {c.entryPoint.slice(0, 30)}…</span>}
-                    {!c.enabled && <span className="ml-2 text-amber-400 text-xs">Disabled</span>}
+                    {!c.enabled && <span className="ml-2 text-[hsl(var(--brand-warning))] text-xs">Disabled</span>}
                   </div>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => openSsoModal(c)}><Pencil className="w-4 h-4" /></Button>
@@ -661,7 +661,7 @@ const Settings: React.FC = () => {
               {slaPolicies.filter((p) => p.entityType === slaEntityFilter).map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
                   <span className="font-medium text-white">{p.name}</span>
-                  <span className="text-slate-500 text-sm">{p.targetHours}h {!p.enabled && <span className="text-amber-400">Disabled</span>}</span>
+                  <span className="text-slate-500 text-sm">{p.targetHours}h {!p.enabled && <span className="text-[hsl(var(--brand-warning))]">Disabled</span>}</span>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => openSlaModal(p)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="sm" className="text-rose-400" onClick={() => handleDeleteSla(p.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -840,7 +840,7 @@ const Settings: React.FC = () => {
               Change Password <Shield className="w-4 h-4 text-slate-400" />
             </Button>
             <Button variant="secondary" className="w-full justify-between">
-              Two-Factor Auth <span className="text-emerald-400 text-xs">Enabled</span>
+              Two-Factor Auth <span className="text-[hsl(var(--brand-success))] text-xs">Enabled</span>
             </Button>
           </div>
         </GlassCard>
