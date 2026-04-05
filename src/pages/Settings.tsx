@@ -23,7 +23,112 @@ type SsoConfigItem = {
 };
 
 const Settings: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language?.startsWith('ar');
+  const copy = isArabic
+    ? {
+        subtitle: 'إعدادات النظام والتفضيلات.',
+        appearance: 'المظهر',
+        theme: 'السمة',
+        dark: 'داكن',
+        lightThemeApplied: 'تم تطبيق السمة الفاتحة',
+        darkThemeApplied: 'تم تطبيق السمة الداكنة',
+        newPasswordsNoMatch: 'كلمتا المرور الجديدتان غير متطابقتين',
+        newPasswordMinLength: 'يجب أن تكون كلمة المرور الجديدة 6 أحرف على الأقل',
+        passwordUpdatedSuccess: 'تم تحديث كلمة المرور بنجاح',
+        failedUpdatePassword: 'فشل تحديث كلمة المرور',
+        failedStart2faSetup: 'فشل بدء إعداد التحقق بخطوتين',
+        invalidCode: 'رمز غير صحيح',
+        failedDisable2fa: 'فشل تعطيل التحقق بخطوتين',
+        twoFactorAuthentication: 'التحقق بخطوتين',
+        twoFactorEnabledDesc: 'التحقق بخطوتين مفعّل. استخدم تطبيق المصادقة أو رمز الاسترداد عند تسجيل الدخول.',
+        passwordToDisable2fa: 'كلمة المرور لتعطيل التحقق بخطوتين',
+        yourPassword: 'كلمة المرور',
+        disable2fa: 'تعطيل التحقق بخطوتين',
+        twoFactorSetupDesc:
+          'أضف هذا الحساب إلى تطبيق المصادقة (Google Authenticator أو Authy وغيرها) باستخدام المفتاح أدناه أو امسح رمز QR من الرابط.',
+        openOtpauthUrl: 'فتح رابط otpauth',
+        otpauthHint: '(بعض التطبيقات يمكنها توليد QR من هذا الرابط)',
+        enter6DigitCode: 'أدخل رمز 6 أرقام من التطبيق',
+        verifyAndEnable: 'تحقق وفعّل',
+        enable2faDesc: 'أضف طبقة أمان إضافية بطلب رمز من هاتفك عند تسجيل الدخول.',
+        enable2fa: 'تفعيل التحقق بخطوتين',
+        recoveryCodes: 'رموز الاسترداد',
+        recoveryCodesDesc:
+          'احفظ هذه الرموز في مكان آمن. يمكن استخدام كل رمز مرة واحدة إذا فقدت الوصول إلى تطبيق المصادقة.',
+        done: 'تم',
+        profile: 'الملف الشخصي',
+        notifications: 'الإشعارات',
+        emailTaskAssignments: 'البريد الإلكتروني: تعيينات المهام',
+        emailFindingAssignments: 'البريد الإلكتروني: تعيينات الملاحظات',
+        emailInvoiceOverdue: 'البريد الإلكتروني: الفواتير / المتأخرة',
+        inAppNotifications: 'إشعارات داخل التطبيق',
+        preferencesSaved: 'تم حفظ التفضيلات',
+        failedSave: 'فشل الحفظ',
+        savePreferences: 'حفظ التفضيلات',
+        security: 'الأمان',
+        changePassword: 'تغيير كلمة المرور',
+        twoFactorAuth: 'التحقق بخطوتين',
+        enabled: 'مفعّل',
+        changePasswordTitle: 'تغيير كلمة المرور',
+        currentPassword: 'كلمة المرور الحالية',
+        newPassword: 'كلمة المرور الجديدة',
+        confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+        updating: 'جارٍ التحديث...',
+        updatePassword: 'تحديث كلمة المرور',
+      }
+    : {
+        subtitle: 'System configuration and preferences.',
+        appearance: 'Appearance',
+        theme: 'Theme',
+        dark: 'Dark',
+        lightThemeApplied: 'Light theme applied',
+        darkThemeApplied: 'Dark theme applied',
+        newPasswordsNoMatch: 'New passwords do not match',
+        newPasswordMinLength: 'New password must be at least 6 characters',
+        passwordUpdatedSuccess: 'Password updated successfully',
+        failedUpdatePassword: 'Failed to update password',
+        failedStart2faSetup: 'Failed to start 2FA setup',
+        invalidCode: 'Invalid code',
+        failedDisable2fa: 'Failed to disable',
+        twoFactorAuthentication: 'Two-factor authentication',
+        twoFactorEnabledDesc:
+          '2FA is enabled. Use your authenticator app or a recovery code when signing in.',
+        passwordToDisable2fa: 'Password to disable 2FA',
+        yourPassword: 'Your password',
+        disable2fa: 'Disable 2FA',
+        twoFactorSetupDesc:
+          'Add this account to your authenticator app (Google Authenticator, Authy, etc.) using the secret below or scan a QR code from the link.',
+        openOtpauthUrl: 'Open otpauth URL',
+        otpauthHint: '(some apps can generate QR from this)',
+        enter6DigitCode: 'Enter 6-digit code from app',
+        verifyAndEnable: 'Verify and enable',
+        enable2faDesc: 'Add an extra layer of security by requiring a code from your phone when signing in.',
+        enable2fa: 'Enable 2FA',
+        recoveryCodes: 'Recovery codes',
+        recoveryCodesDesc:
+          'Save these codes in a safe place. Each can be used once if you lose access to your authenticator.',
+        done: 'Done',
+        profile: 'Profile',
+        notifications: 'Notifications',
+        emailTaskAssignments: 'Email: Task assignments',
+        emailFindingAssignments: 'Email: Finding assignments',
+        emailInvoiceOverdue: 'Email: Invoice / overdue',
+        inAppNotifications: 'In-app notifications',
+        preferencesSaved: 'Preferences saved',
+        failedSave: 'Failed to save',
+        savePreferences: 'Save preferences',
+        security: 'Security',
+        changePassword: 'Change Password',
+        twoFactorAuth: 'Two-Factor Auth',
+        enabled: 'Enabled',
+        changePasswordTitle: 'Change Password',
+        currentPassword: 'Current Password',
+        newPassword: 'New Password',
+        confirmNewPassword: 'Confirm New Password',
+        updating: 'Updating...',
+        updatePassword: 'Update Password',
+      };
   const { user } = useAuth();
   const { confirm } = useAppDialog();
   const [org, setOrg] = useState<{ id: string; name: string; slug?: string | null; plan: string; logo?: string | null; primaryColor?: string | null; accentColor?: string | null; maxUsers: number; maxProjects: number; maxStorageMB: number } | null>(null);
@@ -129,29 +234,29 @@ const Settings: React.FC = () => {
     localStorage.setItem('arena360_theme', next);
     document.documentElement.classList.toggle('theme-light', next === 'light');
     document.documentElement.classList.toggle('dark', next === 'dark');
-    toast.success(next === 'light' ? 'Light theme applied' : 'Dark theme applied');
+    toast.success(next === 'light' ? copy.lightThemeApplied : copy.darkThemeApplied);
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(copy.newPasswordsNoMatch);
       return;
     }
     if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters');
+      toast.error(copy.newPasswordMinLength);
       return;
     }
     setSavingPassword(true);
     try {
       await api.me.changePassword({ currentPassword, newPassword });
-      toast.success('Password updated successfully');
+      toast.success(copy.passwordUpdatedSuccess);
       setPasswordModalOpen(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to update password');
+      toast.error(err?.message || copy.failedUpdatePassword);
     } finally {
       setSavingPassword(false);
     }
@@ -164,7 +269,7 @@ const Settings: React.FC = () => {
       setTwoFactorSetup({ secret: (res as any).secret, otpauthUrl: (res as any).otpauthUrl });
       setTwoFactorCode('');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to start 2FA setup');
+      toast.error(e?.message || copy.failedStart2faSetup);
     } finally {
       setTwoFactorLoading(false);
     }
@@ -182,7 +287,7 @@ const Settings: React.FC = () => {
       setUser2faEnabled(true);
       toast.success('2FA enabled');
     } catch (e: any) {
-      toast.error(e?.message || 'Invalid code');
+      toast.error(e?.message || copy.invalidCode);
     } finally {
       setTwoFactorLoading(false);
     }
@@ -198,7 +303,7 @@ const Settings: React.FC = () => {
       setTwoFactorDisablePw('');
       toast.success('2FA disabled');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to disable');
+      toast.error(e?.message || copy.failedDisable2fa);
     } finally {
       setTwoFactorLoading(false);
     }
@@ -427,7 +532,7 @@ const Settings: React.FC = () => {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold font-display text-white">{t('settings')}</h1>
-        <p className="text-slate-400">System configuration and preferences.</p>
+        <p className="text-slate-400">{copy.subtitle}</p>
       </div>
 
       {org && user?.role === Role.SUPER_ADMIN && (
@@ -709,72 +814,72 @@ const Settings: React.FC = () => {
         </GlassCard>
       )}
 
-      <GlassCard title="Appearance">
+      <GlassCard title={copy.appearance}>
         <div className="space-y-2">
-          <Label>Theme</Label>
+          <Label>{copy.theme}</Label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => handleThemeChange('dark')}
               className="px-4 py-2 rounded-lg border bg-slate-700 border-cyan-500 text-white"
             >
-              Dark
+              {copy.dark}
             </button>
           </div>
         </div>
       </GlassCard>
 
-      <GlassCard title="Two-factor authentication" className="flex items-center gap-2">
+      <GlassCard title={copy.twoFactorAuthentication} className="flex items-center gap-2">
         <Smartphone className="w-5 h-5 text-cyan-500" />
         <div className="flex-1 space-y-4">
           {user2faEnabled ? (
             <>
-              <p className="text-slate-400 text-sm">2FA is enabled. Use your authenticator app or a recovery code when signing in.</p>
+              <p className="text-slate-400 text-sm">{copy.twoFactorEnabledDesc}</p>
               <form onSubmit={handle2faDisable} className="flex gap-2 items-end">
                 <div className="flex-1 max-w-xs">
-                  <Label>Password to disable 2FA</Label>
-                  <Input type="password" value={twoFactorDisablePw} onChange={(e) => setTwoFactorDisablePw(e.target.value)} placeholder="Your password" className="mt-1" />
+                  <Label>{copy.passwordToDisable2fa}</Label>
+                  <Input type="password" value={twoFactorDisablePw} onChange={(e) => setTwoFactorDisablePw(e.target.value)} placeholder={copy.yourPassword} className="mt-1" />
                 </div>
-                <Button type="submit" variant="outline" disabled={twoFactorLoading || !twoFactorDisablePw}>Disable 2FA</Button>
+                <Button type="submit" variant="outline" disabled={twoFactorLoading || !twoFactorDisablePw}>{copy.disable2fa}</Button>
               </form>
             </>
           ) : twoFactorSetup ? (
             <form onSubmit={handle2faVerifySetup} className="space-y-4">
-              <p className="text-slate-400 text-sm">Add this account to your authenticator app (Google Authenticator, Authy, etc.) using the secret below or scan a QR code from the link.</p>
+              <p className="text-slate-400 text-sm">{copy.twoFactorSetupDesc}</p>
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700 font-mono text-sm break-all text-slate-300">{twoFactorSetup.secret}</div>
               <p className="text-slate-500 text-xs">
-                <a href={twoFactorSetup.otpauthUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">Open otpauth URL</a> (some apps can generate QR from this)
+                <a href={twoFactorSetup.otpauthUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">{copy.openOtpauthUrl}</a> {copy.otpauthHint}
               </p>
               <div>
-                <Label>Enter 6-digit code from app</Label>
+                <Label>{copy.enter6DigitCode}</Label>
                 <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="mt-1 max-w-[120px]" maxLength={6} />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={twoFactorLoading || twoFactorCode.length !== 6}>Verify and enable</Button>
-                <Button type="button" variant="ghost" onClick={() => setTwoFactorSetup(null)}>Cancel</Button>
+                <Button type="submit" disabled={twoFactorLoading || twoFactorCode.length !== 6}>{copy.verifyAndEnable}</Button>
+                <Button type="button" variant="ghost" onClick={() => setTwoFactorSetup(null)}>{t('cancel')}</Button>
               </div>
             </form>
           ) : (
             <>
-              <p className="text-slate-400 text-sm">Add an extra layer of security by requiring a code from your phone when signing in.</p>
-              <Button onClick={handle2faStart} disabled={twoFactorLoading}>Enable 2FA</Button>
+              <p className="text-slate-400 text-sm">{copy.enable2faDesc}</p>
+              <Button onClick={handle2faStart} disabled={twoFactorLoading}>{copy.enable2fa}</Button>
             </>
           )}
-          <Modal isOpen={twoFactorRecoveryCodes != null} onClose={() => setTwoFactorRecoveryCodes(null)} title="Recovery codes">
+          <Modal isOpen={twoFactorRecoveryCodes != null} onClose={() => setTwoFactorRecoveryCodes(null)} title={copy.recoveryCodes}>
             {twoFactorRecoveryCodes && (
               <>
-                <p className="text-slate-400 text-sm mb-2">Save these codes in a safe place. Each can be used once if you lose access to your authenticator.</p>
+                <p className="text-slate-400 text-sm mb-2">{copy.recoveryCodesDesc}</p>
                 <div className="font-mono text-sm bg-slate-800/50 p-3 rounded-lg space-y-1">
                   {twoFactorRecoveryCodes.map((c, i) => <div key={i}>{c}</div>)}
                 </div>
-                <Button className="mt-4" onClick={() => setTwoFactorRecoveryCodes(null)}>Done</Button>
+                <Button className="mt-4" onClick={() => setTwoFactorRecoveryCodes(null)}>{copy.done}</Button>
               </>
             )}
           </Modal>
         </div>
       </GlassCard>
 
-      <GlassCard title="Profile">
+      <GlassCard title={copy.profile}>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-2xl text-slate-400">
             <User />
@@ -795,15 +900,15 @@ const Settings: React.FC = () => {
 
 
       <div className="grid md:grid-cols-2 gap-6">
-        <GlassCard title="Notifications">
+        <GlassCard title={copy.notifications}>
           <div className="space-y-4">
             {notifPrefs && (
               <>
                 {[
-                  { key: 'emailTasks' as const, label: 'Email: Task assignments' },
-                  { key: 'emailFindings' as const, label: 'Email: Finding assignments' },
-                  { key: 'emailInvoices' as const, label: 'Email: Invoice / overdue' },
-                  { key: 'inApp' as const, label: 'In-app notifications' },
+                  { key: 'emailTasks' as const, label: copy.emailTaskAssignments },
+                  { key: 'emailFindings' as const, label: copy.emailFindingAssignments },
+                  { key: 'emailInvoices' as const, label: copy.emailInvoiceOverdue },
+                  { key: 'inApp' as const, label: copy.inAppNotifications },
                 ].map(({ key, label }) => (
                   <div key={key} className="flex items-center justify-between p-2 rounded hover:bg-slate-800/30">
                     <span className="text-slate-300">{label}</span>
@@ -822,52 +927,52 @@ const Settings: React.FC = () => {
                     setSavingNotif(true);
                     try {
                       await api.notifications.updatePreferences(notifPrefs);
-                      toast.success('Preferences saved');
+                      toast.success(copy.preferencesSaved);
                     } catch (e) {
-                      toast.error('Failed to save');
+                      toast.error(copy.failedSave);
                     } finally {
                       setSavingNotif(false);
                     }
                   }}
                   disabled={savingNotif}
                 >
-                  Save preferences
+                  {copy.savePreferences}
                 </Button>
               </>
             )}
-            {!notifPrefs && <p className="text-slate-500 text-sm">Loading...</p>}
+            {!notifPrefs && <p className="text-slate-500 text-sm">{t('loading')}</p>}
           </div>
         </GlassCard>
 
-        <GlassCard title="Security">
+        <GlassCard title={copy.security}>
           <div className="space-y-4">
             <Button variant="secondary" className="w-full justify-between" onClick={() => setPasswordModalOpen(true)}>
-              Change Password <Shield className="w-4 h-4 text-slate-400" />
+              {copy.changePassword} <Shield className="w-4 h-4 text-slate-400" />
             </Button>
             <Button variant="secondary" className="w-full justify-between">
-              Two-Factor Auth <span className="text-[hsl(var(--brand-success))] text-xs">Enabled</span>
+              {copy.twoFactorAuth} <span className="text-[hsl(var(--brand-success))] text-xs">{copy.enabled}</span>
             </Button>
           </div>
         </GlassCard>
       </div>
 
-      <Modal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} title="Change Password">
+      <Modal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} title={copy.changePasswordTitle}>
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
-            <Label>Current Password</Label>
+            <Label>{copy.currentPassword}</Label>
             <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
           </div>
           <div>
-            <Label>New Password</Label>
+            <Label>{copy.newPassword}</Label>
             <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
           </div>
           <div>
-            <Label>Confirm New Password</Label>
+            <Label>{copy.confirmNewPassword}</Label>
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setPasswordModalOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={savingPassword}>{savingPassword ? 'Updating...' : 'Update Password'}</Button>
+            <Button type="button" variant="ghost" onClick={() => setPasswordModalOpen(false)}>{t('cancel')}</Button>
+            <Button type="submit" disabled={savingPassword}>{savingPassword ? copy.updating : copy.updatePassword}</Button>
           </div>
         </form>
       </Modal>
