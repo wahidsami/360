@@ -1658,21 +1658,56 @@ export const api = {
       entryId: string,
       file: File,
       caption?: string,
+      onProgress?: (percent: number) => void,
     ) => {
       const formData = new FormData();
       formData.append('file', file);
       if (caption) formData.append('caption', caption);
-      const response = await fetch(`${API_URL}/project-reports/${reportId}/entries/${entryId}/media`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-        body: formData,
+      return await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_URL}/project-reports/${reportId}/entries/${entryId}/media`);
+
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+
+        if (onProgress) {
+          xhr.upload.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+            onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+          };
+        }
+
+        xhr.onload = () => {
+          let payload: any = null;
+          if (xhr.responseText) {
+            try {
+              payload = JSON.parse(xhr.responseText);
+            } catch {
+              payload = null;
+            }
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            onProgress?.(100);
+            resolve(payload);
+            return;
+          }
+
+          const message =
+            (Array.isArray(payload?.message) ? payload.message.join(', ') : payload?.message) ||
+            payload?.error ||
+            'Evidence upload failed';
+          reject(new Error(message));
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Evidence upload failed'));
+        };
+
+        xhr.send(formData);
       });
-      if (!response.ok) {
-        throw new Error('Evidence upload failed');
-      }
-      return response.json();
     },
     deleteEntryMedia: async (reportId: string, entryId: string, mediaId: string): Promise<void> => {
       await fetchApi(`/project-reports/${reportId}/entries/${entryId}/media/${mediaId}`, {

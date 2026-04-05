@@ -22,6 +22,11 @@ import { Permission, ProjectReport, ProjectReportEntry, ProjectReportEntryMedia,
 const SEVERITIES: ProjectReportEntrySeverity[] = ['HIGH', 'MEDIUM', 'LOW'];
 const DEFAULT_ENTRY_STATUS: ProjectReportEntryStatus = 'OPEN';
 const AUDIT_OUTCOMES: ProjectReportEntryOutcome[] = ['PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE', 'NOT_TESTED'];
+const EVIDENCE_UPLOAD_LIMIT_BYTES = 50 * 1024 * 1024;
+const EVIDENCE_UPLOAD_LIMIT_MB = 50;
+
+type EvidenceUploadSlot = 'image' | 'video';
+type EvidenceUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'error';
 
 const emptyEntryDraft = {
   serviceName: '',
@@ -390,6 +395,12 @@ export const ProjectReportWorkspace: React.FC = () => {
   const [exportingPdf, setExportingPdf] = React.useState(false);
   const [generatingAi, setGeneratingAi] = React.useState(false);
   const [savingEntry, setSavingEntry] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<Record<EvidenceUploadSlot, number>>({ image: 0, video: 0 });
+  const [uploadStatus, setUploadStatus] = React.useState<Record<EvidenceUploadSlot, EvidenceUploadStatus>>({
+    image: 'idle',
+    video: 'idle',
+  });
+  const [uploadErrors, setUploadErrors] = React.useState<Record<EvidenceUploadSlot, string>>({ image: '', video: '' });
   const savingEntryRef = React.useRef(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [severityFilter, setSeverityFilter] = React.useState<'ALL' | ProjectReportEntrySeverity>('ALL');
@@ -406,6 +417,12 @@ export const ProjectReportWorkspace: React.FC = () => {
   const generateAiLabel = isArabic ? 'Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù„Ø®Øµ Ø°ÙƒÙŠ' : 'Generate AI Summary';
   const generatingAiLabel = isArabic ? 'Generating...' : 'Generating...';
   const savingEntryLabel = isArabic ? 'Saving...' : 'Saving...';
+  const uploadingEvidenceLabel = isArabic ? '\u062C\u0627\u0631\u064D \u0631\u0641\u0639 \u0627\u0644\u0623\u062F\u0644\u0629...' : 'Uploading evidence...';
+  const uploadingProgressLabel = isArabic ? '\u062C\u0627\u0631\u064D \u0627\u0644\u0631\u0641\u0639...' : 'Uploading...';
+  const uploadedSuccessLabel = isArabic ? '\u062A\u0645 \u0627\u0644\u0631\u0641\u0639 \u0628\u0646\u062C\u0627\u062D.' : 'Uploaded successfully.';
+  const videoLimitHint = isArabic
+    ? `\u0627\u0644\u062D\u062F \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u062D\u062C\u0645 \u0627\u0644\u0641\u064A\u062F\u064A\u0648: ${EVIDENCE_UPLOAD_LIMIT_MB} MB \u0644\u0643\u0644 \u0645\u0644\u0641.`
+    : `Max video size: ${EVIDENCE_UPLOAD_LIMIT_MB} MB per file.`;
 
   const taxonomy = React.useMemo(() => getVersionTaxonomy(report?.templateVersion), [report?.templateVersion]);
   const availableCategories = React.useMemo(
@@ -417,6 +434,72 @@ export const ProjectReportWorkspace: React.FC = () => {
   const entryNeedsSeverity = entryDraft.auditOutcome === 'FAIL' || entryDraft.auditOutcome === 'PARTIAL';
   const entryNeedsRecommendation = entryNeedsSeverity;
   const entryNeedsSubcategory = entryNeedsSeverity;
+  const isUploadingEvidence = uploadStatus.image === 'uploading' || uploadStatus.video === 'uploading';
+
+  const formatFileSize = React.useCallback((bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 MB';
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }, []);
+
+  const resetEvidenceUploadUi = React.useCallback(() => {
+    setImageFile(null);
+    setVideoFile(null);
+    setUploadProgress({ image: 0, video: 0 });
+    setUploadStatus({ image: 'idle', video: 'idle' });
+    setUploadErrors({ image: '', video: '' });
+  }, []);
+
+  const validateEvidenceFile = React.useCallback((slot: EvidenceUploadSlot, file: File | null) => {
+    if (!file) {
+      setUploadErrors((current) => ({ ...current, [slot]: '' }));
+      setUploadStatus((current) => ({ ...current, [slot]: 'idle' }));
+      setUploadProgress((current) => ({ ...current, [slot]: 0 }));
+      return true;
+    }
+
+    if (file.size > EVIDENCE_UPLOAD_LIMIT_BYTES) {
+      const slotLabel = slot === 'video' ? copy.videoDemo : copy.imageProof;
+      const message = isArabic
+        ? `${slotLabel} \u064A\u062A\u062C\u0627\u0648\u0632 \u0627\u0644\u062D\u062F ${EVIDENCE_UPLOAD_LIMIT_MB} MB.`
+        : `${slotLabel} exceeds ${EVIDENCE_UPLOAD_LIMIT_MB} MB limit.`;
+      setUploadErrors((current) => ({ ...current, [slot]: message }));
+      setUploadStatus((current) => ({ ...current, [slot]: 'error' }));
+      setUploadProgress((current) => ({ ...current, [slot]: 0 }));
+      toast.error(message);
+      return false;
+    }
+
+    setUploadErrors((current) => ({ ...current, [slot]: '' }));
+    setUploadStatus((current) => ({ ...current, [slot]: 'idle' }));
+    setUploadProgress((current) => ({ ...current, [slot]: 0 }));
+    return true;
+  }, [copy.imageProof, copy.videoDemo, isArabic]);
+
+  const handleImageFileChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (!validateEvidenceFile('image', file)) {
+      setImageFile(null);
+      event.target.value = '';
+      return;
+    }
+    setImageFile(file);
+  }, [validateEvidenceFile]);
+
+  const handleVideoFileChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (!validateEvidenceFile('video', file)) {
+      setVideoFile(null);
+      event.target.value = '';
+      return;
+    }
+    setVideoFile(file);
+  }, [validateEvidenceFile]);
+
+  const closeEntryModal = React.useCallback(() => {
+    if (savingEntry) return;
+    setEntryModalOpen(false);
+    resetEvidenceUploadUi();
+  }, [resetEvidenceUploadUi, savingEntry]);
 
   const filteredEntries = React.useMemo(() => {
     return entries.filter((entry) => {
@@ -501,15 +584,41 @@ export const ProjectReportWorkspace: React.FC = () => {
       setEditingEntry(null);
       setEntryDraft(emptyEntryDraft);
     }
-    setImageFile(null);
-    setVideoFile(null);
+    resetEvidenceUploadUi();
     setEntryModalOpen(true);
   };
 
   const uploadSelectedEvidence = async (entry: ProjectReportEntry) => {
-    const uploads = [imageFile, videoFile].filter(Boolean) as File[];
-    for (const file of uploads) {
-      await api.reportBuilderProjects.uploadEntryMedia(entry.projectReportId, entry.id, file);
+    const uploads: Array<{ slot: EvidenceUploadSlot; file: File }> = [];
+    if (imageFile) uploads.push({ slot: 'image', file: imageFile });
+    if (videoFile) uploads.push({ slot: 'video', file: videoFile });
+    if (!uploads.length) return;
+
+    for (const upload of uploads) {
+      setUploadStatus((current) => ({ ...current, [upload.slot]: 'uploading' }));
+      setUploadProgress((current) => ({ ...current, [upload.slot]: 0 }));
+      setUploadErrors((current) => ({ ...current, [upload.slot]: '' }));
+
+      try {
+        await api.reportBuilderProjects.uploadEntryMedia(
+          entry.projectReportId,
+          entry.id,
+          upload.file,
+          undefined,
+          (percent) => {
+            setUploadProgress((current) => ({ ...current, [upload.slot]: percent }));
+          },
+        );
+
+        setUploadProgress((current) => ({ ...current, [upload.slot]: 100 }));
+        setUploadStatus((current) => ({ ...current, [upload.slot]: 'uploaded' }));
+        toast.success(`${upload.file.name} ${uploadedSuccessLabel}`);
+      } catch (error: any) {
+        const message = error?.message || 'Evidence upload failed';
+        setUploadStatus((current) => ({ ...current, [upload.slot]: 'error' }));
+        setUploadErrors((current) => ({ ...current, [upload.slot]: message }));
+        throw error;
+      }
     }
   };
 
@@ -545,6 +654,7 @@ export const ProjectReportWorkspace: React.FC = () => {
       await uploadSelectedEvidence(savedEntry);
       await loadData();
       setEntryModalOpen(false);
+      resetEvidenceUploadUi();
       toast.success(editingEntry ? (isArabic ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result updated.') : (isArabic ? 'ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù†ØªÙŠØ¬Ø©.' : 'Audit result added.'));
     } catch (error: any) {
       console.error(error);
@@ -1021,7 +1131,7 @@ export const ProjectReportWorkspace: React.FC = () => {
         </div>
       </GlassCard>
 
-      <Modal isOpen={entryModalOpen} onClose={() => setEntryModalOpen(false)} title={editingEntry ? copy.editFinding : copy.newObservation} maxWidth="max-w-5xl">
+      <Modal isOpen={entryModalOpen} onClose={closeEntryModal} title={editingEntry ? copy.editFinding : copy.newObservation} maxWidth="max-w-5xl">
         <form className="space-y-8" onSubmit={handleSaveEntry}>
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.28em] text-blue-600">
@@ -1107,16 +1217,61 @@ export const ProjectReportWorkspace: React.FC = () => {
               <div>
                 <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">{copy.imageProof}</label>
                 <label className="flex min-h-[56px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 text-sm font-semibold text-slate-500 transition-all hover:border-cyan-400 hover:text-cyan-600 dark:border-slate-700 dark:text-slate-300">
-                  <input type="file" accept="image/*" className="hidden" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageFileChange} />
                   <Upload className="mr-2 h-4 w-4" /> {imageFile ? imageFile.name : copy.imageProof}
                 </label>
+                {imageFile && (
+                  <p className="mt-2 truncate text-xs text-slate-500 dark:text-slate-400">
+                    {imageFile.name} ({formatFileSize(imageFile.size)})
+                  </p>
+                )}
+                {uploadStatus.image === 'uploading' && (
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/30">
+                      <div
+                        className="h-full rounded-full bg-cyan-500 transition-all"
+                        style={{ width: `${uploadProgress.image}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-cyan-400">{uploadingProgressLabel} {uploadProgress.image}%</p>
+                  </div>
+                )}
+                {uploadStatus.image === 'uploaded' && (
+                  <p className="mt-2 text-xs text-[hsl(var(--brand-success))]">{uploadedSuccessLabel}</p>
+                )}
+                {uploadErrors.image && (
+                  <p className="mt-2 text-xs text-rose-500">{uploadErrors.image}</p>
+                )}
               </div>
               <div>
                 <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">{copy.videoDemo}</label>
                 <label className="flex min-h-[56px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 text-sm font-semibold text-slate-500 transition-all hover:border-cyan-400 hover:text-cyan-600 dark:border-slate-700 dark:text-slate-300">
-                  <input type="file" accept="video/*" className="hidden" onChange={(event) => setVideoFile(event.target.files?.[0] || null)} />
+                  <input type="file" accept="video/*" className="hidden" onChange={handleVideoFileChange} />
                   <Video className="mr-2 h-4 w-4" /> {videoFile ? videoFile.name : copy.videoDemo}
                 </label>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{videoLimitHint}</p>
+                {videoFile && (
+                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                    {videoFile.name} ({formatFileSize(videoFile.size)})
+                  </p>
+                )}
+                {uploadStatus.video === 'uploading' && (
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/30">
+                      <div
+                        className="h-full rounded-full bg-cyan-500 transition-all"
+                        style={{ width: `${uploadProgress.video}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-cyan-400">{uploadingProgressLabel} {uploadProgress.video}%</p>
+                  </div>
+                )}
+                {uploadStatus.video === 'uploaded' && (
+                  <p className="mt-2 text-xs text-[hsl(var(--brand-success))]">{uploadedSuccessLabel}</p>
+                )}
+                {uploadErrors.video && (
+                  <p className="mt-2 text-xs text-rose-500">{uploadErrors.video}</p>
+                )}
               </div>
             </div>
           </section>
@@ -1158,8 +1313,10 @@ export const ProjectReportWorkspace: React.FC = () => {
           )}
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
-            <Button type="button" variant="ghost" onClick={() => setEntryModalOpen(false)} disabled={savingEntry}>{copy.cancel}</Button>
-            <Button type="submit" disabled={savingEntry}>{savingEntry ? savingEntryLabel : (editingEntry ? copy.updateFinding : copy.commitFinding)}</Button>
+            <Button type="button" variant="ghost" onClick={closeEntryModal} disabled={savingEntry}>{copy.cancel}</Button>
+            <Button type="submit" disabled={savingEntry}>
+              {savingEntry ? (isUploadingEvidence ? uploadingEvidenceLabel : savingEntryLabel) : (editingEntry ? copy.updateFinding : copy.commitFinding)}
+            </Button>
           </div>
         </form>
       </Modal>
