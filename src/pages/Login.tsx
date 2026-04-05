@@ -110,10 +110,10 @@ const Login: React.FC = () => {
             {/* Heading */}
             <div className="animate-fade-in-up">
               <h1 className="text-3xl font-bold text-white mb-2">
-                {step2fa ? 'Two-Factor Verification' : 'Initialize Session'}
+                {step2fa ? t('login_2fa_title') : t('login_title')}
               </h1>
               <p className="text-base text-[var(--text-muted)] mb-8 font-medium">
-                {step2fa ? 'Enter the 6-digit code from your authenticator app.' : 'Enter your credentials to access the platform.'}
+                {step2fa ? t('login_2fa_subtitle') : t('login_form_subtitle')}
               </p>
             </div>
 
@@ -127,7 +127,7 @@ const Login: React.FC = () => {
             {step2fa ? (
               <form onSubmit={handle2faSubmit} className="space-y-6 animate-fade-in-up-delay">
                 <div>
-                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">Verification Code</label>
+                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">{t('verification_code')}</label>
                   <input
                     type="text" inputMode="numeric" autoComplete="one-time-code"
                     value={code2fa}
@@ -138,18 +138,18 @@ const Login: React.FC = () => {
                 </div>
                 <button type="submit" disabled={loading || code2fa.length !== 6}
                   className="btn-primary w-full h-12 font-semibold text-base rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
-                  {loading ? 'Verifying...' : 'Verify Code'}
+                  {loading ? t('verifying') : t('verify_code')}
                 </button>
                 <button type="button" onClick={() => { setStep2fa(null); setCode2fa(''); setError(null); }}
                   className="w-full text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors">
-                  &larr; Back to login
+                  &larr; {t('back_to_login')}
                 </button>
               </form>
             ) : (
               <form onSubmit={handleSubmit}>
                 {/* Email */}
                 <div className="mb-6 animate-fade-in-up-delay">
-                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">Email Address</label>
+                  <label className="block text-sm font-semibold text-white uppercase tracking-wide mb-2 opacity-80">{t('email_address')}</label>
                   <input
                     type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                     className="input w-full h-12 px-4 text-base placeholder-slate-400 focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--ring))] focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
@@ -160,8 +160,8 @@ const Login: React.FC = () => {
                 {/* Password */}
                 <div className="mb-6 animate-fade-in-up-delay2">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-semibold text-white uppercase tracking-wide opacity-80">Password</label>
-                    <a href="/forgot-password" className="text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors">Forgot Password?</a>
+                    <label className="text-sm font-semibold text-white uppercase tracking-wide opacity-80">{t('password_label')}</label>
+                    <a href="/forgot-password" className="text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors">{t('forgot_password')}</a>
                   </div>
                   <div className="relative">
                     <input
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
                         <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                        Signing in...
+                        {t('signing_in')}
                       </span>
                     ) : t('enter_system') || 'Enter System'}
                   </button>
@@ -217,7 +217,7 @@ const Login: React.FC = () => {
             <h2 className="text-4xl font-bold mb-2">{publicOrg?.name?.toUpperCase() ?? 'ARENA 360'}</h2>
 
             {/* Tagline — text-lg */}
-            <p className="text-2xl font-light text-white/90 mb-8">Welcome to {publicOrg?.name ?? 'Arena 360'}</p>
+            <p className="text-2xl font-light text-white/90 mb-8">{t('welcome_to')} {publicOrg?.name ?? 'Arena 360'}</p>
 
             {/* Description */}
             <p className="text-lg text-white/80 max-w-md leading-relaxed">
