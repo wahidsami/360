@@ -86,8 +86,68 @@ const getAuditOutcome = (entry?: Pick<ProjectReportEntry, 'auditOutcome' | 'rowD
 
 const getVersionTaxonomy = (version?: ReportBuilderTemplateVersion | null) => resolveAccessibilityTaxonomy(version?.taxonomyJson);
 
+const CP1252_REVERSE_MAP: Record<number, number> = {
+  0x20ac: 0x80,
+  0x201a: 0x82,
+  0x0192: 0x83,
+  0x201e: 0x84,
+  0x2026: 0x85,
+  0x2020: 0x86,
+  0x2021: 0x87,
+  0x02c6: 0x88,
+  0x2030: 0x89,
+  0x0160: 0x8a,
+  0x2039: 0x8b,
+  0x0152: 0x8c,
+  0x017d: 0x8e,
+  0x2018: 0x91,
+  0x2019: 0x92,
+  0x201c: 0x93,
+  0x201d: 0x94,
+  0x2022: 0x95,
+  0x2013: 0x96,
+  0x2014: 0x97,
+  0x02dc: 0x98,
+  0x2122: 0x99,
+  0x0161: 0x9a,
+  0x203a: 0x9b,
+  0x0153: 0x9c,
+  0x017e: 0x9e,
+  0x0178: 0x9f,
+};
+
+const MOJIBAKE_MARKER_REGEX = /[ØÙÚÛ]|[\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/;
+
+const cp1252CharToByte = (char: string): number | null => {
+  const codePoint = char.codePointAt(0);
+  if (typeof codePoint !== 'number') return null;
+  if (codePoint <= 0xff) return codePoint;
+  if (codePoint in CP1252_REVERSE_MAP) return CP1252_REVERSE_MAP[codePoint];
+  return null;
+};
+
+const decodeMojibakeString = (value: string): string => {
+  if (!MOJIBAKE_MARKER_REGEX.test(value)) return value;
+
+  try {
+    const bytes: number[] = [];
+    for (const char of Array.from(value)) {
+      const byte = cp1252CharToByte(char);
+      if (byte === null) return value;
+      bytes.push(byte);
+    }
+
+    const decoded = new TextDecoder('utf-8').decode(Uint8Array.from(bytes));
+    if (/[\u0600-\u06ff]/.test(decoded)) return decoded;
+  } catch {
+    // no-op: keep original string
+  }
+
+  return value;
+};
+
 const toText = (value: unknown): string => {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return decodeMojibakeString(value);
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return '';
 };
@@ -114,7 +174,7 @@ const normalizeWorkspaceEntry = (entry: ProjectReportEntry): ProjectReportEntry 
 });
 
 const toDisplayText = (value: unknown): string => {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return decodeMojibakeString(value);
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) {
     return value.map((item) => toDisplayText(item)).filter(Boolean).join('\n');
@@ -122,7 +182,7 @@ const toDisplayText = (value: unknown): string => {
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
     if (typeof record.text === 'string') {
-      return record.text;
+      return decodeMojibakeString(record.text);
     }
     return Object.entries(record)
       .map(([key, nested]) => {
@@ -132,20 +192,6 @@ const toDisplayText = (value: unknown): string => {
       .join('\n');
   }
   return '';
-};
-
-const decodeMojibakeString = (value: string): string => {
-  if (!/[\u00D8\u00D9\u00DA\u00DB]/.test(value)) return value;
-
-  try {
-    const bytes = Uint8Array.from(Array.from(value).map((char) => char.charCodeAt(0) & 0xff));
-    const decoded = new TextDecoder('utf-8').decode(bytes);
-    if (/[\u0600-\u06FF]/.test(decoded)) return decoded;
-  } catch {
-    // no-op: keep original string
-  }
-
-  return value;
 };
 
 const decodeMojibakeRecord = <T extends Record<string, string>>(record: T): T => {
