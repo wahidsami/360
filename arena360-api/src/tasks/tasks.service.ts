@@ -279,8 +279,11 @@ export class TasksService {
         return this.prisma.task.findMany({
             where: {
                 assigneeId: user.id,
-                project: ScopeUtils.projectScope(user),
                 deletedAt: null,
+                project: {
+                    ...ScopeUtils.projectScope(user),
+                    deletedAt: null,
+                },
             },
             include: { project: true },
         });

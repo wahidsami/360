@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { UserWithRoles } from '../common/utils/scope.utils';
+import { ScopeUtils, UserWithRoles } from '../common/utils/scope.utils';
 
 @Injectable()
 export class DashboardService {
@@ -255,7 +255,12 @@ export class DashboardService {
         const tasks = await this.prisma.task.findMany({
             where: {
                 assigneeId: user.id,
-                status: { not: 'DONE' }
+                status: { not: 'DONE' },
+                deletedAt: null,
+                project: {
+                    ...ScopeUtils.projectScope(user),
+                    deletedAt: null,
+                },
             },
             include: { project: { select: { name: true } } },
             orderBy: { dueDate: 'asc' }
