@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Briefcase, Flag, Clock, FileText } from 'lucide-react';
 import { GlassCard, KpiCard, Badge, Button } from "@/components/ui/UIComponents";
 import { ToolsPanel } from '@/components/ToolsPanel';
@@ -12,6 +12,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
    const { t } = useTranslation();
    const { user } = useAuth();
    const navigate = useNavigate();
+   const location = useLocation();
    const [stats, setStats] = useState<any>(null);
    const [loading, setLoading] = useState(true);
 
@@ -25,6 +26,17 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
       };
       load();
    }, [user]);
+
+   useEffect(() => {
+      if (location.hash !== '#shared-files') return;
+      const timer = window.setTimeout(() => {
+         const section = document.getElementById('shared-files');
+         if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+         }
+      }, 0);
+      return () => window.clearTimeout(timer);
+   }, [location.hash, stats]);
 
    if (loading) return <div className="text-center p-10 text-slate-500">{t('loading_portal')}</div>;
    if (!stats) return <div className="text-center p-10 text-slate-500">{t('no_client_assoc')}</div>;
@@ -70,7 +82,7 @@ export const ClientDashboard: React.FC<{ role: Role }> = ({ role }) => {
             </div>
 
             <div className="space-y-6">
-               <GlassCard title={t('shared_files')}>
+               <GlassCard id="shared-files" title={t('shared_files')}>
                   <div className="space-y-3 mt-4">
                      {(stats.files || []).map((f: any) => (
                         <div key={f.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700/50 group">

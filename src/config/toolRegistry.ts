@@ -27,5 +27,5 @@ export const TOOLS_REGISTRY: ToolConfig[] = [
 
   // CLIENT Tools
   { id: 'my_projects', titleKey: 'my_projects', icon: Briefcase, path: '/app/projects', roles: [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER] },
-  { id: 'shared_files', titleKey: 'shared_files', icon: Upload, path: '/app/projects', roles: [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER] },
+  { id: 'shared_files', titleKey: 'shared_files', icon: Upload, path: '/app/dashboard#shared-files', roles: [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER] },
 ];

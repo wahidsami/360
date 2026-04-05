@@ -119,7 +119,7 @@ const App: React.FC = () => {
               </Route>
 
               <Route path="reports" element={<Reports />} />
-              <Route path="files" element={<Navigate to="/app/projects" replace />} />
+              <Route path="files" element={<Navigate to="/app/dashboard#shared-files" replace />} />
 
               <Route path="findings">
                 <Route index element={<FindingsList />} />
