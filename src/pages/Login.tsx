@@ -199,12 +199,11 @@ const Login: React.FC = () => {
         </div>
 
         {/* ═══ RIGHT PANEL — Branding (60%) ═══ */}
-        <div className="hidden md:flex md:w-3/5 bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-700 relative overflow-hidden animate-gradient">
-
-          {/* Floating blobs */}
-          <div className="absolute top-20 left-20 w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/30 rounded-full blur-3xl animate-float-reverse" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '-2s' }} />
+        <div
+          className="hidden md:flex md:w-3/5 relative overflow-hidden bg-cover bg-center"
+          style={{ backgroundImage: "url('/MainImage.jpeg')" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/25 via-blue-600/25 to-indigo-600/30" />
 
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center h-full w-full p-12 text-center text-white animate-fade-in-right">
