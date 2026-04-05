@@ -154,7 +154,6 @@ const Login: React.FC = () => {
                   <input
                     type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                     className="input w-full h-12 px-4 text-base placeholder-slate-400 focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--ring))] focus:scale-[1.01] focus:shadow-lg transition-all duration-200 outline-none"
-                    placeholder="you@company.com"
                   />
                 </div>
 
