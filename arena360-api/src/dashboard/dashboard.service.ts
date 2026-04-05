@@ -58,24 +58,28 @@ export class DashboardService {
                 orderBy: { name: 'asc' },
             }),
             this.prisma.project.findMany({
-                where: { orgId: user.orgId },
+                where: { orgId: user.orgId, deletedAt: null, client: { deletedAt: null } },
                 include: { client: { select: { name: true } } }
             }),
             this.prisma.task.findMany({
                 where: {
-                    project: { orgId: user.orgId }
+                    deletedAt: null,
+                    project: { orgId: user.orgId, deletedAt: null }
                 },
                 include: { project: { select: { name: true } } }
             }),
             this.prisma.milestone.count({
                 where: {
-                    project: { orgId: user.orgId },
+                    deletedAt: null,
+                    project: { orgId: user.orgId, deletedAt: null },
                     status: 'PENDING'
                 }
             }),
             this.prisma.invoice.aggregate({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: 'PAID'
                 },
                 _sum: { amount: true }
@@ -83,13 +87,15 @@ export class DashboardService {
             this.prisma.invoice.findMany({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: 'PAID',
                     paidAt: { not: null },
                 },
                 select: { amount: true, paidAt: true },
             }),
             this.prisma.projectUpdate.findMany({
-                where: { orgId: user.orgId },
+                where: { orgId: user.orgId, deletedAt: null, project: { deletedAt: null } },
                 orderBy: { createdAt: 'desc' },
                 take: 5,
                 include: { author: { select: { name: true } } }
@@ -104,6 +110,9 @@ export class DashboardService {
                 where: {
                     orgId: user.orgId,
                     deletedAt: null,
+                    project: {
+                        deletedAt: null,
+                    },
                     client: {
                         deletedAt: null,
                         status: 'ACTIVE',
@@ -251,6 +260,11 @@ export class DashboardService {
     }
 
     async getDevStats(user: UserWithRoles) {
+        const allowedRoles = ['DEV', 'QA'];
+        if (!allowedRoles.includes(user.role)) {
+            throw new Error('Developer dashboard is for DEV/QA users only');
+        }
+
         // Dev dashboard: tasks assigned to this developer
         const tasks = await this.prisma.task.findMany({
             where: {
@@ -319,6 +333,8 @@ export class DashboardService {
             this.prisma.invoice.aggregate({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: { in: ['ISSUED', 'OVERDUE'] }
                 },
                 _sum: { amount: true }
@@ -327,6 +343,8 @@ export class DashboardService {
             this.prisma.invoice.count({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: { in: ['ISSUED', 'OVERDUE'] }
                 }
             }),
@@ -334,8 +352,11 @@ export class DashboardService {
             this.prisma.invoice.aggregate({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: 'PAID',
-                    updatedAt: {
+                    paidAt: {
+                        not: null,
                         gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
                     }
                 },
@@ -345,6 +366,8 @@ export class DashboardService {
             this.prisma.contract.count({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: 'ACTIVE'
                 }
             }),
@@ -352,6 +375,8 @@ export class DashboardService {
             this.prisma.invoice.findMany({
                 where: {
                     orgId: user.orgId,
+                    deletedAt: null,
+                    project: { deletedAt: null },
                     status: { not: 'PAID' },
                     dueDate: { lt: new Date() }
                 },
@@ -361,7 +386,7 @@ export class DashboardService {
             }),
             // 6. Recent Invoices List
             this.prisma.invoice.findMany({
-                where: { orgId: user.orgId },
+                where: { orgId: user.orgId, deletedAt: null, project: { deletedAt: null } },
                 take: 5,
                 orderBy: { createdAt: 'desc' },
                 include: { project: { select: { client: { select: { name: true } } } } }
