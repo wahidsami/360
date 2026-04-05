@@ -206,23 +206,14 @@ const Login: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/25 via-blue-600/25 to-indigo-600/30" />
 
           {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-full w-full p-12 text-center text-white animate-fade-in-right">
-
-            {/* Logo container — w-24 h-24 */}
-            <div className="mb-8 p-6 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 shadow-2xl">
-              <img src="/dgalogo.svg" className="w-16 h-16 object-contain" alt="Digital Government Authority logo" />
+          <div className="relative z-10 flex items-center justify-center h-full w-full p-12 text-white animate-fade-in-right">
+            <div className="w-full flex items-center justify-center">
+              <img
+                src="/dgalogo.svg"
+                className="w-full max-w-[440px] h-auto object-contain"
+                alt="Digital Government Authority logo"
+              />
             </div>
-
-            {/* Brand name — text-4xl font-bold */}
-            <h2 className="text-4xl font-bold mb-2">{publicOrg?.name?.toUpperCase() ?? 'ARENA 360'}</h2>
-
-            {/* Tagline — text-lg */}
-            <p className="text-2xl font-light text-white/90 mb-8">{t('welcome_to')} {publicOrg?.name ?? 'Arena 360'}</p>
-
-            {/* Description */}
-            <p className="text-lg text-white/80 max-w-md leading-relaxed">
-              {t('login_subtitle') || 'Enter your credentials to access the ARENA 360 platform and manage your projects'}
-            </p>
           </div>
         </div>
       </div>
