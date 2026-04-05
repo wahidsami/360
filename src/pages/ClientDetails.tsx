@@ -15,12 +15,90 @@ import { formatCurrency } from '../utils/currency';
 import { navigateBack } from '@/utils/navigation';
 
 export const ClientDetails: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { clientId } = useParams();
     const navigate = useNavigate();
     const { can, user } = useAuth();
     const { confirm } = useAppDialog();
     const isClientPortalUser = !!user && user.role.startsWith('CLIENT_');
+    const isArabic = i18n.language === 'ar';
+    const locale = isArabic ? 'ar-SA' : 'en-US';
+
+    const copy = React.useMemo(() => ({
+        loadingClientData: isArabic ? 'جارٍ تحميل بيانات العميل...' : 'Loading client data...',
+        clientNotFound: isArabic ? 'لم يتم العثور على العميل.' : 'Client not found.',
+        noAddress: isArabic ? 'لا يوجد عنوان' : 'No Address',
+        notAvailable: isArabic ? 'غير متوفر' : 'N/A',
+        editProfile: isArabic ? 'تعديل الملف' : 'Edit Profile',
+        atAGlance: isArabic ? 'لمحة سريعة' : 'At a Glance',
+        financialHealth: isArabic ? 'الصحة المالية' : 'Financial Health',
+        revenueYtd: isArabic ? 'إيرادات السنة' : 'Revenue YTD',
+        outstanding: isArabic ? 'المستحق' : 'Outstanding',
+        activeProjects: isArabic ? 'المشاريع النشطة' : 'Active Projects',
+        totalSpent: isArabic ? 'إجمالي الإنفاق' : 'Total Spent',
+        activeEngagements: isArabic ? 'المشاريع النشطة' : 'Active Engagements',
+        unnamedProject: isArabic ? 'مشروع بدون اسم' : 'Unnamed Project',
+        deadline: isArabic ? 'الموعد النهائي' : 'Deadline',
+        budget: isArabic ? 'الميزانية' : 'Budget',
+        tbd: isArabic ? 'لاحقاً' : 'TBD',
+        complete: isArabic ? 'مكتمل' : 'Complete',
+        teamAccess: isArabic ? 'وصول الفريق' : 'Team Access',
+        assetsAndContracts: isArabic ? 'الأصول والعقود' : 'Assets & Contracts',
+        remove: isArabic ? 'إزالة' : 'Remove',
+        by: isArabic ? 'بواسطة' : 'by',
+        invoices: isArabic ? 'الفواتير' : 'Invoices',
+        openInvoices: isArabic ? 'فواتير مفتوحة' : 'Open Invoices',
+        overdue: isArabic ? 'متأخر' : 'Overdue',
+        contracts: isArabic ? 'العقود' : 'Contracts',
+        activeContract: isArabic ? 'عقد نشط' : 'Active Contract',
+        exp: isArabic ? 'ينتهي' : 'Exp',
+        noExpirySet: isArabic ? 'لا يوجد تاريخ انتهاء' : 'No expiry set',
+        payments: isArabic ? 'المدفوعات' : 'Payments',
+        paidInvoices: isArabic ? 'فواتير مدفوعة' : 'Paid Invoices',
+        allActiveClientProjects: isArabic ? 'عبر جميع مشاريع العميل النشطة' : 'Across all active client projects',
+        file: isArabic ? 'ملف' : 'File',
+        selectUserPlaceholder: isArabic ? '-- اختر المستخدم --' : '-- Select User --',
+    }), [isArabic]);
+
+    const formatRoleLabel = React.useCallback((role: string) => {
+        if (!isArabic) return role.replace(/_/g, ' ');
+        const labels: Record<string, string> = {
+            SUPER_ADMIN: 'مدير عام',
+            OPS: 'العمليات',
+            PM: 'مدير مشروع',
+            DEV: 'مطور',
+            QA: 'اختبار الجودة',
+            FINANCE: 'المالية',
+            CLIENT_OWNER: 'مالك العميل',
+            CLIENT_MANAGER: 'مدير العميل',
+            CLIENT_MEMBER: 'عضو العميل',
+            VIEWER: 'مشاهد',
+        };
+        return labels[role] || role.replace(/_/g, ' ');
+    }, [isArabic]);
+
+    const formatHealthLabel = React.useCallback((health?: string | null) => {
+        const normalized = (health || 'unknown').toLowerCase();
+        if (!isArabic) return normalized.toUpperCase();
+        const labels: Record<string, string> = {
+            good: 'جيد',
+            'at-risk': 'معرّض للخطر',
+            critical: 'حرج',
+            unknown: 'غير معروف',
+        };
+        return labels[normalized] || normalized;
+    }, [isArabic]);
+
+    const formatClientStatusLabel = React.useCallback((status?: string | null) => {
+        const normalized = (status || '').toLowerCase();
+        if (!isArabic) return normalized.toUpperCase();
+        const labels: Record<string, string> = {
+            active: 'نشط',
+            inactive: 'غير نشط',
+            archived: 'مؤرشف',
+        };
+        return labels[normalized] || normalized;
+    }, [isArabic]);
 
     const [client, setClient] = useState<Client | undefined>();
     const [projects, setProjects] = useState<Project[]>([]);
@@ -209,8 +287,8 @@ export const ClientDetails: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-500">Loading client data...</div>;
-    if (!client) return <div className="p-10 text-center text-slate-500">Client not found.</div>;
+    if (loading) return <div className="p-10 text-center text-slate-500">{copy.loadingClientData}</div>;
+    if (!client) return <div className="p-10 text-center text-slate-500">{copy.clientNotFound}</div>;
 
     const tabs = [
         { id: 'overview', label: t('overview') },
@@ -247,16 +325,16 @@ export const ClientDetails: React.FC = () => {
                     <div>
                         <h1 className="text-3xl font-bold font-display text-white">{client.name}</h1>
                         <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
-                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {client.address || 'No Address'}</span>
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {client.address || copy.noAddress}</span>
                             <span className="w-1 h-1 bg-slate-600 rounded-full" />
                             <span>{client.industry}</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Badge variant={client.status === 'active' ? 'success' : 'neutral'}>{client.status.toUpperCase()}</Badge>
+                    <Badge variant={client.status === 'active' ? 'success' : 'neutral'}>{formatClientStatusLabel(client.status)}</Badge>
                     <PermissionGate permission={Permission.MANAGE_CLIENTS}>
-                        <Button variant="secondary" size="sm" onClick={() => navigate('edit')}>Edit Profile</Button>
+                        <Button variant="secondary" size="sm" onClick={() => navigate('edit')}>{copy.editProfile}</Button>
                     </PermissionGate>
                 </div>
             </div>
@@ -282,25 +360,25 @@ export const ClientDetails: React.FC = () => {
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="space-y-6">
-                            <GlassCard title="At a Glance" className="h-fit">
+                            <GlassCard title={copy.atAGlance} className="h-fit">
                                 <dl className="space-y-4 text-sm">
                                     <div className="flex items-center gap-3 text-slate-300">
                                         <Mail className="w-4 h-4 text-cyan-500" /> {client.email}
                                     </div>
                                     <div className="flex items-center gap-3 text-slate-300">
-                                        <Phone className="w-4 h-4 text-cyan-500" /> {client.phone || 'N/A'}
+                                        <Phone className="w-4 h-4 text-cyan-500" /> {client.phone || copy.notAvailable}
                                     </div>
                                     <div className="flex items-center gap-3 text-slate-300">
-                                        <Globe className="w-4 h-4 text-cyan-500" /> {client.website || 'N/A'}
+                                        <Globe className="w-4 h-4 text-cyan-500" /> {client.website || copy.notAvailable}
                                     </div>
                                 </dl>
                                 <PermissionGate permission={Permission.VIEW_FINANCIALS}>
                                     <div className="mt-6 pt-6 border-t border-slate-700/50">
-                                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Financial Health</h4>
+                                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">{copy.financialHealth}</h4>
                                         <div className="space-y-4">
                                             <div>
                                                 <div className="flex justify-between text-xs mb-1">
-                                                    <span className="text-slate-400">Revenue YTD</span>
+                                                    <span className="text-slate-400">{copy.revenueYtd}</span>
                                                     <span className="text-[hsl(var(--brand-success))]">
                                                         {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
                                                     </span>
@@ -309,7 +387,7 @@ export const ClientDetails: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="flex justify-between text-xs mb-1">
-                                                    <span className="text-slate-400">Outstanding</span>
+                                                    <span className="text-slate-400">{copy.outstanding}</span>
                                                     <span className="text-rose-400">
                                                         {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
                                                     </span>
@@ -328,14 +406,14 @@ export const ClientDetails: React.FC = () => {
 
                         <div className="lg:col-span-2 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <KpiCard label="Active Projects" value={projects.filter(p => p.status === 'in-progress').length} trend={0} />
+                                <KpiCard label={copy.activeProjects} value={projects.filter(p => p.status === 'in-progress').length} trend={0} />
                                 <PermissionGate permission={Permission.VIEW_FINANCIALS}>
-                                    <KpiCard label="Total Spent" value={`${client.billing?.currency || 'SAR'} ${(client.revenueYTD / 1000).toFixed(1)}k`} trend={12} />
+                                    <KpiCard label={copy.totalSpent} value={`${client.billing?.currency || 'SAR'} ${(client.revenueYTD / 1000).toFixed(1)}k`} trend={12} />
                                 </PermissionGate>
                             </div>
 
                             {!isClientPortalUser && (
-                                <GlassCard title="Recent Activity">
+                                <GlassCard title={t('recent_activity')}>
                                     <div className="space-y-4">
                                         {activity.slice(0, 3).map(act => (
                                             <div key={act.id} className="flex gap-4 items-start">
@@ -344,7 +422,7 @@ export const ClientDetails: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-slate-200">{act.description}</p>
-                                                    <p className="text-xs text-slate-500">{new Date(act.timestamp).toLocaleString()}</p>
+                                                    <p className="text-xs text-slate-500">{new Date(act.timestamp).toLocaleString(locale)}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -360,7 +438,7 @@ export const ClientDetails: React.FC = () => {
                 {activeTab === 'projects' && (
                     <div className="space-y-4">
                         <div className="flex justify-between">
-                            <h3 className="text-lg font-semibold text-white">Active Engagements</h3>
+                            <h3 className="text-lg font-semibold text-white">{copy.activeEngagements}</h3>
                             <PermissionGate permission={Permission.MANAGE_PROJECTS}>
                                 <Button size="sm" onClick={() => navigate(`/app/projects/new?clientId=${client.id}`)}>
                                     <Folder className="w-4 h-4 mr-2" /> {t('new_project')}
@@ -376,23 +454,23 @@ export const ClientDetails: React.FC = () => {
                                                 <Folder />
                                             </div>
                                             <div>
-                                                <h4 className="font-medium text-slate-100">{p.name || 'Unnamed Project'}</h4>
+                                                <h4 className="font-medium text-slate-100">{p.name || copy.unnamedProject}</h4>
                                                 <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                                                    <span>Deadline: {p.deadline || 'TBD'}</span>
-                                                    <span>Budget: {p.budget?.toLocaleString() ? `${client?.billing?.currency || 'SAR'} ${p.budget.toLocaleString()}` : 'N/A'}</span>
+                                                    <span>{copy.deadline}: {p.deadline || copy.tbd}</span>
+                                                    <span>{copy.budget}: {p.budget?.toLocaleString() ? `${client?.billing?.currency || 'SAR'} ${p.budget.toLocaleString()}` : copy.notAvailable}</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="text-right">
                                             <Badge variant={p.health === 'good' ? 'success' : p.health === 'at-risk' ? 'warning' : p.health === 'critical' ? 'danger' : 'neutral'}>
-                                                {(p.health || 'unknown').toUpperCase()}
+                                                {formatHealthLabel(p.health)}
                                             </Badge>
-                                            <p className="text-xs text-slate-500 mt-2">{p.progress || 0}% Complete</p>
+                                            <p className="text-xs text-slate-500 mt-2">{p.progress || 0}% {copy.complete}</p>
                                         </div>
                                     </div>
                                 </GlassCard>
                             ))}
-                            {projects.length === 0 && <div className="p-8 text-center text-slate-500 bg-slate-900/30 rounded-xl">No projects found.</div>}
+                            {projects.length === 0 && <div className="p-8 text-center text-slate-500 bg-slate-900/30 rounded-xl">{t('no_projects_found')}</div>}
                         </div>
                     </div>
                 )}
@@ -401,7 +479,7 @@ export const ClientDetails: React.FC = () => {
                 {activeTab === 'members' && (
                     <div className="space-y-4">
                         <div className="flex justify-between">
-                            <h3 className="text-lg font-semibold text-white">Team Access</h3>
+                            <h3 className="text-lg font-semibold text-white">{copy.teamAccess}</h3>
                             <PermissionGate permission={Permission.MANAGE_CLIENTS}>
                                 <Button size="sm" onClick={() => setMemberModalOpen(true)}>
                                     <UserPlus className="w-4 h-4 mr-2" /> {t('add_member')}
@@ -412,21 +490,21 @@ export const ClientDetails: React.FC = () => {
                             <table className="w-full text-left">
                                 <thead className="text-slate-500 text-sm border-b border-slate-700/50">
                                     <tr>
-                                        <th className="pb-3 pl-2">Name</th>
-                                        <th className="pb-3">Role</th>
-                                        <th className="pb-3">Joined</th>
-                                        <th className="pb-3 text-right">Actions</th>
+                                        <th className="pb-3 pl-2">{t('name')}</th>
+                                        <th className="pb-3">{t('role')}</th>
+                                        <th className="pb-3">{t('joined')}</th>
+                                        <th className="pb-3 text-right">{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
                                     {members.map(m => (
                                         <tr key={m.id}>
                                             <td className="py-4 pl-2 font-medium text-slate-200">{m.name}</td>
-                                            <td className="py-4"><Badge variant="neutral">{m.role}</Badge></td>
-                                            <td className="py-4 text-slate-400 text-sm">{new Date(m.joinedAt).toLocaleDateString()}</td>
+                                            <td className="py-4"><Badge variant="neutral">{formatRoleLabel(m.role)}</Badge></td>
+                                            <td className="py-4 text-slate-400 text-sm">{new Date(m.joinedAt).toLocaleDateString(locale)}</td>
                                             <td className="py-4 text-right">
                                                 <PermissionGate permission={Permission.MANAGE_CLIENTS}>
-                                                    <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(m.userId)}>Remove</Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(m.userId)}>{copy.remove}</Button>
                                                 </PermissionGate>
                                             </td>
                                         </tr>
@@ -441,7 +519,7 @@ export const ClientDetails: React.FC = () => {
                 {activeTab === 'files' && (
                     <div className="space-y-4">
                         <div className="flex justify-between">
-                            <h3 className="text-lg font-semibold text-white">Assets & Contracts</h3>
+                            <h3 className="text-lg font-semibold text-white">{copy.assetsAndContracts}</h3>
                             <Button size="sm" onClick={() => setFileModalOpen(true)}>
                                 <Upload className="w-4 h-4 mr-2" /> {t('upload_file')}
                             </Button>
@@ -465,7 +543,7 @@ export const ClientDetails: React.FC = () => {
                                     <h4 className="font-medium text-slate-200 truncate" title={f.name}>{f.name}</h4>
                                     <div className="flex justify-between items-center mt-4 text-xs text-slate-500">
                                         <span className="capitalize bg-slate-800 px-2 py-0.5 rounded">{f.category}</span>
-                                        <span>{new Date(f.uploadedAt).toLocaleDateString()}</span>
+                                        <span>{new Date(f.uploadedAt).toLocaleDateString(locale)}</span>
                                     </div>
                                 </GlassCard>
                             ))}
@@ -484,10 +562,10 @@ export const ClientDetails: React.FC = () => {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <span className="text-sm font-medium text-slate-200">{act.description}</span>
                                         <span className="text-xs text-slate-500 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" /> {new Date(act.timestamp).toLocaleString()}
+                                            <Clock className="w-3 h-3" /> {new Date(act.timestamp).toLocaleString(locale)}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-1">by <span className="text-cyan-400">{act.userName}</span></p>
+                                    <p className="text-xs text-slate-500 mt-1">{copy.by} <span className="text-cyan-400">{act.userName}</span></p>
                                 </div>
                             ))}
                             {activity.length === 0 && <p className="text-slate-500 text-sm italic">{t('no_activity')}</p>}
@@ -498,37 +576,37 @@ export const ClientDetails: React.FC = () => {
                 {/* FINANCIALS */}
                 {activeTab === 'financials' && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <GlassCard title="Invoices">
+                        <GlassCard title={copy.invoices}>
                             <div className="text-center py-8">
                                 <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.openInvoices}</h4>
-                                <p className="text-slate-500 text-sm">Open Invoices</p>
+                                <p className="text-slate-500 text-sm">{copy.openInvoices}</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
                                 <span className="text-rose-400 text-sm font-medium">
-                                    Overdue: {formatCurrency(financialSummary.overdueAmount, 'SAR')}
+                                    {copy.overdue}: {formatCurrency(financialSummary.overdueAmount, 'SAR')}
                                 </span>
                             </div>
                         </GlassCard>
-                        <GlassCard title="Contracts">
+                        <GlassCard title={copy.contracts}>
                             <div className="text-center py-8">
                                 <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.activeContracts}</h4>
-                                <p className="text-slate-500 text-sm">Active Contract</p>
+                                <p className="text-slate-500 text-sm">{copy.activeContract}</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
                                 <span className="text-[hsl(var(--brand-success))] text-sm font-medium">
                                     {financialSummary.nextContractEndDate
-                                        ? `Exp: ${new Date(financialSummary.nextContractEndDate).toLocaleDateString()}`
-                                        : 'No expiry set'}
+                                        ? `${copy.exp}: ${new Date(financialSummary.nextContractEndDate).toLocaleDateString(locale)}`
+                                        : copy.noExpirySet}
                                 </span>
                             </div>
                         </GlassCard>
-                        <GlassCard title="Payments">
+                        <GlassCard title={copy.payments}>
                             <div className="text-center py-8">
                                 <h4 className="text-3xl font-bold text-white mb-2">{formatCurrency(financialSummary.totalPaid, 'SAR')}</h4>
-                                <p className="text-slate-500 text-sm">Paid Invoices</p>
+                                <p className="text-slate-500 text-sm">{copy.paidInvoices}</p>
                             </div>
                             <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-cyan-400 text-sm font-medium">Across all active client projects</span>
+                                <span className="text-cyan-400 text-sm font-medium">{copy.allActiveClientProjects}</span>
                             </div>
                         </GlassCard>
                     </div>
@@ -558,7 +636,7 @@ export const ClientDetails: React.FC = () => {
                     <div>
                         <Label>{t('select_user')}</Label>
                         <Select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} required>
-                            <option value="">-- Select User --</option>
+                            <option value="">{copy.selectUserPlaceholder}</option>
                             {availableUsers.map(u => (
                                 <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                             ))}
@@ -587,7 +665,7 @@ export const ClientDetails: React.FC = () => {
                         <Input value={fileData.name} onChange={(e) => setFileData({ ...fileData, name: e.target.value })} placeholder="e.g. Q1_Report.pdf" required />
                     </div>
                     <div>
-                        <Label>File</Label>
+                        <Label>{copy.file}</Label>
                         <Input type="file" required />
                     </div>
                     <div>
