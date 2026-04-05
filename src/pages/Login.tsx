@@ -100,7 +100,7 @@ const Login: React.FC = () => {
 
           {/* Top Logo — h-12 (48px) */}
           <div className="flex items-center gap-3 animate-fade-in-up mb-8 p-4">
-            <img src="/arenalogo.png" className="logo" alt="Arena 360" />
+            <img src="/whitedgalogo.svg" className="logo" alt="Digital Government Authority logo" />
             <span className="text-xl font-bold text-white">{publicOrg?.name ?? 'Arena 360'}</span>
           </div>
 
@@ -211,7 +211,7 @@ const Login: React.FC = () => {
 
             {/* Logo container — w-24 h-24 */}
             <div className="mb-8 p-6 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 shadow-2xl">
-              <img src="/arenalogo.png" className="w-16 h-16 object-contain" alt="Arena 360" />
+              <img src="/dgalogo.svg" className="w-16 h-16 object-contain" alt="Digital Government Authority logo" />
             </div>
 
             {/* Brand name — text-4xl font-bold */}

@@ -260,12 +260,18 @@ export const Layout: React.FC = () => {
               {orgBranding?.logo ? (
                 <img src={orgBranding.logo} alt="Logo" className="logo max-w-[160px] dark:invert-0" />
               ) : (
-                <img
-                  src="/arenalogo.png"
-                  alt="Arena logo"
-                  className="logo max-w-[160px] dark:brightness-0 dark:invert-1"
-                  style={{ filter: document.documentElement.classList.contains('theme-light') ? 'none' : 'brightness(0) invert(1)' }}
-                />
+                <>
+                  <img
+                    src="/dgalogo.svg"
+                    alt="Digital Government Authority logo"
+                    className="logo max-w-[160px] dark:hidden"
+                  />
+                  <img
+                    src="/whitedgalogo.svg"
+                    alt="Digital Government Authority logo"
+                    className="logo max-w-[160px] hidden dark:block"
+                  />
+                </>
               )}
             </div>
           )}
