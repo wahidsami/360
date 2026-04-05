@@ -108,6 +108,27 @@ const normalizeWorkspaceEntry = (entry: ProjectReportEntry): ProjectReportEntry 
   recommendation: toText(entry.recommendation),
 });
 
+const toDisplayText = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => toDisplayText(item)).filter(Boolean).join('\n');
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (typeof record.text === 'string') {
+      return record.text;
+    }
+    return Object.entries(record)
+      .map(([key, nested]) => {
+        const nestedText = toDisplayText(nested);
+        return nestedText ? `${key}: ${nestedText}` : key;
+      })
+      .join('\n');
+  }
+  return '';
+};
+
 export const ProjectReportWorkspace: React.FC = () => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
@@ -430,6 +451,12 @@ export const ProjectReportWorkspace: React.FC = () => {
     const compliance = scoredChecks > 0 ? Math.round(((counts.pass + counts.partial * 0.5) / scoredChecks) * 100) : 0;
     return { ...counts, compliance, scoredChecks };
   }, [entries]);
+
+  const summaryIntroduction = toDisplayText((report?.summaryJson as any)?.introduction);
+  const summaryExecutive = toDisplayText((report?.summaryJson as any)?.statisticsSummary || (report?.summaryJson as any)?.executiveSummary);
+  const summaryStrengths = toDisplayText((report?.summaryJson as any)?.strengthsSummary);
+  const summaryCompliance = toDisplayText((report?.summaryJson as any)?.complianceSummary);
+  const summaryRecommendations = toDisplayText((report?.summaryJson as any)?.recommendationsSummary);
 
   const loadData = React.useCallback(async () => {
     if (!reportId) return;
@@ -827,41 +854,41 @@ export const ProjectReportWorkspace: React.FC = () => {
         </GlassCard>
       )}
 
-      {(report.summaryJson as any)?.introduction || (report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary || (report.summaryJson as any)?.strengthsSummary || (report.summaryJson as any)?.complianceSummary || (report.summaryJson as any)?.recommendationsSummary ? (
+      {summaryIntroduction || summaryExecutive || summaryStrengths || summaryCompliance || summaryRecommendations ? (
         <GlassCard>
           <div className="mb-4 flex items-center gap-2">
             <Bot className="h-5 w-5 text-cyan-500" />
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{copy.aiReportSummary}</h2>
           </div>
           <div className="grid gap-4 xl:grid-cols-12">
-            {(report.summaryJson as any)?.introduction && (
+            {summaryIntroduction && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.introduction}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).introduction}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{summaryIntroduction}</p>
               </div>
             )}
-            {((report.summaryJson as any)?.statisticsSummary || (report.summaryJson as any)?.executiveSummary) && (
+            {summaryExecutive && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.executiveSummary}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).statisticsSummary || (report.summaryJson as any).executiveSummary}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{summaryExecutive}</p>
               </div>
             )}
-            {(report.summaryJson as any)?.strengthsSummary && (
+            {summaryStrengths && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-4">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.strengthsSummary}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).strengthsSummary}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{summaryStrengths}</p>
               </div>
             )}
-            {(report.summaryJson as any)?.complianceSummary && (
+            {summaryCompliance && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-6">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.complianceSummary}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).complianceSummary}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{summaryCompliance}</p>
               </div>
             )}
-            {(report.summaryJson as any)?.recommendationsSummary && (
+            {summaryRecommendations && (
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800 xl:col-span-6">
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{copy.recommendationsSummary}</h3>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{(report.summaryJson as any).recommendationsSummary}</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{summaryRecommendations}</p>
               </div>
             )}
           </div>
