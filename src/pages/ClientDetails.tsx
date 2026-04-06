@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock, Eye, Download, DollarSign } from 'lucide-react';
+import { ArrowLeft, Folder, Mail, Phone, Globe, MapPin, UserPlus, Upload, FileText, CheckCircle, Clock, Eye, Download } from 'lucide-react';
 import { Client, Project, ClientMember, FileAsset, ActivityLog, Role, Permission } from '../types';
 import { api } from '../services/api';
 import { GlassCard, Button, Badge, KpiCard, Input, Label, Select } from '../components/ui/UIComponents';
@@ -11,7 +11,6 @@ import { DocumentViewer } from '../components/DocumentViewer';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppDialog } from '../contexts/DialogContext';
-import { formatCurrency } from '../utils/currency';
 import { navigateBack } from '@/utils/navigation';
 
 export const ClientDetails: React.FC = () => {
@@ -31,31 +30,16 @@ export const ClientDetails: React.FC = () => {
         notAvailable: isArabic ? 'غير متوفر' : 'N/A',
         editProfile: isArabic ? 'تعديل الملف' : 'Edit Profile',
         atAGlance: isArabic ? 'لمحة سريعة' : 'At a Glance',
-        financialHealth: isArabic ? 'الصحة المالية' : 'Financial Health',
-        revenueYtd: isArabic ? 'إيرادات السنة' : 'Revenue YTD',
-        outstanding: isArabic ? 'المستحق' : 'Outstanding',
         activeProjects: isArabic ? 'المشاريع النشطة' : 'Active Projects',
-        totalSpent: isArabic ? 'إجمالي الإنفاق' : 'Total Spent',
         activeEngagements: isArabic ? 'المشاريع النشطة' : 'Active Engagements',
         unnamedProject: isArabic ? 'مشروع بدون اسم' : 'Unnamed Project',
         deadline: isArabic ? 'الموعد النهائي' : 'Deadline',
-        budget: isArabic ? 'الميزانية' : 'Budget',
         tbd: isArabic ? 'لاحقاً' : 'TBD',
         complete: isArabic ? 'مكتمل' : 'Complete',
         teamAccess: isArabic ? 'وصول الفريق' : 'Team Access',
         assetsAndContracts: isArabic ? 'الأصول والعقود' : 'Assets & Contracts',
         remove: isArabic ? 'إزالة' : 'Remove',
         by: isArabic ? 'بواسطة' : 'by',
-        invoices: isArabic ? 'الفواتير' : 'Invoices',
-        openInvoices: isArabic ? 'فواتير مفتوحة' : 'Open Invoices',
-        overdue: isArabic ? 'متأخر' : 'Overdue',
-        contracts: isArabic ? 'العقود' : 'Contracts',
-        activeContract: isArabic ? 'عقد نشط' : 'Active Contract',
-        exp: isArabic ? 'ينتهي' : 'Exp',
-        noExpirySet: isArabic ? 'لا يوجد تاريخ انتهاء' : 'No expiry set',
-        payments: isArabic ? 'المدفوعات' : 'Payments',
-        paidInvoices: isArabic ? 'فواتير مدفوعة' : 'Paid Invoices',
-        allActiveClientProjects: isArabic ? 'عبر جميع مشاريع العميل النشطة' : 'Across all active client projects',
         file: isArabic ? 'ملف' : 'File',
         selectUserPlaceholder: isArabic ? '-- اختر المستخدم --' : '-- Select User --',
     }), [isArabic]);
@@ -105,13 +89,6 @@ export const ClientDetails: React.FC = () => {
     const [members, setMembers] = useState<ClientMember[]>([]);
     const [files, setFiles] = useState<FileAsset[]>([]);
     const [activity, setActivity] = useState<ActivityLog[]>([]);
-    const [financialSummary, setFinancialSummary] = useState({
-        openInvoices: 0,
-        overdueAmount: 0,
-        totalPaid: 0,
-        activeContracts: 0,
-        nextContractEndDate: null as string | null,
-    });
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
 
@@ -137,13 +114,6 @@ export const ClientDetails: React.FC = () => {
             setMembers([]);
             setFiles([]);
             setActivity([]);
-            setFinancialSummary({
-                openInvoices: 0,
-                overdueAmount: 0,
-                totalPaid: 0,
-                activeContracts: 0,
-                nextContractEndDate: null,
-            });
             loadData(clientId, () => isCurrent);
         }
 
@@ -170,18 +140,11 @@ export const ClientDetails: React.FC = () => {
             return;
         }
 
-        const [p, m, f, a, financials] = await Promise.allSettled([
+        const [p, m, f, a] = await Promise.allSettled([
             api.projects.getByClient(requestedClientId),
             api.clients.getMembers(requestedClientId),
             api.clients.getFiles(requestedClientId),
             isClientPortalUser ? Promise.resolve([]) : api.clients.getActivity(requestedClientId),
-            can(Permission.VIEW_FINANCIALS) ? api.clients.getFinancialSummary(requestedClientId) : Promise.resolve({
-                openInvoices: 0,
-                overdueAmount: 0,
-                totalPaid: 0,
-                activeContracts: 0,
-                nextContractEndDate: null,
-            }),
         ]);
 
         if (!isCurrent()) return;
@@ -189,13 +152,6 @@ export const ClientDetails: React.FC = () => {
         setMembers(m.status === 'fulfilled' ? m.value : []);
         setFiles(f.status === 'fulfilled' ? f.value : []);
         setActivity(a.status === 'fulfilled' ? a.value : []);
-        setFinancialSummary(financials.status === 'fulfilled' ? financials.value : {
-            openInvoices: 0,
-            overdueAmount: 0,
-            totalPaid: 0,
-            activeContracts: 0,
-            nextContractEndDate: null,
-        });
         setLoading(false);
     };
 
@@ -294,7 +250,6 @@ export const ClientDetails: React.FC = () => {
         { id: 'overview', label: t('overview') },
         { id: 'projects', label: t('projects') },
         { id: 'members', label: t('members') },
-        ...(can(Permission.VIEW_FINANCIALS) ? [{ id: 'financials', label: t('financials') }] : []),
         { id: 'files', label: t('files') },
         ...(!isClientPortalUser ? [{ id: 'activity', label: t('activity') }] : []),
     ];
@@ -372,31 +327,6 @@ export const ClientDetails: React.FC = () => {
                                         <Globe className="w-4 h-4 text-cyan-500" /> {client.website || copy.notAvailable}
                                     </div>
                                 </dl>
-                                <PermissionGate permission={Permission.VIEW_FINANCIALS}>
-                                    <div className="mt-6 pt-6 border-t border-slate-700/50">
-                                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">{copy.financialHealth}</h4>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <div className="flex justify-between text-xs mb-1">
-                                                    <span className="text-slate-400">{copy.revenueYtd}</span>
-                                                    <span className="text-[hsl(var(--brand-success))]">
-                                                        {client.billing?.currency || 'SAR'} {client.revenueYTD.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-[hsl(var(--brand-success))] h-1.5 rounded-full" style={{ width: '70%' }}></div></div>
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between text-xs mb-1">
-                                                    <span className="text-slate-400">{copy.outstanding}</span>
-                                                    <span className="text-rose-400">
-                                                        {client.billing?.currency || 'SAR'} {client.outstandingBalance.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <div className="w-full bg-slate-800 rounded-full h-1.5"><div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '30%' }}></div></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </PermissionGate>
                             </GlassCard>
 
                             <GlassCard className="h-fit">
@@ -407,9 +337,6 @@ export const ClientDetails: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <KpiCard label={copy.activeProjects} value={projects.filter(p => p.status === 'in-progress').length} trend={0} />
-                                <PermissionGate permission={Permission.VIEW_FINANCIALS}>
-                                    <KpiCard label={copy.totalSpent} value={`${client.billing?.currency || 'SAR'} ${(client.revenueYTD / 1000).toFixed(1)}k`} trend={12} />
-                                </PermissionGate>
                             </div>
 
                             {!isClientPortalUser && (
@@ -457,7 +384,6 @@ export const ClientDetails: React.FC = () => {
                                                 <h4 className="font-medium text-slate-100">{p.name || copy.unnamedProject}</h4>
                                                 <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                                                     <span>{copy.deadline}: {p.deadline || copy.tbd}</span>
-                                                    <span>{copy.budget}: {p.budget?.toLocaleString() ? `${client?.billing?.currency || 'SAR'} ${p.budget.toLocaleString()}` : copy.notAvailable}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -572,45 +498,6 @@ export const ClientDetails: React.FC = () => {
                         </div>
                     </GlassCard>
                 )}
-
-                {/* FINANCIALS */}
-                {activeTab === 'financials' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <GlassCard title={copy.invoices}>
-                            <div className="text-center py-8">
-                                <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.openInvoices}</h4>
-                                <p className="text-slate-500 text-sm">{copy.openInvoices}</p>
-                            </div>
-                            <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-rose-400 text-sm font-medium">
-                                    {copy.overdue}: {formatCurrency(financialSummary.overdueAmount, 'SAR')}
-                                </span>
-                            </div>
-                        </GlassCard>
-                        <GlassCard title={copy.contracts}>
-                            <div className="text-center py-8">
-                                <h4 className="text-3xl font-bold text-white mb-2">{financialSummary.activeContracts}</h4>
-                                <p className="text-slate-500 text-sm">{copy.activeContract}</p>
-                            </div>
-                            <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-[hsl(var(--brand-success))] text-sm font-medium">
-                                    {financialSummary.nextContractEndDate
-                                        ? `${copy.exp}: ${new Date(financialSummary.nextContractEndDate).toLocaleDateString(locale)}`
-                                        : copy.noExpirySet}
-                                </span>
-                            </div>
-                        </GlassCard>
-                        <GlassCard title={copy.payments}>
-                            <div className="text-center py-8">
-                                <h4 className="text-3xl font-bold text-white mb-2">{formatCurrency(financialSummary.totalPaid, 'SAR')}</h4>
-                                <p className="text-slate-500 text-sm">{copy.paidInvoices}</p>
-                            </div>
-                            <div className="border-t border-slate-700/50 pt-4 text-center">
-                                <span className="text-cyan-400 text-sm font-medium">{copy.allActiveClientProjects}</span>
-                            </div>
-                        </GlassCard>
-                    </div>
-                )}
             </div>
 
             {/* Document Viewer Modal */}
@@ -671,8 +558,6 @@ export const ClientDetails: React.FC = () => {
                     <div>
                         <Label>{t('file_category')}</Label>
                         <Select value={fileData.category} onChange={(e) => setFileData({ ...fileData, category: e.target.value as any })}>
-                            <option value="contract">{t('contract')}</option>
-                            <option value="invoice">{t('invoice')}</option>
                             <option value="brief">{t('brief')}</option>
                             <option value="other">{t('other')}</option>
                         </Select>

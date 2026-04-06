@@ -61,7 +61,7 @@ const Settings: React.FC = () => {
         notifications: 'الإشعارات',
         emailTaskAssignments: 'البريد الإلكتروني: تعيينات المهام',
         emailFindingAssignments: 'البريد الإلكتروني: تعيينات الملاحظات',
-        emailInvoiceOverdue: 'البريد الإلكتروني: الفواتير / المتأخرة',
+        emailInvoiceOverdue: 'البريد الإلكتروني: عناصر العمل المتأخرة',
         inAppNotifications: 'إشعارات داخل التطبيق',
         preferencesSaved: 'تم حفظ التفضيلات',
         failedSave: 'فشل الحفظ',
@@ -113,7 +113,7 @@ const Settings: React.FC = () => {
         notifications: 'Notifications',
         emailTaskAssignments: 'Email: Task assignments',
         emailFindingAssignments: 'Email: Finding assignments',
-        emailInvoiceOverdue: 'Email: Invoice / overdue',
+        emailInvoiceOverdue: 'Email: Overdue work items',
         inAppNotifications: 'In-app notifications',
         preferencesSaved: 'Preferences saved',
         failedSave: 'Failed to save',
@@ -166,10 +166,10 @@ const Settings: React.FC = () => {
 
   type SlaPolicyItem = { id: string; name: string; entityType: string; targetHours: number; clientId: string | null; enabled: boolean };
   const [slaPolicies, setSlaPolicies] = useState<SlaPolicyItem[]>([]);
-  const [slaEntityFilter, setSlaEntityFilter] = useState<'TASK' | 'FINDING' | 'INVOICE'>('TASK');
+  const [slaEntityFilter, setSlaEntityFilter] = useState<'TASK' | 'FINDING'>('TASK');
   const [slaModalOpen, setSlaModalOpen] = useState(false);
   const [slaEditing, setSlaEditing] = useState<SlaPolicyItem | null>(null);
-  const [slaForm, setSlaForm] = useState({ name: '', entityType: 'TASK' as 'TASK' | 'FINDING' | 'INVOICE', targetHours: 24, clientId: '', enabled: true });
+  const [slaForm, setSlaForm] = useState({ name: '', entityType: 'TASK' as 'TASK' | 'FINDING', targetHours: 24, clientId: '', enabled: true });
   const [savingSla, setSavingSla] = useState(false);
   const [checkingBreaches, setCheckingBreaches] = useState(false);
 
@@ -752,13 +752,12 @@ const Settings: React.FC = () => {
         <GlassCard title="SLA policies" className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-cyan-500" />
           <div className="flex-1 space-y-4">
-            <p className="text-slate-400 text-sm">Define response/resolution SLAs for tasks, findings, and invoices. Breach check notifies OPS/Admins.</p>
+            <p className="text-slate-400 text-sm">Define response and resolution SLAs for tasks and findings. Breach checks notify OPS/Admins.</p>
             <div className="flex gap-2 items-center flex-wrap">
               <span className="text-slate-500 text-sm">Entity:</span>
               <select value={slaEntityFilter} onChange={(e) => setSlaEntityFilter(e.target.value as any)} className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white">
                 <option value="TASK">Task</option>
                 <option value="FINDING">Finding</option>
-                <option value="INVOICE">Invoice</option>
               </select>
               <Button variant="outline" size="sm" onClick={handleCheckBreaches} disabled={checkingBreaches}>{checkingBreaches ? 'Checking…' : 'Check breaches'}</Button>
             </div>
@@ -789,7 +788,6 @@ const Settings: React.FC = () => {
                   <select value={slaForm.entityType} onChange={(e) => setSlaForm((f) => ({ ...f, entityType: e.target.value as any }))} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" disabled={!!slaEditing}>
                     <option value="TASK">Task</option>
                     <option value="FINDING">Finding</option>
-                    <option value="INVOICE">Invoice</option>
                   </select>
                 </div>
                 <div>

@@ -12,7 +12,6 @@ import toast from 'react-hot-toast';
 const TRIGGER_ENTITIES = [
   { value: 'TASK', label: 'Task' },
   { value: 'FINDING', label: 'Finding' },
-  { value: 'INVOICE', label: 'Invoice' },
 ] as const;
 
 const TRIGGER_EVENTS = [
@@ -185,7 +184,7 @@ const Automations: React.FC = () => {
             <Workflow className="w-8 h-8 text-cyan-500" />
             {t('automations') || 'Automations'}
           </h1>
-          <p className="text-slate-400 mt-1">Rules that run when tasks, findings, or invoices change.</p>
+          <p className="text-slate-400 mt-1">Rules that run when tasks or findings change.</p>
         </div>
         <PermissionGate permission={Permission.MANAGE_PROJECTS}>
           <Button onClick={openCreate}>

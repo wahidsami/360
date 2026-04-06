@@ -20,6 +20,10 @@ export const UsersAdmin: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { confirm } = useAppDialog();
   const isArabic = i18n.language === 'ar';
+  const visiblePermissions = React.useMemo(
+    () => Object.values(Permission).filter((perm) => perm !== Permission.VIEW_FINANCIALS),
+    [],
+  );
   const copy = React.useMemo(
     () =>
       isArabic
@@ -728,7 +732,7 @@ export const UsersAdmin: React.FC = () => {
             <div>
               <Label>{copy.customPermissionsEdit}</Label>
               <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
-                {Object.values(Permission).map(perm => (
+                {visiblePermissions.map(perm => (
                   <label key={perm} className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
                     <input
                       type="checkbox"
@@ -838,7 +842,7 @@ export const UsersAdmin: React.FC = () => {
           <div>
             <Label>{copy.customPermissions}</Label>
             <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-lg border border-slate-700/50 bg-slate-800/30">
-              {Object.values(Permission).map(perm => (
+              {visiblePermissions.map(perm => (
                 <label key={perm} className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
                   <input
                     type="checkbox"

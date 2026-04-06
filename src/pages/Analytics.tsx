@@ -8,17 +8,13 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
   PieChart,
   Pie,
   Cell,
   Legend,
 } from 'recharts';
-import { BarChart3, TrendingUp, Users, AlertCircle, DollarSign } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../components/ui/UIComponents';
-import { PermissionGate } from '../components/PermissionGate';
-import { Permission } from '../types';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -74,13 +70,6 @@ const Analytics: React.FC = () => {
   if (loading) return <div className="p-10 text-slate-500 text-center">{t('loading_analytics')}</div>;
   if (!data) return <div className="p-10 text-slate-500 text-center">{t('no_data')}</div>;
 
-  const arAgingData = [
-    { name: `0-30 ${t('days')}`, value: data.financial.arAging['0-30'], color: COLORS[0] },
-    { name: `31-60 ${t('days')}`, value: data.financial.arAging['31-60'], color: COLORS[1] },
-    { name: `61-90 ${t('days')}`, value: data.financial.arAging['61-90'], color: COLORS[2] },
-    { name: `90+ ${t('days')}`, value: data.financial.arAging['90+'], color: COLORS[3] },
-  ].filter((d) => d.value > 0);
-
   return (
     <div className="space-y-8 p-6">
       <div>
@@ -120,9 +109,7 @@ const Analytics: React.FC = () => {
             </ResponsiveContainer>
           </div>
         </div>
-        <p className="text-slate-500 text-sm mt-2">
-          {t('total_projects')}: {data.portfolio.projectCount} · {t('budget_total')}: {data.portfolio.totalBudget.toLocaleString()} SAR
-        </p>
+        <p className="text-slate-500 text-sm mt-2">{t('total_projects')}: {data.portfolio.projectCount}</p>
       </GlassCard>
 
       {/* Team */}
@@ -170,59 +157,6 @@ const Analytics: React.FC = () => {
           </div>
         </div>
       </GlassCard>
-
-      {/* Financial */}
-      <PermissionGate permission={Permission.VIEW_FINANCIALS}>
-        <GlassCard title={t('financial_analytics')} className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-cyan-500" />
-          <div className="flex-1 grid md:grid-cols-2 gap-6">
-            <div className="min-h-[220px]">
-              <h3 className="text-slate-300 text-sm font-medium mb-2">{t('revenue_by_month')}</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={data.financial.revenueByMonth}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="month" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={12} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }} />
-                  <Area type="monotone" dataKey="amount" stroke="#06b6d4" fill="url(#revenueGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="min-h-[200px]">
-              <h3 className="text-slate-300 text-sm font-medium mb-2">{t('ar_aging_title')}</h3>
-              <p className="text-slate-500 text-sm mb-2">{t('total_outstanding')}: {data.financial.totalOutstanding.toLocaleString()} SAR</p>
-              {arAgingData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={arAgingData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={70}
-                      label={({ name, value }) => `${name}: ${value.toLocaleString()}`}
-                    >
-                      {arAgingData.map((_, i) => (
-                        <Cell key={i} fill={arAgingData[i].color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }} formatter={(v: number) => v.toLocaleString()} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className="text-slate-500 text-sm">{t('no_outstanding_ar')}</p>
-              )}
-            </div>
-          </div>
-        </GlassCard>
-      </PermissionGate>
 
       {/* Findings */}
       <GlassCard title={t('findings_analytics')} className="flex items-center gap-2">

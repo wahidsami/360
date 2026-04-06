@@ -32,11 +32,7 @@ const UsersAdmin = React.lazy(() => import('./pages/admin/UsersAdmin'));
 const RolesAdmin = React.lazy(() => import('./pages/admin/RolesAdmin'));
 const ReportTemplatesAdmin = React.lazy(() => import('./pages/admin/ReportTemplatesAdmin'));
 const WorkspaceTemplatesAdmin = React.lazy(() => import('./pages/admin/WorkspaceTemplatesAdmin'));
-const Automations = React.lazy(() => import('./pages/Automations'));
-const Integrations = React.lazy(() => import('./pages/Integrations'));
 const Calendar = React.lazy(() => import('./pages/Calendar'));
-const Wiki = React.lazy(() => import('./pages/Wiki'));
-const Analytics = React.lazy(() => import('./pages/Analytics'));
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,14 +49,6 @@ const RoleProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Ro
   if (!user || !allowedRoles.includes(user.role)) return <Navigate to="/app/dashboard" replace />;
   return <>{children}</>;
 };
-
-// Placeholder for missing pages
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex flex-col items-center justify-center h-96 text-slate-500">
-    <h2 className="text-2xl font-bold mb-2 text-slate-300">{title}</h2>
-    <p>This module is under development.</p>
-  </div>
-);
 
 import { Toaster } from 'react-hot-toast';
 
@@ -133,13 +121,13 @@ const App: React.FC = () => {
                 <Route path="roles" element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]}><RolesAdmin /></RoleProtectedRoute>} />
               </Route>
 
-              <Route path="automations" element={<Automations />} />
+              <Route path="automations" element={<Navigate to="/app/dashboard" replace />} />
 
-              <Route path="integrations" element={<Integrations />} />
+              <Route path="integrations" element={<Navigate to="/app/dashboard" replace />} />
 
-              <Route path="wiki" element={<Wiki />} />
+              <Route path="wiki" element={<Navigate to="/app/dashboard" replace />} />
 
-              <Route path="analytics" element={<Analytics />} />
+              <Route path="analytics" element={<Navigate to="/app/dashboard" replace />} />
 
               <Route path="settings" element={<Settings />} />
             </Route>

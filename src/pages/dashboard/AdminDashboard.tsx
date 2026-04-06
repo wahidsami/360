@@ -25,11 +25,10 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
-const DEFAULT_WIDGET_IDS = ['kpi-cards', 'client-compliance', 'revenue-chart', 'latest-updates', 'projects-at-risk', 'tools-panel'] as const;
+const DEFAULT_WIDGET_IDS = ['kpi-cards', 'client-compliance', 'latest-updates', 'projects-at-risk', 'tools-panel'] as const;
 const WIDGET_LABELS: Record<string, string> = {
   'kpi-cards': 'widget_kpi_cards',
   'tools-panel': 'widget_quick_actions',
-  'revenue-chart': 'widget_revenue_chart',
   'client-compliance': 'widget_client_compliance_chart',
   'latest-updates': 'widget_latest_updates',
   'projects-at-risk': 'widget_projects_at_risk',
@@ -152,15 +151,6 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     load();
   }, [mergeWidgetOrder, t]);
 
-  const revenueSeries = useMemo(
-    () =>
-      (stats?.revenueByMonth || []).map((point: { monthKey: string; amount: number }) => ({
-        ...point,
-        label: new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(`${point.monthKey}-01T00:00:00`)),
-      })),
-    [stats?.revenueByMonth],
-  );
-
   const complianceSeries = useMemo(
     () =>
       (stats?.clientComplianceComparison || [])
@@ -248,12 +238,6 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
     () => complianceSeries.map((item) => item.needsAttentionChecks),
     [complianceSeries],
   );
-  const revenueHasHistory = useMemo(
-    () => revenueSeries.some((point: { amount: number }) => Number(point.amount) > 0),
-    [revenueSeries],
-  );
-  const paidRevenueTotal = Number(stats?.revenue || 0);
-  const outstandingRevenueTotal = Number(analytics?.financial.totalOutstanding || 0);
   const showFindingsStatusChart = findingsStatusData.length > 1;
   const showPortfolioHealthChart = portfolioHealthData.length > 1;
 
@@ -833,42 +817,6 @@ export const AdminDashboard: React.FC<{ role: Role }> = ({ role }) => {
           )}
         </GlassCard>
 
-        {has('revenue-chart') && (
-          <GlassCard className="xl:col-span-4 h-full overflow-hidden cursor-pointer" title={t('revenue_velocity')} onClick={() => navigate('/app/reports')}>
-            {revenueHasHistory ? (
-              <div className="h-[220px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueSeries}>
-                    <defs>
-                      <linearGradient id="dashboardRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} opacity={0.2} />
-                    <XAxis dataKey="label" stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke={chartAxisColor} tick={{ fill: chartAxisColor }} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(Number(value))} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [formatCurrency(value, 'SAR'), t('revenue')]} />
-                    <Area type="monotone" dataKey="amount" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#dashboardRevenueGradient)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('paid_revenue')}</p>
-                  <p className="mt-2 text-3xl font-black text-white">{formatCurrency(paidRevenueTotal, 'SAR')}</p>
-                  <p className="mt-1 text-xs text-slate-400">{t('revenue_from_paid_invoices')}</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 px-4 py-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{t('outstanding_invoices')}</p>
-                  <p className="mt-2 text-2xl font-black text-white">{formatCurrency(outstandingRevenueTotal, 'SAR')}</p>
-                  <p className="mt-1 text-xs text-slate-400">{t('outstanding_invoice_balance')}</p>
-                </div>
-              </div>
-            )}
-          </GlassCard>
-        )}
       </div>
 
       {has('tools-panel') && <ToolsPanel role={role} />}

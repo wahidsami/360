@@ -24,7 +24,6 @@ export const RolesAdmin: React.FC = () => {
     { label: 'Dashboard', perm: Permission.VIEW_DASHBOARD },
     { label: 'Clients', perm: Permission.MANAGE_CLIENTS },
     { label: 'Projects', perm: Permission.MANAGE_PROJECTS },
-    { label: 'Financials', perm: Permission.VIEW_FINANCIALS },
     { label: 'Users', perm: Permission.MANAGE_USERS },
     { label: 'System', perm: Permission.VIEW_ADMIN },
   ];

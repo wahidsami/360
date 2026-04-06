@@ -369,7 +369,6 @@ const Integrations: React.FC = () => {
     'task.updated',
     'finding.created',
     'finding.updated',
-    'invoice.created',
     'approval.requested',
   ];
 

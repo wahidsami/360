@@ -2,11 +2,11 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Sparkles } from 'lucide-react';
-import { Project, Client, Milestone, ProjectUpdate, EnvironmentAccess, Invoice, Contract, Discussion, DiscussionReply, Permission, ActivityLog, FileAsset, ProjectMember, Role, Finding, Report, Task, isInternalRole, ProjectReadiness, ReadinessAction } from '../types';
+import { Project, Client, Milestone, ProjectUpdate, EnvironmentAccess, Discussion, DiscussionReply, Permission, ActivityLog, FileAsset, ProjectMember, Role, Finding, Report, Task, isInternalRole, ProjectReadiness, ReadinessAction } from '../types';
 import { api } from '../services/api';
 import { Button, Badge, KpiCard } from '../components/ui/UIComponents';
 import { PermissionGate } from '../components/PermissionGate';
-import { MilestonesTab, UpdatesTab, EnvironmentsTab, FinancialsTab, DiscussionsTab, OverviewTab, FilesTab, TeamTab, FindingsTab, ReportsTab, TimeTab, TimelineTab, SprintsTab, ActivityTab } from '../components/project/ProjectTabs';
+import { MilestonesTab, UpdatesTab, EnvironmentsTab, DiscussionsTab, OverviewTab, FilesTab, TeamTab, FindingsTab, ReportsTab, TimeTab, TimelineTab, SprintsTab, ActivityTab } from '../components/project/ProjectTabs';
 import { TasksTab } from '../components/project/TasksTab';
 import { RecurringTasksTab } from '../components/project/RecurringTasksTab';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,7 +33,6 @@ export const ProjectDetails: React.FC = () => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [environments, setEnvironments] = useState<EnvironmentAccess[]>([]);
-  const [financials, setFinancials] = useState<{ contract?: Contract, invoices: Invoice[] }>({ invoices: [] });
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [activity, setActivity] = useState<ActivityLog[]>([]);
   const [files, setFiles] = useState<FileAsset[]>([]);
@@ -183,7 +182,6 @@ export const ProjectDetails: React.FC = () => {
       setMilestones([]);
       setUpdates([]);
       setEnvironments([]);
-      setFinancials({ invoices: [] });
       setDiscussions([]);
       setActivity([]);
       setFiles([]);
@@ -299,11 +297,10 @@ export const ProjectDetails: React.FC = () => {
         setClient(c || null);
       });
 
-      const [m, u, e, f, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
+      const [m, u, e, th, act, fl, mem, fnd, rep, tsk] = await Promise.all([
         api.projects.getMilestones(requestedProjectId).catch(e => { console.error('Milestones failed', e); return []; }),
         api.projects.getUpdates(requestedProjectId).catch(e => { console.error('Updates failed', e); return []; }),
         api.projects.getEnvironments(requestedProjectId).catch(e => { console.error('Environments failed', e); return []; }),
-        api.projects.getFinancials(requestedProjectId).catch(e => { console.error('Financials failed', e); return { invoices: [] }; }),
         api.projects.getDiscussions(requestedProjectId).catch(e => { console.error('Discussions failed', e); return []; }),
         api.projects.getActivity(requestedProjectId).catch(e => { console.error('Activity failed', e); return []; }),
         api.projects.getFiles(requestedProjectId).catch(e => { console.error('Files failed', e); return []; }),
@@ -318,7 +315,6 @@ export const ProjectDetails: React.FC = () => {
         setMilestones(m);
         setUpdates(u);
         setEnvironments(e);
-        setFinancials(f as any);
         setDiscussions(th as any);
         setActivity(act);
         setFiles(fl);
@@ -732,7 +728,6 @@ export const ProjectDetails: React.FC = () => {
             {activeTab === 'findings' && <FindingsTab findings={findings} projectId={projectId!} onRefresh={handleRefreshFindings} />}
             {activeTab === 'reports' && <ReportsTab reports={reports} projectName={project?.name} onRefresh={loadData} />}
             {activeTab === 'testing' && <EnvironmentsTab environments={environments} />}
-            {activeTab === 'financials' && <FinancialsTab contract={financials.contract} invoices={financials.invoices} onRefresh={loadData} />}
             {activeTab === 'discussions' && <DiscussionsTab
               projectId={projectId!}
               discussions={discussions}

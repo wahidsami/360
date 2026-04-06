@@ -4,17 +4,15 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import {
   LayoutDashboard, Users, Briefcase, FileText, ShieldCheck,
-  Settings, Bell, Search, LogOut, Menu, X, ChevronRight, Globe, ClipboardList, User as UserIcon, Sparkles, Workflow, Calendar, Link2, BookOpen, BarChart3, History, PanelsTopLeft
+  Settings, Bell, Search, LogOut, Menu, X, ChevronRight, Globe, ClipboardList, Calendar, History
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Role, isInternalRole } from '../types';
-import { Button } from '@/components/ui/UIComponents';
 import { DateTimeDisplay } from './DateTimeDisplay';
 import { SearchResults } from './SearchResults';
 import { NotificationsDrawer } from './NotificationsDrawer';
 import { OnboardingWizard } from './OnboardingWizard';
 import { ChangelogModal } from './ChangelogModal';
-import { useAI } from '../contexts/AIContext';
 import { api } from '../services/api';
 
 const API_WS_URL = import.meta.env.VITE_API_URL || '';
@@ -75,11 +73,10 @@ const SidebarSectionLabel = ({ label, isCollapsed }: { label: string; isCollapse
 
 export const Layout: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { user, logout, impersonateUser } = useAuth();
+  const { user, logout } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { openAI } = useAI();
   const navigate = useNavigate();
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
@@ -178,11 +175,6 @@ export const Layout: React.FC = () => {
     navigate('/login');
   };
 
-  const handleImpersonate = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    await impersonateUser(e.target.value);
-    navigate('/app/dashboard');
-  };
-
   const primaryMenuItems = [
     { to: '/app/dashboard', icon: LayoutDashboard, label: t('dashboard') },
   ];
@@ -202,24 +194,8 @@ export const Layout: React.FC = () => {
   }
 
   const knowledgeMenuItems: Array<{ to: string; icon: any; label: string }> = [];
-  if (user && isInternalRole(user.role)) {
-    knowledgeMenuItems.push({ to: '/app/wiki', icon: BookOpen, label: t('wiki') });
-    knowledgeMenuItems.push({ to: '/app/analytics', icon: BarChart3, label: t('analytics') });
-
-    if ([Role.SUPER_ADMIN, Role.OPS, Role.PM].includes(user.role)) {
-      knowledgeMenuItems.push({ to: '/app/automations', icon: Workflow, label: t('automations') });
-      knowledgeMenuItems.push({ to: '/app/integrations', icon: Link2, label: t('integrations') });
-    }
-  }
 
   const adminToolItems: Array<{ to: string; icon: any; label: string }> = [];
-  if (user?.role === Role.SUPER_ADMIN) {
-    adminToolItems.push({ to: '/app/admin/report-templates', icon: FileText, label: t('report_builder') });
-  }
-
-  if (user && [Role.SUPER_ADMIN, Role.OPS].includes(user.role)) {
-    adminToolItems.push({ to: '/app/admin/workspace-templates', icon: PanelsTopLeft, label: t('workspace_builder') });
-  }
 
   const adminManagementItems: Array<{ to: string; icon: any; label: string }> = [];
   if (user?.role === Role.SUPER_ADMIN) {

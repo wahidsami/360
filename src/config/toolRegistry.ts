@@ -1,4 +1,4 @@
-import { LucideIcon, ClipboardList, Briefcase, FileText, AlertCircle, Plus, DollarSign, CheckSquare, Upload, MessageSquare } from 'lucide-react';
+import { LucideIcon, ClipboardList, Briefcase, FileText, AlertCircle, Plus, CheckSquare, Upload, MessageSquare } from 'lucide-react';
 import { Role } from '../types';
 
 export interface ToolConfig {
@@ -20,11 +20,6 @@ export const TOOLS_REGISTRY: ToolConfig[] = [
   { id: 'reports', titleKey: 'reports', icon: FileText, path: '/app/reports', roles: [Role.PM, Role.OPS, Role.SUPER_ADMIN, Role.CLIENT_MANAGER] },
   { id: 'findings', titleKey: 'findings', icon: AlertCircle, path: '/app/findings', roles: [Role.PM, Role.OPS, Role.SUPER_ADMIN, Role.DEV] },
   { id: 'approvals', titleKey: 'approvals', icon: CheckSquare, path: '/app/dashboard', roles: [Role.PM, Role.OPS, Role.SUPER_ADMIN] },
-
-  // FINANCE Tools
-  { id: 'invoices', titleKey: 'invoices', icon: DollarSign, path: '/app/reports', roles: [Role.FINANCE, Role.SUPER_ADMIN] },
-  { id: 'receivables', titleKey: 'receivables', icon: Briefcase, path: '/app/dashboard', roles: [Role.FINANCE, Role.SUPER_ADMIN] },
-
   // CLIENT Tools
   { id: 'my_projects', titleKey: 'my_projects', icon: Briefcase, path: '/app/projects', roles: [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER] },
   { id: 'shared_files', titleKey: 'shared_files', icon: Upload, path: '/app/dashboard#shared-files', roles: [Role.CLIENT_OWNER, Role.CLIENT_MANAGER, Role.CLIENT_MEMBER] },

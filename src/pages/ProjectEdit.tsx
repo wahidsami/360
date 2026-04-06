@@ -221,10 +221,6 @@ export const ProjectEdit: React.FC = () => {
                             <Label>{t('deadline')}</Label>
                             <Input type="date" required value={formData.deadline} onChange={e => setFormData({ ...formData, deadline: e.target.value })} />
                         </div>
-                        <div>
-                            <Label>{t('budget')}</Label>
-                            <Input type="number" min="0" value={formData.budget} onChange={e => setFormData({ ...formData, budget: parseFloat(e.target.value) })} />
-                        </div>
                         <div className="md:col-span-2">
                             <Label>{t('description')}</Label>
                             <TextArea rows={4} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />

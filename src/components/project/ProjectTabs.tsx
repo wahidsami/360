@@ -20,8 +20,6 @@ export { MilestonesTab };
 import { UpdatesTab } from './UpdatesTab';
 export { UpdatesTab };
 export const EnvironmentsTab = (props: any) => <PlaceholderTab name="Environments" />;
-import { FinancialsTab } from './FinancialsTab';
-export { FinancialsTab };
 import { DiscussionsTab } from './DiscussionsTab';
 export { DiscussionsTab };
 import { FilesTab } from './FilesTab';

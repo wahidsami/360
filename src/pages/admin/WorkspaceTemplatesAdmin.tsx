@@ -33,6 +33,9 @@ const TAB_STATE_OPTIONS = [
   { value: 'visible_interactive', label: 'Interactive' },
 ] as const;
 
+const VISIBLE_PRIMARY_TEMPLATE_TAB_DEFINITIONS = PRIMARY_TEMPLATE_TAB_DEFINITIONS.filter((tab) => tab.id !== 'financials');
+const VISIBLE_SECONDARY_TEMPLATE_TAB_DEFINITIONS = SECONDARY_TEMPLATE_TAB_DEFINITIONS.filter((tab) => tab.id !== 'financials');
+
 const buildDefaultTemplateDefinition = () => {
   const draft = buildDefaultProjectWorkspaceConfigDraft();
   return {
@@ -526,7 +529,7 @@ export const WorkspaceTemplatesAdmin: React.FC = () => {
                 )}
 
                 <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-                  {[{ title: t('workspace_primary_tabs'), items: PRIMARY_TEMPLATE_TAB_DEFINITIONS }, { title: t('workspace_dependent_tabs'), items: SECONDARY_TEMPLATE_TAB_DEFINITIONS }].map((section) => (
+                  {[{ title: t('workspace_primary_tabs'), items: VISIBLE_PRIMARY_TEMPLATE_TAB_DEFINITIONS }, { title: t('workspace_dependent_tabs'), items: VISIBLE_SECONDARY_TEMPLATE_TAB_DEFINITIONS }].map((section) => (
                     <div key={section.title} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white">{section.title}</h3>
                       <div className="mt-4 space-y-4">
